@@ -1,0 +1,211 @@
+{
+  "sourceCommit": "a54628ae5af38e8578e952a90986d90f9db9a997",
+  "sourceArchiveSHA256": "7d24d1c1864fcecebadce20731b9e4bdbc29369d2a762d994f5edebf60923a46",
+  "runtimeChanged": false,
+  "mainChanged": false,
+  "pagesSettingsChanged": false,
+  "published": false,
+  "tests": {
+    "passed": 134,
+    "failed": 0,
+    "syntaxCheck": "pass",
+    "relativeImportClosure": "pass",
+    "browser": "Chromium 154.0.8037.57",
+    "viewports": [
+      [
+        1440,
+        960
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        320,
+        640
+      ]
+    ]
+  },
+  "files": [
+    {
+      "path": "index.html",
+      "sha256": "34a5fba24dc619b91432380468f4b0b3de585b6b6d9435a711b16b9a85ae1119",
+      "bytes": 8645
+    },
+    {
+      "path": "styles.css",
+      "sha256": "86b53d74019323aeb21db812624c81b0f486df87ea298c24a0d9967a66a69fdb",
+      "bytes": 38143
+    },
+    {
+      "path": "assets/dice.svg",
+      "sha256": "1adc2e9cd7c3c6897c6328e46103273cd7848dff8d029dfae9ee3783a6d562f9",
+      "bytes": 331
+    },
+    {
+      "path": "src/data/catalog.js",
+      "sha256": "be3315dbfce2997ed7695d8033bcb8f86e09fa5256b378617ccf8ad8f83d18b3",
+      "bytes": 24743
+    },
+    {
+      "path": "src/data/club.js",
+      "sha256": "33ded0bf4607a6ba32512d76552d746ca68628dba04b632d0201c7c26bfc3d1e",
+      "bytes": 11546
+    },
+    {
+      "path": "src/data/identities.js",
+      "sha256": "cef74424b051d139a2376f82f82c605b18b1fe8528e98996aa800ef5717e3a7d",
+      "bytes": 3346
+    },
+    {
+      "path": "src/data/visuals.js",
+      "sha256": "a6c34078bf6438cf7eb2a2280badf61dfa150fc5c61a037e34cbdd75db23798a",
+      "bytes": 3034
+    },
+    {
+      "path": "src/data/systems.js",
+      "sha256": "47898833e71f17252435d689023c66efee3f5e8ec716e1e7c828c8c60e3c3d31",
+      "bytes": 9204
+    },
+    {
+      "path": "src/model/generator.js",
+      "sha256": "5f59f15d0b603c2c87459828fb295892e9b3f9eee3e9873ebeab91bff893433d",
+      "bytes": 4730
+    },
+    {
+      "path": "src/model/club.js",
+      "sha256": "5307d5176c65f9a2c00b45ffa49ab6cb321fce2e32c6d1fa0363289b4b08c3df",
+      "bytes": 11883
+    },
+    {
+      "path": "src/model/camera.js",
+      "sha256": "254d835b4739efb4db1028ce57149b9f92bfc7c39407de044181883d77123f88",
+      "bytes": 4373
+    },
+    {
+      "path": "src/model/assessment.js",
+      "sha256": "910627674d649807235bd6614f5fd8049210e6c9f0e41afb6905ae4960bc0b10",
+      "bytes": 5534
+    },
+    {
+      "path": "src/model/search.js",
+      "sha256": "41ba431906aa04ff3fb69a11d555ed9fb378c3b950506e09afbbbe4a6ed02b41",
+      "bytes": 3505
+    },
+    {
+      "path": "src/model/lifecycle.js",
+      "sha256": "118e39ec01c2cb24cbdc5b5e08801f7d5a00fe2ca4e2c3b3024b3c418f1783f0",
+      "bytes": 16878
+    },
+    {
+      "path": "src/model/reception.js",
+      "sha256": "5b7253116f8cad5908cacaddda08cc31a5637cc86325fa0185245fdaa98de61d",
+      "bytes": 787
+    },
+    {
+      "path": "src/model/puppet.js",
+      "sha256": "bef531c17bbb8287090223049952ca45871e5dca6b0c12ee6fc420b732d54f53",
+      "bytes": 6246
+    },
+    {
+      "path": "src/model/drag-geometry.js",
+      "sha256": "43ff212f545eb8fdc2b89f076911eeb3ec71e1c391a0348eb248c47f0031cbf6",
+      "bytes": 3373
+    },
+    {
+      "path": "src/ui/app.js",
+      "sha256": "1ee4d5f1660a7b563f9cc2c0fa34001a66196cb743d8cfd82d5f695cd2d8e7c5",
+      "bytes": 20
+    },
+    {
+      "path": "src/ui/game.js",
+      "sha256": "084f7e1285b663263ed851e7d313731433ce7654090e710706b9086b1b1c3238",
+      "bytes": 16098
+    },
+    {
+      "path": "src/ui/room-controls.css",
+      "sha256": "421deba6a3db061cfc4009ea6aac17967838e11bd76ef8718a66da65a9732ce0",
+      "bytes": 509
+    },
+    {
+      "path": "src/ui/scrollbars.css",
+      "sha256": "c7c9411fab09287101a03e852cff8c1e922f0711ca5b4aecd20850b574b5cfea",
+      "bytes": 1265
+    },
+    {
+      "path": "src/ui/portrait.js",
+      "sha256": "2d48d6adeeee936934887f8ae87570b0f3ed61396ba70badb7259493f74b6d19",
+      "bytes": 1537
+    },
+    {
+      "path": "src/ui/graphic-portrait.js",
+      "sha256": "19f325d0ab325c713911abeb9c72d47f064d842d4656ce03b2609ff07554af00",
+      "bytes": 2416
+    },
+    {
+      "path": "src/ui/character-head.js",
+      "sha256": "6300c543aaa4732cf92dcc6630c8b28f5a285496b90af690b46677d97ccccb29",
+      "bytes": 10832
+    },
+    {
+      "path": "src/ui/character-clothes.js",
+      "sha256": "921cd118f3a1dde49a51e1f3f3d0ffbd30f56a2042edeb2fd44778e8760e488f",
+      "bytes": 9479
+    },
+    {
+      "path": "src/ui/scene-geometry.js",
+      "sha256": "593d5871318c57da45613b4f41c794ad283e429ef9c865b8e608c4e67aa98e2c",
+      "bytes": 288
+    },
+    {
+      "path": "src/ui/map.js",
+      "sha256": "db482cb54535ce77d214a019cbea94c93988fa571a34b0c44aae1df1790f8c10",
+      "bytes": 4051
+    },
+    {
+      "path": "src/ui/information.js",
+      "sha256": "9a4386bd23e9ea0470b781bcbf8bbf33dc11b68a720a526aa14cecfb4fe56469",
+      "bytes": 1264
+    },
+    {
+      "path": "src/ui/avatar-drag.js",
+      "sha256": "c9f595d9873d1d1eadabb4b8c4b540fec89760b4a2b6915a27561b439ce04877",
+      "bytes": 11717
+    },
+    {
+      "path": "docs/GAME_DESIGN.md",
+      "sha256": "aadb9835145023646c80f1effdc30d5a091ec5fd5c8487da405dc20cb980cc6a",
+      "bytes": 18814
+    },
+    {
+      "path": "docs/CLUB_CYCLE.md",
+      "sha256": "171c117fb23154bfb97cd7e7b30aed48c1e2fd48198f95dff0bfea1f53c925fb",
+      "bytes": 9020
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "b5db215e32a83c7205f902e65ced6975fdcab9d6ae87e4b648ddf24fe6f1952c",
+      "bytes": 8808
+    },
+    {
+      "path": ".nojekyll",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    {
+      "path": "src/model/rating.js",
+      "sha256": "1d0d23d76e6692258302cf3020fdb19233c030e5174cb283ceaf0c99375e4309",
+      "bytes": 8214
+    },
+    {
+      "path": "src/ui/reviews.js",
+      "sha256": "72981f5d35832f06d102fa4330a6806f06fd13d2c366c8934943393835e26fa5",
+      "bytes": 1935
+    },
+    {
+      "path": "src/ui/reviews.css",
+      "sha256": "9b54e94a0d5846d9b02cfaa89e2420050dd4cd94646fa73ffead48f4f45c84af",
+      "bytes": 400
+    }
+  ]
+}

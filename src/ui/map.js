@@ -1,0 +1,19 @@
+import {roomOccupants} from '../model/club.js';
+import {lockedGuest,clockText} from '../model/lifecycle.js';
+import {graphicPortrait} from './graphic-portrait.js';
+export const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function sprite(g){return`<span class="map-person" aria-hidden="true">${graphicPortrait(g.identity,{mini:true})}</span>`;}
+// The seat meets the seated figure's hips at y=50; feet and chair legs share y=73.
+// Keep the back below shoulder height so it cannot frame the visitor's head.
+export function chair(){return`<span class="chair-back" aria-hidden="true"><svg viewBox="0 0 64 76" focusable="false"><ellipse cx="32" cy="72" rx="26" ry="3" fill="#43313b" opacity=".17"/><g stroke="#513b3b" stroke-width="1.8" stroke-linejoin="round"><path d="M17 49 L22 50 L21 70 L18 70 Z M42 50 L47 49 L46 70 L43 70 Z" fill="#715345"/><path d="M13 25 Q15 23 17 25 L19 52 L15 53 Z M47 25 Q49 23 51 25 L49 53 L45 52 Z" fill="#967056"/><path d="M15 26 Q32 23 49 26 L48 35 Q32 32 16 35 Z" fill="#b58d69"/><path d="M17 40 Q32 38 47 40 L47 44 Q32 42 17 44 Z" fill="#a27b5b"/><path d="M16 48 L48 48 L55 55 Q32 58 9 55 Z" fill="#bd956e"/><path d="M9 55 Q32 58 55 55 L54 59 Q32 62 10 59 Z" fill="#876247"/><path d="M11 58 L16 59 L12 73 L8 73 Z M48 59 L53 58 L56 73 L52 73 Z" fill="#a37a57"/></g><path d="M18 28 Q32 26 45 28 M18 50 L44 50 M14 61 L12 69 M51 61 L53 69" fill="none" stroke="#ddba8d" stroke-width="1.2" stroke-linecap="round"/></svg></span>`;}
+export function mapHTML(club,selected,departures=[]){
+ return club.rooms.map(room=>{
+  const people=roomOccupants(club,room.id),running=room.status==='running',locked=running||lockedGuest(club,selected),leaving=departures.find(d=>d.roomId===room.id);
+  const chairs=Array.from({length:4},(_,seat)=>{
+   const guest=people.find(g=>g.seat===seat);
+   return`<button type="button" class="map-chair chair-${seat} ${guest?'occupied':''} ${guest?.id===selected.id?'chosen':''}" data-seat="${seat}" ${guest?`data-guest="${escape(guest.id)}" ${!running?`data-drag-guest="${escape(guest.id)}"`:''} aria-label="${escape(guest.profile.name)}, комната ${room.number}, стул ${seat+1}"`:`data-place="${room.id}" aria-label="Посадить в комнате ${room.number}, стул ${seat+1}" ${locked?'disabled':''}`}>${chair()}${guest?sprite(guest):'<span class="empty-seat">+</span>'}<span class="chair-label">${guest?escape(guest.profile.name):'свободно'}</span></button>`;
+  }).join('');
+  const departure=leaving?`<div class="departure-group" aria-label="Гости уходят">${leaving.guests.map(g=>`<div class="departing chair-${g.seat}">${sprite(g)}<span>${escape(g.profile.name)}</span></div>`).join('')}</div>`:'';
+  return`<section class="map-room ${running?'is-running':'is-open'}" data-room="${room.id}" aria-label="Комната ${room.number}"><header class="map-room-heading"><span class="map-room-number">0${room.number}</span><button class="map-game-heading" data-system="${room.session.systemId}" type="button" aria-label="Справочник: ${escape(room.session.game)}"><strong>${escape(room.session.game)}</strong><span class="map-session">${escape(room.session.title)}</span></button><span class="map-duration">${room.session.minutes/60} ч<small>${running?'до '+clockText(room.run.endsAt):people.length+'/4'}</small></span></header><div class="room-floor"><button class="master-seat" data-inspect="${room.id}" type="button" aria-label="Мастер ${escape(room.master.name)}"><span class="master-visual" aria-hidden="true">${chair()}<span class="master-figure">${graphicPortrait(room.master.identity,{mini:true})}</span></span><span class="master-name">${escape(room.master.name)}</span></button><div class="gaming-table"><span class="table-dice">⚄</span><span class="table-paper"></span><small>${running?'ИДЁТ ИГРА':'СТОЛ '+room.number}</small></div>${chairs}${departure}<span class="room-door" aria-hidden="true"></span></div></section>`;
+ }).join('');
+}

@@ -1,0 +1,10 @@
+/* Local game surfaces only; keep both axes visible and comfortably draggable. */
+#game,#game *,dialog,dialog *{scrollbar-width:auto;scrollbar-color:#a58891 #292431}
+#game::-webkit-scrollbar,#game *::-webkit-scrollbar,dialog::-webkit-scrollbar,dialog *::-webkit-scrollbar{width:14px;height:14px}
+#game::-webkit-scrollbar-track,#game *::-webkit-scrollbar-track,dialog::-webkit-scrollbar-track,dialog *::-webkit-scrollbar-track{background:#292431;border:1px solid #5a4658}
+#game::-webkit-scrollbar-thumb,#game *::-webkit-scrollbar-thumb,dialog::-webkit-scrollbar-thumb,dialog *::-webkit-scrollbar-thumb{background:#a58891;border:3px solid #292431;border-radius:0;min-height:32px;min-width:32px}
+#game::-webkit-scrollbar-thumb:hover,#game *::-webkit-scrollbar-thumb:hover,dialog::-webkit-scrollbar-thumb:hover,dialog *::-webkit-scrollbar-thumb:hover{background:#d2b29e}
+#game::-webkit-scrollbar-corner,#game *::-webkit-scrollbar-corner,dialog::-webkit-scrollbar-corner,dialog *::-webkit-scrollbar-corner{background:#292431}
+#rooms:hover,#queue:hover,.counter:hover,dialog:hover{scrollbar-color:#c3a49e #292431}
+@media(forced-colors:active){#game,#game *,dialog,dialog *{scrollbar-color:auto}}
+@media(max-width:850px){#game{grid-template-rows:56px minmax(0,1fr) 64px}}

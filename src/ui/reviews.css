@@ -1,0 +1,7 @@
+.session-rating{padding:12px 0 0;margin-bottom:4px}
+.session-rating-note,.rating-version{font-size:12px;line-height:1.5;color:#655765}
+.rating-explanation{margin-top:12px;font-size:13px;line-height:1.55}
+.rating-explanation summary{cursor:pointer;min-height:32px;color:#514056}
+.rating-explanation ul{padding-left:20px}
+.rating-explanation>ul>li{margin:8px 0}
+.rating-explanation li li{margin:3px 0}

@@ -1,0 +1,6 @@
+/* Table actions are separate from the character artwork and physics styles. */
+.room-start{position:absolute;z-index:6;left:50%;bottom:5px;transform:translateX(-50%);width:112px;min-height:36px;padding:6px;font-size:11px;line-height:1.2;background:#dbc49f;color:#392c38;border:1px solid #735466;box-shadow:2px 2px 0 #49354255}
+.room-start:hover:enabled{background:#f0d7ad;color:#392c38;border-color:#5f4252}
+@media(max-width:850px){.room-start{min-height:44px;width:112px}}
+
+#continue-club{margin-left:auto}
