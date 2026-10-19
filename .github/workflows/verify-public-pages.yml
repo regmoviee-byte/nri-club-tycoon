@@ -1,0 +1,196 @@
+name: Verify public playable Pages
+on:
+  push:
+    branches:
+      - recovery-playable-build
+    paths:
+      - .github/workflows/verify-public-pages.yml
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Verify public assets and desktop/mobile gameplay
+        shell: bash
+        run: |
+          export CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          npm install --prefix "$RUNNER_TEMP/nri-pages-check" --no-audit --no-fund --ignore-scripts playwright-core@1.64.1
+          cat > "$RUNNER_TEMP/nri-pages-check/smoke.mjs" <<'PUBLIC_BROWSER_SMOKE'
+          import { chromium } from 'playwright-core';
+          import assert from 'node:assert/strict';
+          import { mkdir, writeFile } from 'node:fs/promises';
+          
+          const base = process.env.RECOVERY_BASE || 'https://regmoviee-byte.github.io/nri-club-tycoon/';
+          const dir = process.env.RUNNER_TEMP + '/nri-pages-verification';
+          await mkdir(dir,{recursive:true});
+          import { createHash } from 'node:crypto';
+          const publicBase='https://regmoviee-byte.github.io/nri-club-tycoon/';
+          const manifestResponse=await fetch(publicBase+'RECOVERY_MANIFEST.json');
+          assert.equal(manifestResponse.status,200);
+          const manifest=await manifestResponse.json();
+          assert.equal(manifest.sourceCommit,'a54628ae5af38e8578e952a90986d90f9db9a997');
+          let verified=0;
+          for(const file of manifest.files.filter(f=>/\.(html|css|js|svg)$/.test(f.path))){
+           const response=await fetch(publicBase+file.path);
+           assert.equal(response.status,200,file.path);
+           const bytes=Buffer.from(await response.arrayBuffer());
+           assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sha256,file.path);
+           verified++;
+          }
+          console.log(JSON.stringify({publicURL:publicBase,publicRuntimeFilesVerified:verified,status:200,hashesMatch:true}));
+          
+          const browser = await chromium.launch({executablePath:process.env.CHROME_BIN,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+          const results = [], errors = [], failedRequests = [];
+          const key = 'nri-club-tycoon:club:v4';
+          const state = p => p.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);
+          function monitor(page,label){
+           page.on('pageerror',e=>errors.push({label,error:e.message}));
+           page.on('console',m=>{if(m.type()==='error')errors.push({label,error:m.text()});});
+           page.on('requestfailed',r=>failedRequests.push({label,url:r.url(),error:r.failure()}));
+           page.on('response',r=>{if(r.status()>=400)failedRequests.push({label,url:r.url(),status:r.status()});});
+          }
+          async function seed(p,label){
+           await p.goto(base,{waitUntil:'networkidle'});
+           await p.evaluate(async ({label,key})=>{
+            const {createClub,encodeClub}=await import('./src/model/lifecycle.js');
+            localStorage.setItem(key,encodeClub(createClub(label)));
+           },{label,key});
+           await p.reload({waitUntil:'networkidle'});
+           await p.locator('#visitor-art svg').waitFor();
+           assert.equal(await p.locator('.map-room').count(),5);
+           assert.equal(await p.locator('#queue button').count(),30);
+          }
+          async function seat(p,roomId,seatIndex){
+           const before=await state(p);const selected=before.selectedId;
+           await p.locator('#guest-ticket').click();
+           await p.locator(`[data-place="${roomId}"][data-seat="${seatIndex}"]`).click();
+           const after=await state(p),g=after.guests.find(g=>g.id===selected);
+           assert.equal(g.roomId,roomId);assert.equal(g.seat,seatIndex);assert.notEqual(after.selectedId,selected);
+           return selected;
+          }
+          async function reportCheck(p){
+           await p.locator('#report-dialog[open]').waitFor();
+           const s=await state(p);const completed=s.lastReport.completed;
+           assert.equal(await p.locator('#report-tabs button').count(),completed.length);
+           for(let i=0;i<completed.length;i++){
+            await p.locator(`#report-tabs [data-report="${i}"]`).click();
+            const reviews=completed[i].reviews,average=reviews.reduce((n,r)=>n+r.score,0)/reviews.length;
+            const text=await p.locator('.session-rating').innerText();
+            assert.ok(text.includes(average.toLocaleString('ru',{minimumFractionDigits:1,maximumFractionDigits:1})),text);
+            assert.equal(await p.locator('.guest-reviews article').count(),4);
+            const version2=reviews.filter(r=>r.ratingVersion===2&&r.evidence).length;
+            assert.equal(await p.locator('.rating-explanation').count(),version2);
+            if(version2){
+             await p.locator('.rating-explanation summary').first().click();
+             assert.equal(await p.locator('.rating-explanation').first().getAttribute('open'),'');
+             assert.ok((await p.locator('.rating-explanation').first().innerText()).includes('главный приоритет'));
+            }
+           }
+           return s;
+          }
+          async function overflow(p){
+           const sizes=await p.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+           assert.ok(sizes.scroll<=sizes.width,JSON.stringify(sizes));return sizes;
+          }
+          
+          try{
+           const context=await browser.newContext({viewport:{width:1440,height:960}});
+           const p=await context.newPage();monitor(p,'desktop');
+           await seed(p,'recovery-chromium-2026-10-19');
+           await p.screenshot({path:dir+'/desktop-start.png'});
+           const start=await state(p),firstId=start.selectedId;
+           await p.locator('[data-question]').first().click();
+           const reply=await p.locator('#reply').innerText();
+           assert.ok((await state(p)).guests.find(g=>g.id===firstId).dialogue.length>0);
+           await p.locator('#history-open').click();assert.equal(await p.locator('#history-list button').count(),1);
+           await p.locator('#history-list button').first().click();assert.equal(await p.locator('#reply').innerText(),reply);
+           await p.locator('[data-system]').first().click();await p.locator('#guide-dialog[open]').waitFor();
+           await p.locator('#close-guide').click();
+           await p.locator('.master-seat').first().click();await p.locator('#room-dialog[open]').waitFor();
+           assert.ok((await p.locator('#room-content').innerText()).length>100);
+           await p.locator('[data-close="room-dialog"]').click();
+           const avatar=await p.locator('#visitor-art .graphic-portrait').boundingBox();
+           const chair=await p.locator('[data-place="room-1"][data-seat="0"]').boundingBox();
+           assert.ok(avatar&&chair);
+           await p.mouse.move(avatar.x+avatar.width*.5,avatar.y+avatar.height*.48);
+           await p.mouse.down();
+           await p.mouse.move(avatar.x+avatar.width*.5+20,avatar.y+avatar.height*.48,{steps:8});
+           await p.waitForTimeout(200);
+           await p.mouse.move(chair.x+chair.width*.5,chair.y+chair.height*.5,{steps:30});
+           await p.waitForTimeout(200);await p.mouse.up();
+           await p.waitForFunction(({key,id})=>JSON.parse(localStorage.getItem(key)).guests.find(g=>g.id===id)?.roomId==='room-1',{key,id:firstId});
+           assert.notEqual((await state(p)).selectedId,firstId);
+           for(let i=1;i<4;i++)await seat(p,'room-1',i);
+           await p.locator('[data-start-room="room-1"]').click();
+           let running=await state(p);assert.equal(running.clock,12);assert.equal(running.rooms[0].status,'running');
+           assert.equal(await p.locator('#queue button').count(),26);
+           for(let i=0;i<4;i++)await seat(p,'room-2',i);
+           await p.locator('[data-start-room="room-2"]').click();
+           running=await state(p);assert.equal(running.rooms.filter(r=>r.status==='running').length,2);
+           assert.equal(running.clock,12);
+           await p.reload({waitUntil:'networkidle'});assert.deepEqual(await state(p),running);
+           await p.locator('#check').click();const report=await reportCheck(p);
+           assert.equal(report.clock,Math.min(...running.rooms.filter(r=>r.run).map(r=>r.run.endsAt)));
+           assert.equal(report.rating.count,report.lastReport.completed.length*4);assert.equal(report.guests.length,30);
+           for(const r of running.rooms.filter(r=>r.run&&r.run.endsAt>report.clock))assert.deepEqual(report.rooms.find(x=>x.id===r.id).run,r.run);
+           await p.screenshot({path:dir+'/desktop-report.png'});
+           await p.locator('#continue-club').click();await p.waitForTimeout(300);
+           assert.deepEqual((await state(p)).rooms,report.rooms);
+           await p.reload({waitUntil:'networkidle'});assert.deepEqual((await state(p)).rating,report.rating);
+           await p.locator('#last-result').click();await reportCheck(p);await p.locator('#continue-club').click();
+           const freed=report.lastReport.completed[0].roomId;
+           for(let i=0;i<4;i++)await seat(p,freed,i);
+           await p.locator(`[data-start-room="${freed}"]`).click();
+           const next=await state(p);assert.equal(next.rooms.find(r=>r.id===freed).run.startedAt,report.clock);
+           await p.locator('#check').click();const nextReport=await reportCheck(p);
+           assert.ok(nextReport.rating.count>report.rating.count);assert.equal(new Set(nextReport.reviewIds).size,nextReport.rating.count);
+           await p.locator('#continue-club').click();
+           results.push({scenario:'desktop actual UI: dialogue/history/guide/master, mouse drag, automatic queue, independent starts, next event, details, continue, reload, refill',passed:true,ratingCount:nextReport.rating.count,...await overflow(p)});
+          
+           // A synthetic save fixture represents one pre-update v1 run and one v2 run.
+           await p.evaluate(async key=>{
+            const {createClub,startRoom,encodeClub}=await import('./src/model/lifecycle.js');
+            const {assignGuest}=await import('./src/model/club.js');
+            const c=createClub('recovery-mixed-version');
+            for(let i=0;i<2;i++){
+             c.rooms[i].session.minutes=120;
+             for(let n=0;n<4;n++)assignGuest(c,c.guests.find(g=>!g.roomId).id,c.rooms[i].id,n);
+             startRoom(c,c.rooms[i].id);
+            }
+            const raw=JSON.parse(encodeClub(c));delete raw.rooms[0].run.ratingVersion;
+            localStorage.setItem(key,JSON.stringify(raw));
+           },key);
+           await p.reload({waitUntil:'networkidle'});await p.locator('#check').click();
+           const mixed=await reportCheck(p);assert.equal(mixed.rating.count,8);
+           assert.ok(mixed.lastReport.completed[0].reviews.every(r=>r.ratingVersion===1));
+           assert.ok(mixed.lastReport.completed[1].reviews.every(r=>r.ratingVersion===2));
+           await p.locator('#report-tabs [data-report="0"]').click();
+           assert.equal(await p.locator('.rating-version').count(),4);assert.equal(await p.locator('.rating-explanation').count(),0);
+           await p.locator('#continue-club').click();await p.reload({waitUntil:'networkidle'});
+           await p.locator('#last-result').click();await reportCheck(p);
+           results.push({scenario:'mixed v1/v2 endings, legacy report fallback, persisted historical report',passed:true});
+           await context.close();
+          
+           for(const width of [390,320]){
+            const c=await browser.newContext({viewport:{width,height:width===320?640:844},isMobile:true,hasTouch:true,deviceScaleFactor:1});
+            const m=await c.newPage();monitor(m,'mobile-'+width);await seed(m,'recovery-mobile-'+width);
+            const before=await state(m);await m.locator('[data-question]').first().click();
+            for(let i=0;i<4;i++)await seat(m,'room-1',i);
+            await m.locator('#mobile-rooms').click();await m.locator('[data-start-room="room-1"]').click();
+            assert.equal((await state(m)).clock,12);await m.locator('#check').click();await reportCheck(m);
+            assert.equal((await state(m)).rating.count,4);await m.locator('#continue-club').click();
+            await m.reload({waitUntil:'networkidle'});assert.equal((await state(m)).guests.length,30);
+            await m.screenshot({path:dir+`/mobile-${width}.png`});
+            results.push({scenario:`mobile ${width}: touch seating, start, finish, report detail and reload`,passed:true,...await overflow(m)});
+            await c.close();
+           }
+           assert.deepEqual(errors,[]);assert.deepEqual(failedRequests,[]);
+           const evidence={base,browserVersion:browser.version(),sourceCommit:'a54628ae5af38e8578e952a90986d90f9db9a997',results,errors,failedRequests};
+           await writeFile(dir+'/browser-results.json',JSON.stringify(evidence,null,2)+'\n');
+           console.log(JSON.stringify(evidence,null,2));
+          }finally{await browser.close();}
+          
+          PUBLIC_BROWSER_SMOKE
+          node "$RUNNER_TEMP/nri-pages-check/smoke.mjs"
