@@ -3,6 +3,7 @@
   "passed": true,
   "checks": [
     "Desktop boot, silence, no dialogs",
+    "Physical administrator is visible behind the reception and shares the desk inspector",
     "All ten integrated panels, no page/map overflow",
     "Pan, cursor-anchored zoom, Home, resizable panel and visible queue",
     "Guest walks from reception through the floor route",
@@ -18,7 +19,8 @@
     "Technical fixture: physical service equipment, paid orders, timed delivery, stock batches, common-zone cleaning controls and service staff",
     "Real mobile touch pinch changes map zoom without a page scrollbar",
     "Confirmed new game archives the old campaign and opens one room with reception",
-    "Malformed saved record remains downloadable; new game archives original bytes atomically"
+    "Malformed saved record remains downloadable; new game archives original bytes atomically",
+    "Character gallery: twelve identities in portraits and three poses; administrator follows all four desk rotations"
   ],
   "errors": [],
   "screenshots": [
@@ -31,7 +33,8 @@
     "mobile-320.png",
     "technical-expanded-club.png",
     "technical-service-stock.png",
-    "new-club-desktop.png"
+    "new-club-desktop.png",
+    "characters.png"
   ],
   "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence before app scripts"
 }

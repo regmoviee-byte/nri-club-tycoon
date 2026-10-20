@@ -4,7 +4,7 @@ import {ownedCells} from '../model/campaign-layout.js';
 import {staffSeatForMaster} from '../model/staff-room.js';
 import {guestWaitingStatus} from '../model/guest-waiting.js';
 import {receptionStatus} from '../model/reception-area.js';
-import {personArt,escapeHTML as esc} from './people.js';
+import {personArt,ADMINISTRATOR,escapeHTML as esc} from './people.js';
 
 export const project=(x,y,z=0)=>({x:(x-y)*36,y:(x+y)*18-z});
 export const unproject=(x,y)=>({x:x/72+y/36,y:y/36-x/72});
@@ -24,7 +24,11 @@ export function furnitureArt(o,layout,{selected=false,ghost=false}={}){
  const at=inner=>'<g transform="translate('+p.x+' '+p.y+')">'+inner+'</g>';
  if(item.family==='reception'){
   const top=project(o.x+w/2,o.y+h/2,40),front=project(o.x+w*.5,o.y+h,18);
-  return group(box(o.x+.04,o.y+.04,w-.08,h-.08,37,'#b48c5e','#796951')+'<g transform="translate('+top.x+' '+top.y+')"><path d="M-20-2l16-8 13 7-16 8Z" fill="#eee0ba" stroke="#9f845a"/><path d="M10-2v-13h12v13Z" fill="#4a6162" stroke="#354c4d"/><path d="M12-11h8" stroke="#b7c6ad" stroke-width="3"/><circle cx="-23" cy="4" r="4" fill="#e5bf6c"/></g><text x="'+front.x+'" y="'+front.y+'" text-anchor="middle" font-size="7" fill="#ead8ac" transform="rotate(26 '+front.x+' '+front.y+')">РЕСЕПШН</text>');
+  // The far edge of the solid counter occludes the legs, never the head.
+  // This also keeps the administrator readable with the two rotated footprints.
+  const station=o.rotation%2?[.04,.5]:[.5,.04],a=project(o.x+w*station[0],o.y+h*station[1]);
+  const administrator=o.enabled===false?'':'<g data-administrator="'+esc(o.id??'preview')+'" role="img" aria-label="Администратор за стойкой" transform="translate('+a.x+' '+a.y+') scale(.64)"><title>Администратор клуба</title>'+personArt(ADMINISTRATOR,{reception:true,back:o.rotation===2||o.rotation===3})+'</g>';
+  return group(administrator+box(o.x+.04,o.y+.04,w-.08,h-.08,37,'#b48c5e','#796951')+'<g transform="translate('+top.x+' '+top.y+')"><path d="M-20-2l16-8 13 7-16 8Z" fill="#eee0ba" stroke="#9f845a"/><path d="M10-2v-13h12v13Z" fill="#4a6162" stroke="#354c4d"/><path d="M12-11h8" stroke="#b7c6ad" stroke-width="3"/><circle cx="-23" cy="4" r="4" fill="#e5bf6c"/></g><text x="'+front.x+'" y="'+front.y+'" text-anchor="middle" font-size="7" fill="#ead8ac" transform="rotate(26 '+front.x+' '+front.y+')">РЕСЕПШН</text>');
  }
  if(item.family==='table'){
   let a='';for(const [dx,dy]of [[.15,.15],[w-.15,.15],[w-.15,h-.15],[.15,h-.15]]){const q=project(o.x+dx,o.y+dy);a+='<path d="M'+q.x+' '+q.y+'v-25" stroke="#785c45" stroke-width="5"/>';}

@@ -4,7 +4,7 @@
   "date": "2026-10-20",
   "scope": "Runtime, tests and documentation at final verification. Evidence files excluded to avoid self-reference.",
   "modelChecks": 50,
-  "browserCheckBlocks": 17,
+  "browserCheckBlocks": 19,
   "files": [
     {
       "path": ".gitignore",
@@ -33,8 +33,8 @@
     },
     {
       "path": "docs/REWORK.md",
-      "sha256": "f4f1162aa652a392d1a916835d0a6b2d8ddd52b80ccfce11c4294982ed3d1511",
-      "bytes": 10783
+      "sha256": "e689620efc71859b8c2eac2149475f83e242d5e8940d02cca01a54058dda4b93",
+      "bytes": 12062
     },
     {
       "path": "docs/ROADMAP.md",
@@ -43,8 +43,8 @@
     },
     {
       "path": "index.html",
-      "sha256": "18f8482dc8cdc8a2f41d14fe47553c1cca21804bf8430f8cc683132420f2bce3",
-      "bytes": 535
+      "sha256": "6ea37c6a56ef791c7f42c662411785b0dc37811e539919cff3f0a3b20863f8e4",
+      "bytes": 569
     },
     {
       "path": "package.json",
@@ -388,8 +388,8 @@
     },
     {
       "path": "src/ui/people.js",
-      "sha256": "cfeb11b6955477a26a8a5b27a2eaf27eb7ee607461f5e7b98c0b56492f4ad044",
-      "bytes": 5533
+      "sha256": "fd4deeb0b10f4bc5b2850d970e5d09e2756cb39a25cbde3741ac0e8b0fcb9bfb",
+      "bytes": 11856
     },
     {
       "path": "src/ui/portrait.js",
@@ -433,8 +433,8 @@
     },
     {
       "path": "src/ui/studio.css",
-      "sha256": "71fad93b3f8c986462556ba2c128aad02021b0005592502fa97ad5d9caa1072f",
-      "bytes": 27175
+      "sha256": "e71354f7a2ca25f2609a998f8c494d8cfb2e4d328ef57e9742c27112a9970318",
+      "bytes": 27301
     },
     {
       "path": "src/ui/studio.js",
@@ -443,8 +443,8 @@
     },
     {
       "path": "src/ui/world.js",
-      "sha256": "52a938ec698cce5c406e3534a061afb6188ed953da05686cedabb666ef4a184f",
-      "bytes": 26049
+      "sha256": "3f7a266f4604bb1493472485377a39e005027db0a13b9c49f2865ad4081154f9",
+      "bytes": 26683
     },
     {
       "path": "Start-Club.cmd",
@@ -472,9 +472,14 @@
       "bytes": 1239
     },
     {
+      "path": "tools/review-live.mjs",
+      "sha256": "6cc57372fc7131f8eb90861e8ce3f6a4fa27ca4c78d6d13fa1948430b7aa8b39",
+      "bytes": 4245
+    },
+    {
       "path": "tools/review.mjs",
-      "sha256": "b41db9bcc4b3bd4e20edc3d45b6c53b01646a6d97adca5016c44a08544c7746e",
-      "bytes": 25465
+      "sha256": "6085e8a83369358459168774ca4f5842aab08313ea27c0d80d8a0f5405d480f3",
+      "bytes": 28706
     },
     {
       "path": "tools/serve.mjs",
