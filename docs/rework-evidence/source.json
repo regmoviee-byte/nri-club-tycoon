@@ -23,8 +23,8 @@
     },
     {
       "path": "docs/ADVENTURE-ECONOMY-UPDATE.md",
-      "sha256": "32d978f1f3da46743e1ed6a4a0c824e3f174af816e436b35e6406e7015906082",
-      "bytes": 5639
+      "sha256": "9a1ccb1293f6f1ded2be92bd06e90380ec3016de790c710e5f73cce1ea7cba36",
+      "bytes": 6094
     },
     {
       "path": "docs/CLUB_CYCLE.md",
@@ -48,8 +48,8 @@
     },
     {
       "path": "index.html",
-      "sha256": "ba8d1f72378b4cd0d5db34fdf23db36a55c66d72258255d902cd8f44f8682c36",
-      "bytes": 5620
+      "sha256": "44c64c414fef2fa1e66439cef7417cf2f1da6ebd3839e998441e0d360310285f",
+      "bytes": 6040
     },
     {
       "path": "package.json",
@@ -443,8 +443,8 @@
     },
     {
       "path": "src/ui/studio.js",
-      "sha256": "77cd25be959bf18c78ca5ca77d8e71073b589e239fa26acad6aa62087f764967",
-      "bytes": 66992
+      "sha256": "d0cd2cee84ece941ef33a6ec66b9fdd3a5d5cc6a650a8a93fed52cce2a409ae7",
+      "bytes": 67262
     },
     {
       "path": "src/ui/world.js",
@@ -483,23 +483,24 @@
     },
     {
       "path": "tools/prepare-entry.mjs",
-      "sha256": "d18002de1c231a35d0655b3cb2b5b594c611883145b79d867217b504b4b843b3",
-      "bytes": 1076
+      "sha256": "bae089810fb8c0e0fb8313fdff20dc3d4deb262dbb5f909605bea1f3d6e2cb54",
+      "bytes": 1082
     },
     {
       "path": "tools/review-live.mjs",
-      "sha256": "163811f6b60d51ce0c759d35cce0b53df1dc7123bb513f6a1003ac39bd7a48b7",
-      "bytes": 5259
+      "sha256": "cbaf2766f05a0581cdc299b8816bb7d6a10ebf5022145e0f5ab0313f02d62bef",
+      "bytes": 5379
     },
     {
       "path": "tools/review.mjs",
-      "sha256": "e79814fcd756e277844d5a70ef7c76d04b671cd223a2147cee315ad2679723b2",
-      "bytes": 32066
+      "sha256": "336ae12816abba1bf3fc5736c0f994ff4a660bd776156eb8dfe9f7270b94d42c",
+      "bytes": 32291
     },
     {
       "path": "tools/serve.mjs",
       "sha256": "ac8fda734993875565d36b130dc4278f32f88972777115f70d758990e5bb2e28",
       "bytes": 1578
     }
-  ]
+  ],
+  "finalBrowserReport": "icon-browser.json"
 }

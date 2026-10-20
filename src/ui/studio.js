@@ -27,6 +27,7 @@ const icon=name=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(icons[
 const button=(label,action,attrs='',className='')=>'<button type="button" data-action="'+action+'" class="'+className+'" '+attrs+'>'+label+'</button>';
 const options=(list,value)=>list.map(([id,name])=>'<option value="'+esc(id)+'" '+(id===value?'selected':'')+'>'+esc(name)+'</option>').join('');
 const nameOf=g=>g?.profile?.name??g?.name??'Гость';
+function fitItemIcons(container){for(const svg of container.querySelectorAll('svg.item-art')){const b=svg.getBBox();if(b.width&&b.height)svg.setAttribute('viewBox',[b.x-4,b.y-4,b.width+8,b.height+8].join(' '));}}
 let club,store,writer,busy=false,readOnly=false,world,buildService,undo=null;
 const ui={tab:'club',guest:null,room:null,object:null,tool:'select',kind:'plant',rotation:0,category:'furniture',purpose:'game',furnished:true,cells:new Map(),edges:new Map(),preview:null,hover:null,pending:null,walls:'cut',message:'',error:false,candidates:false,ledgerLimit:40,seatArmed:false,catalogSearch:'',libraryTab:'adventures',librarySearch:''};
 const panels={club:['СВОДКА КЛУБА','Сегодня в клубе'],guests:['РАЗГОВОР У РЕСЕПШНА','Знакомство'],rooms:['НАСТРОЙКИ И СОСТАВ СТОЛОВ','Игровые комнаты'],build:['РЕДАКТОР ПЛАНИРОВКИ','Строительство'],team:['ШТАТ, ОТДЫХ И НАЙМ','Мастера'],library:['ИГРЫ И ИСТОРИИ','Библиотека'],service:['ЗАБОТА О КЛУБЕ','Сервис'],finance:['ДЕНЬГИ И РЕЗУЛЬТАТЫ ПАРТИЙ','Касса и отзывы'],goals:['ОТ ПЕРВОГО СТОЛА К КЛУБУ','Развитие'],settings:['ВАША КАМПАНИЯ','Сохранение']};
@@ -51,7 +52,7 @@ function render(resetScroll=false){
  root.querySelector('#resources').innerHTML=[['В КАССЕ',money(status.balance),'wallet'],['СВОБОДНО',money(status.balance-status.reserve),'free'],['РЕЙТИНГ',rating+' / 10','rating'],['ПРЕСТИЖ',prestige.value,'prestige']].map(([a,b,c])=>'<div class="resource '+c+'"><small>'+a+'</small><strong>'+b+'</strong></div>').join('');
  root.querySelectorAll('[data-action="nav"]').forEach(n=>n.classList.toggle('active',n.dataset.tab===ui.tab));
  root.querySelector('#panel-eyebrow').textContent=panels[ui.tab][0];root.querySelector('#panel-title').textContent=panels[ui.tab][1];
- const panel=root.querySelector('#panel-content'),scroll=resetScroll?0:panel.scrollTop;panel.innerHTML=panelHTML();panel.scrollTop=scroll;
+ const panel=root.querySelector('#panel-content'),scroll=resetScroll?0:panel.scrollTop;panel.innerHTML=panelHTML();fitItemIcons(panel);panel.scrollTop=scroll;
  const active=runningRooms(club),waiting=club.guests.filter(g=>!g.roomId);
  root.querySelector('#map-summary').textContent=club.rooms.length+' '+(club.rooms.length===1?'игровая':'игровых')+' · '+club.guests.length+' гостей';
  root.querySelector('#queue-count').textContent=waiting.length;
@@ -319,7 +320,7 @@ root.addEventListener('submit',e=>{
  if(e.target.classList.contains('training-form'))command({type:'trainMaster',masterId:e.target.dataset.id,systemId:data.get('course')});
 });
 root.addEventListener('input',e=>{
- if(e.target.id==='catalog-search'){ui.catalogSearch=e.target.value;root.querySelector('#catalog-grid').innerHTML=catalogCards();}
+ if(e.target.id==='catalog-search'){ui.catalogSearch=e.target.value;const grid=root.querySelector('#catalog-grid');grid.innerHTML=catalogCards();fitItemIcons(grid);}
  if(e.target.id==='library-search'){ui.librarySearch=e.target.value;root.querySelector('#library-cards').innerHTML=libraryCards();}
 });
 root.addEventListener('change',async e=>{
