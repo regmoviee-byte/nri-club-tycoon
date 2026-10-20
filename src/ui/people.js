@@ -9,7 +9,7 @@ const path=(d,fill,extra='')=>'<path d="'+d+'" fill="'+fill+'" '+extra+'/>';
 const line=(d,stroke,width=1)=>path(d,'none','stroke="'+stroke+'" stroke-width="'+width+'"');
 const limb=(name,x,y,art)=>'<g class="limb '+name+'" style="transform-origin:'+x+'px '+y+'px">'+art+'</g>';
 
-export function personArt(person,{seated=false,back=false,drag=false,reception=false}={}){
+export function personArt(person,{seated=false,back=false,drag=false,reception=false,seatRotation=null}={}){
  const identity=person?.identity??person??{},p=identity.portrait??{},name=identity.name??person?.profile?.name??person?.name??'Гость';
  const seed=[...name].reduce((n,c)=>(n*31+c.charCodeAt(0))>>>0,7),skin=color(p.skin,'#e3b79e'),skinDark=tint(skin,-24),skinLight=tint(skin,13),hair=color(p.hairColor,'#57433a'),hairDark=tint(hair,-15),hairLight=tint(hair,21),coat=color(p.coat,['#627f84','#9c705c','#728368','#82718b'][seed%4]),coatDark=tint(coat,-23),coatLight=tint(coat,17),pants=color(p.trousers,'#3c4e58'),shoe=color(p.shoes,'#303b42'),accent=color(p.accent,'#d8cab2'),eyes=color(p.iris,'#5a6c66');
  const head=seated?-77:-104,shoulder=seated?-58:-85,hip=seated?-22:-49,build=p.bodyShape??['lean','regular','soft','broad','compact'][seed%5],wide=build==='broad'?18:build==='lean'?14:16,waist=build==='soft'?14:build==='lean'?10:12,age=identity.age??person?.age??30,style=p.hair??['short','bob','curly','tied'][seed%4],outfit=p.outfit??['shirt','hoodie','cardigan','sweater'][seed%4],admin=identity.role==='administrator';
@@ -18,9 +18,15 @@ export function personArt(person,{seated=false,back=false,drag=false,reception=f
  if(['long','braid','ponytail'].includes(style))hairBehind=path('M-10 '+(head-7)+'Q-17 '+(head+5)+'-14 '+(shoulder+13)+'Q-6 '+(shoulder+20)+' 2 '+(shoulder+10)+'L11 '+(shoulder+12)+'Q16 '+(head+7)+' 10 '+(head-9)+'Z',hairDark)+path('M-10 '+head+'Q-13 '+(head+15)+'-10 '+(shoulder+10)+'L-7 '+(shoulder+12)+'Q-8 '+(head+10)+'-7 '+head+'Z',hair);
  if(['tied','ponytail'].includes(style))hairBehind+='<ellipse cx="9" cy="'+(head-8)+'" rx="6" ry="7" fill="'+hairDark+'"/>'+(style==='ponytail'?path('M11 '+(head-8)+'Q24 '+head+' 17 '+(head+25)+'Q12 '+(head+19)+' 14 '+(head+7)+'Z',hair):'');
  if(style==='bob')hairBehind=path('M-11 '+(head-6)+'Q-17 '+(head+4)+'-13 '+(head+19)+'Q0 '+(head+25)+' 13 '+(head+17)+'L12 '+(head-6)+'Z',hairDark);
- const leftLeg=seated?path('M-11-24Q-12-21-15-17L-13-4-6-4-6-14 0-17 0-24Z',pants)+path('M-14-17L-10-16-8-4-13-4Z',tint(pants,-19)):path('M-12-51L1-50-1-27-4-4-12-4-11-27Z',pants)+path('M-12-49L-8-47-7-27-9-4-12-4-11-27Z',tint(pants,-17));
- const rightLeg=seated?path('M0-24L11-24 16-17 13-3 6-3 8-14 0-17Z',tint(pants,5))+path('M12-21L16-17 13-3 10-3 12-15 6-20Z',tint(pants,-12)):path('M0-50L12-50 11-27 13-4 5-4 1-26Z',tint(pants,6))+path('M9-48L12-49 11-27 13-4 10-4 7-27Z',tint(pants,-13));
- const shoesLeft=path('M-13-6Q-9-7-5-4L-5 0Q-10 3-17 1L-17-1Z',shoe)+line('M-16 0Q-11 2-5 0',tint(shoe,27),1.1),shoesRight=path('M5-5Q8-7 13-5L18-1Q19 2 13 2L5 1Z',shoe)+line('M6 0Q13 2 17 0',tint(shoe,27),1.1);
+ let leftLeg=seated?path('M-11-24Q-12-21-15-17L-13-4-6-4-6-14 0-17 0-24Z',pants)+path('M-14-17L-10-16-8-4-13-4Z',tint(pants,-19)):path('M-12-51L1-50-1-27-4-4-12-4-11-27Z',pants)+path('M-12-49L-8-47-7-27-9-4-12-4-11-27Z',tint(pants,-17));
+ let rightLeg=seated?path('M0-24L11-24 16-17 13-3 6-3 8-14 0-17Z',tint(pants,5))+path('M12-21L16-17 13-3 10-3 12-15 6-20Z',tint(pants,-12)):path('M0-50L12-50 11-27 13-4 5-4 1-26Z',tint(pants,6))+path('M9-48L12-49 11-27 13-4 10-4 7-27Z',tint(pants,-13));
+ let shoesLeft=path('M-13-6Q-9-7-5-4L-5 0Q-10 3-17 1L-17-1Z',shoe)+line('M-16 0Q-11 2-5 0',tint(shoe,27),1.1),shoesRight=path('M5-5Q8-7 13-5L18-1Q19 2 13 2L5 1Z',shoe)+line('M6 0Q13 2 17 0',tint(shoe,27),1.1);
+ if(seated&&seatRotation!==null){
+  const [dx,dy]=[[1,-1],[1,1],[-1,1],[-1,-1]][seatRotation],kneeY=-22+dy*9,footY=dy*9;
+  const leg=side=>{const x=side*6+dx*16,fill=side===-1?pants:tint(pants,6);return path('M'+(side*6-6)+'-24H'+(side*6+6)+'L'+(x+4)+' '+(kneeY-2)+' '+(x+3)+' '+(footY-3)+' '+(x-4)+' '+(footY-3)+' '+(x-5)+' '+(kneeY+2)+'Z',fill)+line('M'+(x+1)+' '+kneeY+'V'+(footY-4),tint(pants,-17),1.4);};
+  const foot=side=>{const x=side*6+dx*16,toe=x+dx*9;return path('M'+(x-4)+' '+(footY-5)+'L'+(x+4)+' '+(footY-5)+' '+toe+' '+(footY+dy*3)+'Q'+toe+' '+(footY+dy*3+3)+' '+x+' '+(footY+2)+'L'+(x-4)+' '+(footY+1)+'Z',shoe);};
+  leftLeg=leg(-1);rightLeg=leg(1);shoesLeft=foot(-1);shoesRight=foot(1);
+ }
  let arms='';
  for(const side of [-1,1]){
   const sleeve=seated?path('M11-58Q18-58 20-51L23-42 16-38 10-48Z',coat)+path('M19-52L23-42 20-40 16-50Z',coatDark):reception?path('M11-85Q19-86 22-78L25-66 18-61 12-72Z',coat)+path('M22-77L25-66 22-64 18-75Z',coatDark):path('M'+(wide-6)+' '+(shoulder+1)+'Q'+(wide+4)+' '+(shoulder-1)+' '+(wide+5)+' '+(shoulder+10)+'L'+(wide+5)+' '+(shoulder+27)+' '+(wide-2)+' '+(shoulder+28)+' '+(wide-4)+' '+(shoulder+11)+'Z',coat)+path('M'+(wide+1)+' '+(shoulder+7)+'L'+(wide+5)+' '+(shoulder+12)+' '+(wide+5)+' '+(shoulder+27)+' '+(wide+2)+' '+(shoulder+27)+'Z',coatDark);

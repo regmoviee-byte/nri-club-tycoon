@@ -13,6 +13,19 @@ export function hourlyCosts(club){
  const count=activeRooms(club).length,runningGuests=club.rooms.filter(r=>r.status==='running').reduce((n,r)=>n+r.run.guests.length,0);
  return{general:generalHour(count),rooms:count*ECONOMY.roomHour,consumables:runningGuests*ECONOMY.consumableHour,equipment:club.layout.objects.filter(i=>i.enabled!==false&&(!club.operations||equipmentRunning(club,i))).reduce((n,i)=>n+(productFor(i).hourly??0),0),serviceStaff:serviceHourlyCost(club)};
 }
+// Forecast the table's share of the currently open club. Split shared costs
+// among running tables in each interval, including when another table ends.
+// Cafe sales, tips and future purchases are excluded, never counted as income.
+export function sessionForecast(club,roomId){
+ const room=club.rooms.find(r=>r.id===roomId);if(!room)return null;
+ if(room.status==='running'&&room.run.contract?.forecast)return {...room.run.contract.forecast};
+ const run=room.status==='running'?room.run:null,hours=run?run.endsAt-run.startedAt:room.hours,from=run?.startedAt??club.clock,to=from+hours;
+ const guestPrice=run?.contract?.guestPrice??hours*ECONOMY.guestHour,masterCost=run?.contract?.wageTotal??hours*(room.master?.hourlyWage??0),costs=hourlyCosts(club),sharedHourly=costs.general+costs.rooms+costs.equipment+costs.serviceStaff;
+ const other=club.rooms.filter(r=>r.id!==roomId&&r.status==='running'&&r.run),ends=[from,...other.map(r=>r.run.endsAt).filter(t=>t>from&&t<to),to].sort((a,b)=>a-b);
+ let sharedCost=0;for(let i=0;i<ends.length-1;i++){const tables=1+other.filter(r=>r.run.endsAt>ends[i]).length;sharedCost+=(ends[i+1]-ends[i])*sharedHourly/tables;}
+ const consumables=hours*4*ECONOMY.consumableHour,operatingCost=Math.round((sharedCost+consumables)*100)/100,income=guestPrice*4,totalCost=Math.round((masterCost+operatingCost)*100)/100;
+ return {hours,endsAt:to,guestHourlyRate:guestPrice/hours,guestPrice,income,masterCost,operatingCost,totalCost,profitIfAllPay:Math.round((income-totalCost)*100)/100,breakEvenGuests:guestPrice?Math.ceil(totalCost/guestPrice):5};
+}
 // Cash still needed to finish existing commitments in the current open/shift
 // configuration. Purchases, courses and repairs are already paid: only their
 // remaining clock time belongs here, never their purchase price or future sales.

@@ -8,9 +8,9 @@ import {IDENTITIES} from '../data/identities.js';
 import {visualFor} from '../data/visuals.js';
 import {PRODUCTS,ECONOMY,gameProduct,masterCandidate,availableMasterCandidates,commerceItems} from '../data/commerce.js';
 import {starterLayout,inspectRooms,ownedCells,footprint,physical,edgeKey,adjacentCells,canPlace,addItem,moveItem,setWall,addPlot,buildRoomTemplate,validateLayout,cellKey,convertRecoveryLayout} from './campaign-layout.js';
-import {makePreferences,makeLegacyPreferences,sessionProgram,sessionDurationRange,masterPreferences} from './preferences.js';
+import {makePreferences,makeLegacyPreferences,sessionProgram,sessionDurationRange,sessionHours,masterPreferences} from './preferences.js';
 import {CAMPAIGN_RATING_VERSION,rateCampaignGuest} from './campaign-rating.js';
-import {recordMoney,restock,reserveRequired,obligations,hourlyCosts,serviceInterval,chargeInterval,settleRun} from './finances.js';
+import {recordMoney,restock,reserveRequired,obligations,hourlyCosts,serviceInterval,chargeInterval,settleRun,sessionForecast} from './finances.js';
 import {findRecoveryPlan,applyRecoveryPlan,canProveInsolvent} from './solvency.js';
 import {hireServiceStaff,setServiceShift,validateServiceStaff} from './service-staff.js';
 import {layoutForRooms,validateOccupiedLayout,libraryStorageStatus} from './layout-club.js';
@@ -57,9 +57,9 @@ export function syncRooms(club){
   if(master?.training)room.layoutErrors.push({text:'Мастер ещё учится.',x:0,y:0});
   if(master&&kit&&!master.known.includes(kit.systemId))room.layoutErrors.push({text:'Мастер пока не знает эту игру.',x:0,y:0});
   room.master=master?masterPreferences(structuredClone(master)):null;room.adventureId=adventure?.id??null;
-  room.session=adventure?{...structuredClone(adventure),minutes:(room.hours??2)*60}:null;
+  room.hours=adventure?sessionHours(adventure):2;
+  room.session=adventure?structuredClone(adventure):null;
   room.program=adventure?sessionProgram(adventure):null;
-  if(adventure){const [min,max]=sessionDurationRange(adventure);if((room.hours??2)<min||(room.hours??2)>max)room.layoutErrors.push({text:`Для этой истории выберите длительность ${min}–${max} ч.`,x:0,y:0});}
   room.operational=room.enabled&&room.layoutErrors.length===0;room.status=room.operational?'seating':'closed';room.reviewAt=club.clock;
   if(!room.operational)for(const g of roomOccupants(club,room.id)){g.roomId=null;g.seat=null;}
   next.push(room);
@@ -154,11 +154,10 @@ export function configureRoom(club,id,{kitId,masterId,adventureId,hours,enabled}
  if(k&&(!kit||!resourceFree(club,'kitId',k,id)))return fail('Этот комплект занят в другой комнате.');
  if(m&&(!master||!resourceFree(club,'masterId',m,id)||master.training))return fail('Этот мастер уже занят.');
  if(kit&&master&&!master.known.includes(kit.systemId))return fail('Мастер ещё не знает эту игру.');
- if(hours!==undefined&&(!Number.isInteger(hours)||hours<2||hours>6))return fail('Выберите длительность от двух до шести часов.');
  if(adventureId&&(!club.library.adventures.includes(adventureId)||!SESSIONS.some(s=>s.id===adventureId&&s.systemId===kit?.systemId)))return fail('Купите подходящее приключение.');
  const adventure=adventureFor(club,kit?.systemId,adventureId??room.adventureId);
- if(adventure){const [min,max]=sessionDurationRange(adventure),duration=hours??room.hours??2;if(duration<min||duration>max)return fail(`Для этой истории выберите длительность ${min}–${max} ч.`);}
- Object.assign(room,{kitId:k,masterId:m,...(adventureId?{adventureId}:{}),...(hours?{hours}:{}),...(enabled!==undefined?{enabled}: {})});syncRooms(club);replenish(club,{removeExpired:false});updateCampaign(club);return{ok:true};
+ if(hours!==undefined&&hours!==sessionHours(adventure))return fail(`Приключение «${adventure?.title??''}» длится ${sessionHours(adventure)} ч. Длительность задаётся историей.`);
+ Object.assign(room,{kitId:k,masterId:m,adventureId:adventure?.id??null,hours:sessionHours(adventure),...(enabled!==undefined?{enabled}: {})});syncRooms(club);replenish(club,{removeExpired:false});updateCampaign(club);return{ok:true};
 }
 export function setEquipment(club,id,settings){
  const draft=retireStaffRoomLegacyCredit(structuredClone(club)),item=draft.layout.objects.find(i=>i.id===id);if(!item)return fail('Предмет не найден.');
@@ -176,7 +175,8 @@ export function startRoom(club,id,{acceptRisk=false}={}){
  if(!readyRooms(club).includes(room))return fail('Для игры нужна готовая комната, мастер и четыре гостя.');
  const guests=roomOccupants(club,id).map(g=>({...structuredClone(g),waiting:guestWaitingSummary(club,g)})),runId=`${club.seed}|${id}|${room.turn}|${club.clock}`;
  const equipment=equipRoom(club,room.layout),hours=room.hours??2,snapshot=structuredClone({...room,run:null,equipment,environment:{hot:hours>=5&&room.layout.cells.length<=28,noisyAppliances:commerceItems(club.layout).some(i=>i.enabled&&equipmentRunning(club,i)&&PRODUCTS[i.type].noisy&&room.layout.cells.some(k=>{const [x,y]=k.split(',').map(Number);return Math.abs(i.x-x)+Math.abs(i.y-y)<=2;}))}});
- const run={id:runId,ratingVersion:CAMPAIGN_RATING_VERSION,startedAt:club.clock,endsAt:club.clock+hours,room:snapshot,guests,contract:{guestPrice:hours*ECONOMY.guestHour,wageTotal:hours*room.master.hourlyWage,tipRolls:Object.fromEntries(guests.map(g=>[g.id,hash(club.seed+'|tips|'+runId+'|'+g.id)/4294967296]))}};
+ const forecast=sessionForecast(club,id);
+ const run={id:runId,ratingVersion:CAMPAIGN_RATING_VERSION,startedAt:club.clock,endsAt:club.clock+hours,room:snapshot,guests,contract:{pricingVersion:2,hourlyRate:ECONOMY.guestHour,guestPrice:hours*ECONOMY.guestHour,wageTotal:hours*room.master.hourlyWage,forecast,tipRolls:Object.fromEntries(guests.map(g=>[g.id,hash(club.seed+'|tips|'+runId+'|'+g.id)/4294967296]))}};
  const trial=structuredClone(club);trial.rooms.find(r=>r.id===id).status='running';trial.rooms.find(r=>r.id===id).run=run;const reserve=reserveRequired(trial);
  if(!acceptRisk&&money(club)<reserve)return{ok:false,needsRiskConfirmation:true,reserve,cash:money(club),reason:`Если никто не заплатит, текущие партии и клуб потребуют до ${reserve} ₽. В кассе ${Math.round(money(club))} ₽.`};
  room.status='running';room.run=freeze(run);club.activity[runId]={noiseHours:0,services:[]};club.campaign.openingHelp=false;syncGuestWaiting(club);
