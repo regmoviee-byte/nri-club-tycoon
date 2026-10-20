@@ -1,0 +1,11 @@
+{
+  "finished": true,
+  "passed": true,
+  "audio": "Pure model; -noaudio; ReviewAudioSilence",
+  "checks": [
+    "Locally regenerated fictional guest pool matches the original audited pool byte for byte in canonical JSON"
+  ],
+  "originalHash": "648fbf77d9663f8cb82273ff36024b267d455b21a661ff8eb9c79427ecd0bf3e",
+  "regeneratedHash": "648fbf77d9663f8cb82273ff36024b267d455b21a661ff8eb9c79427ecd0bf3e",
+  "count": 12
+}

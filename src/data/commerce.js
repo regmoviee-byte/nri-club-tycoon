@@ -44,7 +44,8 @@ export const canonicalKind=type=>COMMERCE_KINDS[type]??type;
 const commerceNames=Object.fromEntries(Object.entries(COMMERCE_KINDS).map(([name,kind])=>[kind,name]));
 for(const [kind,item] of Object.entries(BUILD_CATALOG)){
  const old=PRODUCTS[commerceNames[kind]??kind]??{};
- const product={...old,name:item.name,price:item.price,w:item.width,h:item.height,kind:old.kind??item.family??kind,overhead:item.passable,wallMounted:item.layer==='wall',hourly:item.hourlyCost??0};
+ const product={...old,name:item.name,price:item.price,w:item.width,h:item.height,kind:old.kind??item.family??kind,overhead:item.passable,wallMounted:item.layer==='wall',hourly:item.hourlyCost??0,
+  ...(item.useCost!==undefined?{unitCost:item.useCost}:{}),...(item.salePrice!==undefined?{salePrice:item.salePrice}:{}),...(item.capacity!==undefined?{capacity:item.capacity}:{})};
  PRODUCTS[kind]=product;if(commerceNames[kind])PRODUCTS[commerceNames[kind]]=product;
 }
 export const productFor=object=>PRODUCTS[object.kind??object.type];

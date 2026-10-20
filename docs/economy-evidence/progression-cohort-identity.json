@@ -1,0 +1,42 @@
+{
+  "previous": "progression-v8-final-cohort.json",
+  "matchingTrajectories": true,
+  "passed": true,
+  "accepted": "progression-v8-accepted-cohort.json",
+  "parties": 1200,
+  "finished": true,
+  "sourceHashes": [
+    {
+      "matches": true,
+      "path": "src/model/campaign-rating.js",
+      "current": "5a232249558012238cdd4486746d0a00211558feea91d3526bf4d73933069f60",
+      "recorded": "5a232249558012238cdd4486746d0a00211558feea91d3526bf4d73933069f60"
+    },
+    {
+      "matches": true,
+      "path": "src/model/campaign.js",
+      "current": "4125d76ca78e355c205e6a460b363d838abed56d260c1feb4045ec12f7bde993",
+      "recorded": "4125d76ca78e355c205e6a460b363d838abed56d260c1feb4045ec12f7bde993"
+    },
+    {
+      "matches": true,
+      "path": "src/model/guest-flow.js",
+      "current": "19c908d1cb09e8f5e5a5e9684351a47d56dac2ca02fd1355582cdee05cda6ffa",
+      "recorded": "19c908d1cb09e8f5e5a5e9684351a47d56dac2ca02fd1355582cdee05cda6ffa"
+    },
+    {
+      "matches": true,
+      "path": "src/model/finances.js",
+      "current": "627588720ce4dbea83db9a197bd34ec8c6583a96a2c1db377ed4b878554b812b",
+      "recorded": "627588720ce4dbea83db9a197bd34ec8c6583a96a2c1db377ed4b878554b812b"
+    },
+    {
+      "matches": true,
+      "path": "src/data/balance.js",
+      "current": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08",
+      "recorded": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08"
+    }
+  ],
+  "campaigns": 60,
+  "matchingSummary": true
+}

@@ -1,8 +1,9 @@
 import {makeLegacyPreferences,sessionProgram,masterPreferences,guestVoice} from './preferences.js';
 import {disclosedWeights} from './rating.js';
 import {gameProduct,PRODUCTS} from '../data/commerce.js';
-import {roomUpgradeBenefit} from './upgrades.js';
-export const CAMPAIGN_RATING_VERSION=7;
+import {roomUpgradeBenefit,roomUpgradeBenefitV8,serviceUpgradeBenefitV8} from './upgrades.js';
+import {QUALITY_BALANCE as Q} from '../data/balance.js';
+export const CAMPAIGN_RATING_VERSION=8;
 const keys=['game','master','company','duration'];
 const clamp=n=>Math.max(0,Math.min(1,n));
 const fact=(fit,text,question,code)=>({fit:clamp(fit),text,question,code});
@@ -101,6 +102,7 @@ function acceptedHelper(a,b,system){
  return a.id!==b.id&&p.giveHelp!=='none'&&p.knowledge[system]>=2&&p.respectsNo&&q.receiveHelp!=='none'&&q.knowledge[system]<2;
 }
 export function tableWorkload(run){
+ if((run.ratingVersion??CAMPAIGN_RATING_VERSION)>=8)return tableWorkloadV8(run);
  if((run.ratingVersion??CAMPAIGN_RATING_VERSION)<4)return tableWorkloadV3(run);
  const system=run.room.session.systemId,complexity=gameProduct(system)?.complexity??1,master=restedMaster(run.room.master),guests=run.guests.map(g=>baseGuest(run,g));
  const demandById=Object.fromEntries(guests.map(g=>[g.id,g.preferences.knowledge[system]>=2?0:complexity*{ahead:.35,table:.8,describe:1.2}[g.preferences.learning]*(g.preferences.knowledge[system]===1?.75:1)]));
@@ -198,5 +200,76 @@ export function rateCampaignGuest(run,guest){
   const score=Math.max(1,Math.min(10,Math.round(10-9*shortfall-review.comfort.penalty+benefit.bonus)));
   return {...review,score,ratingVersion:7,equipmentBenefit:true,upgradeBenefit:benefit,comfort:{...review.comfort,helped:[...review.comfort.helped,...benefit.effects.map(e=>e.text)]}};
  }
+ if(version===8)return rateCampaignGuestV8(run,guest);
  throw new Error('Неизвестная версия оценки кампании.');
+}
+
+export const learningComplexityMultiplier=systemId=>Q.teachingComplexity[(gameProduct(systemId)?.complexity??1)-1]??1;
+export function learningMaterialAllowance(items,{learning,combat=0}={}){
+ const enabled=(items??[]).filter(i=>i.enabled!==false),has=kind=>enabled.some(i=>(i.kind??i.type)===kind||i.type===kind),tablet=has('tablet'),board=has('whiteboard')||has('board');
+ const written=tablet?Q.tabletMaterials:board&&['ahead','table'].includes(learning)?Q.boardMaterials:0,visual=has('miniatures')&&learning==='describe'&&combat>=.8?Q.miniatureMaterials:0;
+ return Math.max(written,visual);
+}
+export function tableWorkloadV8(run){
+ const system=run.room.session.systemId,complexity=learningComplexityMultiplier(system),master=restedMaster(run.room.master),guests=run.guests.map(g=>baseGuest(run,g));
+ const demandById=Object.fromEntries(guests.map(g=>[g.id,g.preferences.knowledge[system]>=2?0:complexity*{ahead:.35,table:.8,describe:1.2}[g.preferences.learning]*(g.preferences.knowledge[system]===1?.75:1)]));
+ const demand=Object.values(demandById).reduce((n,v)=>n+v,0),masterCapacity=master.wantsTeaching?master.teachingCapacity*master.teachingSkill:0;
+ const assigned=Object.fromEntries(guests.map(g=>[g.id,demand?Math.min(demandById[g.id],masterCapacity*demandById[g.id]/demand):0]));
+ const volunteers=guests.filter(g=>g.preferences.giveHelp!=='none'&&g.preferences.knowledge[system]>=2&&g.preferences.respectsNo);
+ let peerCapacity=0;
+ for(const helper of volunteers){
+  const targets=guests.filter(g=>acceptedHelper(helper,g,system)&&assigned[g.id]<demandById[g.id]);
+  const available=Math.max(0,helper.preferences.teachingSkill??.5),unserved=targets.reduce((n,g)=>n+demandById[g.id]-assigned[g.id],0);
+  for(const target of targets){const share=unserved?Math.min(demandById[target.id]-assigned[target.id],available*(demandById[target.id]-assigned[target.id])/unserved):0;assigned[target.id]+=share;peerCapacity+=share;}
+ }
+ const materialsById=Object.fromEntries(guests.map(g=>{const allowance=learningMaterialAllowance(run.room.equipment,{learning:g.preferences.learning,combat:g.preferences.scenes.combat});return[g.id,Math.min(allowance,Math.max(0,demandById[g.id]-assigned[g.id]))];}));
+ const servedById=Object.fromEntries(guests.map(g=>[g.id,demandById[g.id]?clamp((assigned[g.id]+materialsById[g.id])/demandById[g.id]):1]));
+ const supported=guests.reduce((n,g)=>n+Math.min(demandById[g.id],assigned[g.id]+materialsById[g.id]),0),capacity=masterCapacity+peerCapacity;
+ return{demand,capacity,served:demand?clamp(supported/demand):1,servedById,demandById,materialsById,teachingMinutes:Math.round(demand*8/Math.max(.4,capacity)),volunteers:volunteers.map(g=>g.id),fatigue:master.fatigue,complexityMultiplier:complexity};
+}
+
+function roomComfortV8(run,guest){
+ const p=guest.preferences.comfort,items=(run.room.equipment??[]).filter(i=>i.enabled!==false),has=(...kinds)=>items.some(i=>kinds.includes(i.kind??i.type)||kinds.includes(i.type)),hours=run.endsAt-run.startedAt,master=masterPreferences(run.room.master),chair=items.find(i=>i.id===run.room.chairIds?.[guest.seat]),helped=[],notes=[],penalties=[];
+ const add=(value,text,code)=>{penalties.push({value,text,code});notes.push(text);};
+ if(p.longSeat&&hours>=5){
+  if(['chairSoft','chairArms','softChair','armchair'].includes(chair?.kind??chair?.type)||master.breaks)helped.push('Удобное место или короткие перерывы помогли высидеть долгую игру.');
+  else add(Q.longSeatPenalty,'На длинной игре устал сидеть на простом стуле.','long-seat');
+ }
+ if(p.quiet){
+  const adjacent=(run.observed?.noiseHours??0)>0,appliance=run.room.environment?.noisyAppliances??false,insulated=has('soundproof');
+  if(adjacent){if(insulated)helped.push('Звукоизоляция защитила от соседней партии.');else add(Q.adjacentNoisePenalty,'Было слышно соседнюю партию.','adjacent-noise');}
+  if(appliance)add(Q.applianceNoisePenalty*(insulated ? .5 : 1),insulated?'Свой прибор немного шумел даже со звукоизоляцией.':'Свой прибор немного мешал сосредоточиться.','appliance-noise');
+ }
+ if(p.heat&&run.room.environment?.hot){if(has('fan','aircon','conditioner'))helped.push('Вентиляция помогла избежать духоты.');else add(Q.heatPenalty,'На долгой игре в тесной комнате стало душно.','heat');}
+ const waited=Math.max(0,run.startedAt-(guest.schedule?.arrivalAt??run.startedAt)),waiting=structuredClone(guest.waiting??{totalHours:waited,seatedHours:0,standingHours:waited,legacyHours:0});
+ if(waiting.standingHours+1e-9>=3)add(.25,'Перед игрой пришлось долго ждать стоя.','standing-wait');
+ else if(waiting.totalHours+1e-9>=3&&waiting.seatedHours>0)helped.push('Во время ожидания было настоящее место, где можно присесть.');
+ const dirty=(run.observed?.dirtyHours??0)+1e-9>=hours*.25;
+ if(dirty)add(1,'В комнате было грязно заметную часть игры.','dirty-room');
+ return{penalty:Math.min(1,penalties.reduce((n,e)=>n+e.value,0)),penalties,notes,helped,waiting,dirty};
+}
+
+// New-session arithmetic only. Accepted V3–V7 reviews above remain unchanged.
+export function rateCampaignGuestV8(run,original){
+ const guest=baseGuest(run,original),session=run.room.session,master=restedMaster(run.room.master),p=guest.preferences,legacy=rateCampaignGuestV5({...run,ratingVersion:7},guest),evidence=legacy.evidence,work=tableWorkloadV8(run);
+ const teaching=evidence.master.find(f=>f.code==='teaching'),needs=p.knowledge[session.systemId]<2,served=needs?work.servedById[guest.id]:1;
+ if(teaching){teaching.fit=served;teaching.text=served>=.9?'Объяснений и времени на первый ход хватило.':p.learning==='describe'?'На первый ход с подсказками требовалось больше времени мастера.':'Нескольким игрокам требовались объяснения; времени мастера на всех не хватило.';}
+ const hours=run.endsAt-run.startedAt,[low,high]=guest.schedule.preferred,distance=Math.max(low-hours,hours-high,0);
+ evidence.duration[0].fit=Math.max(.4,1-distance*.2);
+ const mean=items=>items.reduce((n,f)=>n+f.fit,0)/items.length;
+ const components={...legacy.components,master:.4*weakest(evidence.master).fit+.6*mean(evidence.master),company:.45*weakest(evidence.company).fit+.55*mean(evidence.company),duration:evidence.duration.length===1?evidence.duration[0].fit:.85*evidence.duration[0].fit+.15*evidence.duration[1].fit};
+ const shortfall=Math.sqrt(keys.reduce((n,k)=>n+legacy.weights[k]*(1-components[k])**2,0)/10),comfort=roomComfortV8(run,guest),genre=evidence.game.find(f=>f.code==='genre')?.fit??0;
+ const eligible=!legacy.violations.length&&genre>=.55&&!comfort.dirty,equipment=eligible?roomUpgradeBenefitV8(run,guest):{bonus:0,effects:[]},service=eligible?serviceUpgradeBenefitV8(run,guest):{bonus:0,effects:[]};
+ const teachingPenalty=needs&&work.demandById[guest.id]>0?Math.min(Q.teachingPenaltyCap,Q.teachingPenaltyStrength*Math.max(0,Q.teachingTarget-served)):0;
+ const bonus=Math.min(Q.totalBonusCap,equipment.bonus+service.bonus),raw=10-9*shortfall-comfort.penalty-teachingPenalty+bonus;
+ let satisfactionValue=Math.max(1,Math.min(10,raw));if(genre<.2)satisfactionValue=Math.min(satisfactionValue,6);if(legacy.violations.length)satisfactionValue=Math.min(satisfactionValue,4);
+ satisfactionValue=Math.round(satisfactionValue*100)/100;
+ const effects=[...equipment.effects,...service.effects],cleanText=text=>guest.identity.grammar==='feminine'?text.replace(/(ждала|рассчитывала|просила|хотела|успела|знала|сама|играла|устала)а+/gu,'$1'):text;
+ comfort.helped=eligible?[...new Set([...comfort.helped,...effects.map(e=>e.text),...(work.materialsById[guest.id]>0?['Наглядные материалы помогли разобраться с правилом.']:[])])]:[];
+ comfort.notes=comfort.notes.map(s=>cleanText(guestVoice(guest,s)));comfort.helped=comfort.helped.map(s=>cleanText(guestVoice(guest,s)));
+ for(const facts of Object.values(evidence))for(const f of facts)f.text=cleanText(f.text);
+ const category=keys.toSorted((a,b)=>legacy.weights[b]*(1-components[b])**2-legacy.weights[a]*(1-components[a])**2)[0],reason=weakest(evidence[category]);
+ const learningText=p.learning==='describe'?'Мне требовалась помощь с кубиками на первом ходу, а мастер не успевал помочь всем.':'Для новой системы мне требовались объяснения, а времени мастера на все вопросы не хватило.';
+ const text=legacy.violations[0]??(teachingPenalty>.35?learningText:reason.fit<.95?reason.text:comfort.notes[0]??'История, мастер и компания подошли. Было приятно играть.');
+ return{...legacy,score:Math.round(satisfactionValue),satisfactionValue,satisfaction:satisfactionValue,baseSatisfaction:Math.round(Math.max(1,Math.min(10,10-9*shortfall-comfort.penalty-teachingPenalty))*100)/100,teachingPenalty,components,evidence,comfort,text:cleanText(text),violations:legacy.violations.map(cleanText),ratingVersion:8,equipmentBenefit:eligible&&comfort.helped.length>0,upgradeBenefit:{bonus,equipmentBonus:equipment.bonus,serviceBonus:service.bonus,effects,cap:Q.totalBonusCap},events:[...Object.values(evidence).flat().filter(f=>f.fit<.95||f.code==='teaching'),...comfort.penalties.map(p=>fact(0,p.text,'comfort',p.code)),...(teachingPenalty>0?[fact(served,learningText,'learning','unmet-teaching')]:[])],workload:work};
 }

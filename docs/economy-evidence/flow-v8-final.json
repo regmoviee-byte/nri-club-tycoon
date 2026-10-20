@@ -1,0 +1,22 @@
+{
+  "finished": true,
+  "passed": true,
+  "audio": "Pure model; -noaudio; ReviewAudioSilence",
+  "checks": [
+    "Dismissal, redraw, configuration and save/load never generate another visit",
+    "A new finite queue takes time and shows its precise affordable cost",
+    "Earned visit bank is capped and cannot be spent by a dismissal",
+    "Expired waiting visitors leave automatically without a negative review",
+    "Legacy flow adoption preserves the finite existing audience and grants no historic credit",
+    "Insufficient waiting funds reject atomically and a repeated waiting transaction is idempotent",
+    "Debt never advances an unattended waiting loop and a corrupt future arrival is rejected",
+    "New contracts preserve their continuous curve through save/load and settle only once",
+    "The new payment curve is continuous and an explicit hard violation refunds the ticket",
+    "Previously accepted contracts retain their old full-payment threshold even with new evidence",
+    "Full, partial and refunded tickets remain distinct in the session statement",
+    "Arrival quote accounts for a visitor whose agreed departure is at the next tick",
+    "A second genuinely purchased room increases future flow without granting visitors on configuration",
+    "Waiting during a running session stops on a future event and preserves its manual assignments"
+  ],
+  "failures": []
+}

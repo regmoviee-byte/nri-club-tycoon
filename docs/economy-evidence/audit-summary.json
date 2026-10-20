@@ -1,0 +1,1584 @@
+{
+  "finished": true,
+  "passed": true,
+  "fullLocalReports": {
+    "progression-v8-accepted-cohort.json": {
+      "path": "E:/Game/NRI-Club-Tycoon/review/economy-balance/progression-v8-accepted-cohort.json",
+      "sha256": "f04f30ddfa9b392af1ba69e7ef4c7db3be88b320c5b10283739fb1896354f17e"
+    },
+    "purchases-v8-final.json": {
+      "path": "E:/Game/NRI-Club-Tycoon/review/economy-balance/purchases-v8-final.json",
+      "sha256": "5e5cdda12c04992f58debbc78e82b8ddd1fbf919ee3079eacb8d7e2211f29cae"
+    },
+    "purchases-v8-seating-value.json": {
+      "path": "E:/Game/NRI-Club-Tycoon/review/economy-balance/purchases-v8-seating-value.json",
+      "sha256": "158ee34a8c1f5ab7c2d9f209a41b37fc07b0d435d121847dd4b878f6764840b7"
+    },
+    "guests-v8-final.json": {
+      "path": "E:/Game/NRI-Club-Tycoon/review/economy-balance/guests-v8-final.json",
+      "sha256": "672eb087bae718082429e9d153072a8da358d4f820472fdcb1bb50a0a383b2fd"
+    },
+    "master-value-v8-final.json": {
+      "path": "E:/Game/NRI-Club-Tycoon/review/economy-balance/master-value-v8-final.json",
+      "sha256": "b2c13529a2009d58d5d2acd963cc351531fc134157a15874285877ba0a2d9858"
+    }
+  },
+  "progression": {
+    "limitations": [
+      "No cash is injected. One starter room, starter master and starter adventure are retained. No purchase policy is simulated.",
+      "Informed policy enumerates all combinations from the present finite reception queue. It is an optimistic information bound, not an automatic player feature.",
+      "Only already expired visitors may be dismissed, once per pre-session boundary. No voluntary replacement or infinite reroll is permitted.",
+      "The current finite guest-flow system is used when available. Any manual expired dismissal is bounded to the pre-existing list, never a newly generated visitor.",
+      "No external data, translation, browser, real save, or publishing is used."
+    ],
+    "rules": {
+      "ratingVersion": 8,
+      "paymentCurve": 3,
+      "at": "2026-10-20T15:01:18.689Z",
+      "sourceHashes": {
+        "src/model/campaign-rating.js": "5a232249558012238cdd4486746d0a00211558feea91d3526bf4d73933069f60",
+        "src/model/campaign.js": "4125d76ca78e355c205e6a460b363d838abed56d260c1feb4045ec12f7bde993",
+        "src/model/guest-flow.js": "19c908d1cb09e8f5e5a5e9684351a47d56dac2ca02fd1355582cdee05cda6ffa",
+        "src/model/finances.js": "627588720ce4dbea83db9a197bd34ec8c6583a96a2c1db377ed4b878554b812b",
+        "src/data/balance.js": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08"
+      }
+    },
+    "baseline": {
+      "economy": {
+        "initialBudget": 15220,
+        "openingSpent": 11170,
+        "guestHour": 200,
+        "payThreshold": 6,
+        "roomHour": 80,
+        "consumableHour": 10
+      },
+      "cash": 4050,
+      "hourlyCosts": {
+        "general": 60,
+        "rooms": 80,
+        "consumables": 0,
+        "equipment": 0,
+        "serviceStaff": 0
+      },
+      "forecast": {
+        "hours": 2,
+        "endsAt": 14,
+        "guestHourlyRate": 200,
+        "guestPrice": 400,
+        "income": 1600,
+        "masterCost": 320,
+        "operatingCost": 360,
+        "totalCost": 680,
+        "profitIfAllPay": 920,
+        "breakEvenGuests": 2
+      },
+      "linearPrices": [
+        {
+          "hours": 2,
+          "ticket": 400,
+          "master": 320,
+          "operating": 360,
+          "netByPayingGuests": [
+            {
+              "paid": 0,
+              "net": -680
+            },
+            {
+              "paid": 1,
+              "net": -280
+            },
+            {
+              "paid": 2,
+              "net": 120
+            },
+            {
+              "paid": 3,
+              "net": 520
+            },
+            {
+              "paid": 4,
+              "net": 920
+            }
+          ]
+        },
+        {
+          "hours": 4,
+          "ticket": 800,
+          "master": 640,
+          "operating": 720,
+          "netByPayingGuests": [
+            {
+              "paid": 0,
+              "net": -1360
+            },
+            {
+              "paid": 1,
+              "net": -560
+            },
+            {
+              "paid": 2,
+              "net": 240
+            },
+            {
+              "paid": 3,
+              "net": 1040
+            },
+            {
+              "paid": 4,
+              "net": 1840
+            }
+          ]
+        },
+        {
+          "hours": 6,
+          "ticket": 1200,
+          "master": 960,
+          "operating": 1080,
+          "netByPayingGuests": [
+            {
+              "paid": 0,
+              "net": -2040
+            },
+            {
+              "paid": 1,
+              "net": -840
+            },
+            {
+              "paid": 2,
+              "net": 360
+            },
+            {
+              "paid": 3,
+              "net": 1560
+            },
+            {
+              "paid": 4,
+              "net": 2760
+            }
+          ]
+        }
+      ],
+      "secondRoom": {
+        "land": 6000,
+        "passage": 200,
+        "furnishedRoom": 6200,
+        "secondFateCopy": 540,
+        "master": {
+          "id": "hire-7",
+          "name": "Соня",
+          "fee": 450,
+          "hourlyWage": 175
+        },
+        "total": 13390,
+        "assumes": "Existing staff room has a second place; no optional service or decoration",
+        "reserve": 1270,
+        "safeCashTarget": 14660
+      }
+    },
+    "summary": [
+      {
+        "policy": "first-four",
+        "seeds": 20,
+        "completedAll": 20,
+        "finalCash": {
+          "min": 12826,
+          "median": 14657,
+          "max": 17860
+        },
+        "continuousFinalCashSameDecisions": {
+          "min": 12826,
+          "median": 14657,
+          "max": 17860
+        },
+        "after10Cash": {
+          "min": 8697,
+          "median": 10266
+        },
+        "averageRating": 6.839375000000001,
+        "medianCleanings": 5,
+        "medianArrivalWaitCost": 0,
+        "medianArrivalWaitHours": 0,
+        "medianOperatingCost": 7550,
+        "medianFatigueAtEnd": 12,
+        "medianKitConditionAtEnd": 60,
+        "canSafelyExpand": 12,
+        "medianExpansionTurn": 19,
+        "stops": []
+      },
+      {
+        "policy": "heard-basic",
+        "seeds": 20,
+        "completedAll": 20,
+        "finalCash": {
+          "min": 16210,
+          "median": 18554,
+          "max": 19992
+        },
+        "continuousFinalCashSameDecisions": {
+          "min": 16210,
+          "median": 18554,
+          "max": 19992
+        },
+        "after10Cash": {
+          "min": 10663,
+          "median": 11794
+        },
+        "averageRating": 7.352500000000001,
+        "medianCleanings": 5,
+        "medianArrivalWaitCost": 0,
+        "medianArrivalWaitHours": 0,
+        "medianOperatingCost": 7550,
+        "medianFatigueAtEnd": 12,
+        "medianKitConditionAtEnd": 60,
+        "canSafelyExpand": 20,
+        "medianExpansionTurn": 15,
+        "stops": []
+      },
+      {
+        "policy": "oracle-best-four",
+        "seeds": 20,
+        "completedAll": 20,
+        "finalCash": {
+          "min": 16296,
+          "median": 18789,
+          "max": 20366
+        },
+        "continuousFinalCashSameDecisions": {
+          "min": 16296,
+          "median": 18789,
+          "max": 20366
+        },
+        "after10Cash": {
+          "min": 10895,
+          "median": 11934
+        },
+        "averageRating": 7.405000000000001,
+        "medianCleanings": 5,
+        "medianArrivalWaitCost": 0,
+        "medianArrivalWaitHours": 0,
+        "medianOperatingCost": 7550,
+        "medianFatigueAtEnd": 12,
+        "medianKitConditionAtEnd": 60,
+        "canSafelyExpand": 20,
+        "medianExpansionTurn": 14,
+        "stops": []
+      }
+    ]
+  },
+  "purchases": {
+    "source": {
+      "src/model/campaign-rating.js": "5a232249558012238cdd4486746d0a00211558feea91d3526bf4d73933069f60",
+      "src/model/upgrades.js": "5a80df7462fadd8e58e506c42f93596890822854415672c182723f47b9198a68",
+      "src/data/build-catalog.js": "68c8046a3f6e30c791337a9f11195347c5701641f8df774422dba339782368d7",
+      "src/data/balance.js": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08",
+      "src/model/finances.js": "627588720ce4dbea83db9a197bd34ec8c6583a96a2c1db377ed4b878554b812b"
+    },
+    "sample": {
+      "groupsPerCohort": 300,
+      "guestsPerCohort": 1200,
+      "pool": 12,
+      "method": "Static matched counterfactuals of V8 rating and real payment V3; known master and authored adventure rotate. First four random, or four of twelve ranked by exact satisfaction. Half have adjacent noise; long games use compact rooms. Appropriate group = at least one guest with a positive fractional or expected-tip change. All-target = all four. Services force one matching actual portion with an in-session timestamp: their money excludes cafe revenue/stock/waste and is only a rating-effect upper bound. No campaign win-rate claim."
+    },
+    "results": {
+      "random": {
+        "tableComfort": {
+          "guests": 1200,
+          "capitalCost": 1040,
+          "meanRawGain": 0.1209,
+          "meanNetPerGroup": 32.2848,
+          "meanAppropriateNet": 37.9821,
+          "paybackMixedGroups": 32.2133,
+          "paybackAppropriateGroups": 27.3813,
+          "appropriateGroups": 255,
+          "allTargetGroups": 13
+        },
+        "dice": {
+          "guests": 1200,
+          "capitalCost": 150,
+          "meanRawGain": 0.0343,
+          "meanNetPerGroup": 12.9193,
+          "meanAppropriateNet": 23.2084,
+          "paybackMixedGroups": 11.6105,
+          "paybackAppropriateGroups": 6.4632,
+          "appropriateGroups": 167,
+          "allTargetGroups": 0
+        },
+        "mat": {
+          "guests": 1200,
+          "capitalCost": 220,
+          "meanRawGain": 0.0377,
+          "meanNetPerGroup": 10.6416,
+          "meanAppropriateNet": 20.4646,
+          "paybackMixedGroups": 20.6736,
+          "paybackAppropriateGroups": 10.7503,
+          "appropriateGroups": 156,
+          "allTargetGroups": 1
+        },
+        "miniatures": {
+          "guests": 1200,
+          "capitalCost": 450,
+          "meanRawGain": 0.0362,
+          "meanNetPerGroup": 10.1531,
+          "meanAppropriateNet": 31.0808,
+          "paybackMixedGroups": 44.3214,
+          "paybackAppropriateGroups": 14.4784,
+          "appropriateGroups": 98,
+          "allTargetGroups": 0
+        },
+        "screen": {
+          "guests": 1200,
+          "capitalCost": 200,
+          "meanRawGain": 0.0277,
+          "meanNetPerGroup": 8.0323,
+          "meanAppropriateNet": 17.9827,
+          "paybackMixedGroups": 24.8995,
+          "paybackAppropriateGroups": 11.1218,
+          "appropriateGroups": 134,
+          "allTargetGroups": 0
+        },
+        "allTable": {
+          "guests": 1200,
+          "capitalCost": 2060,
+          "meanRawGain": 0.2323,
+          "meanNetPerGroup": 56.5188,
+          "meanAppropriateNet": 65.9753,
+          "paybackMixedGroups": 36.448,
+          "paybackAppropriateGroups": 31.2238,
+          "appropriateGroups": 257,
+          "allTargetGroups": 13
+        },
+        "board": {
+          "guests": 1200,
+          "capitalCost": 700,
+          "meanRawGain": 0.1696,
+          "meanNetPerGroup": 79.0563,
+          "meanAppropriateNet": 225.875,
+          "paybackMixedGroups": 8.8544,
+          "paybackAppropriateGroups": 3.0991,
+          "appropriateGroups": 105,
+          "allTargetGroups": 3
+        },
+        "tablet": {
+          "guests": 1200,
+          "capitalCost": 1600,
+          "meanRawGain": 0.2925,
+          "meanNetPerGroup": 130.3257,
+          "meanAppropriateNet": 293.5609,
+          "paybackMixedGroups": 12.2769,
+          "paybackAppropriateGroups": 5.4503,
+          "appropriateGroups": 135,
+          "allTargetGroups": 11
+        },
+        "softSeats": {
+          "guests": 1200,
+          "capitalCost": 1760,
+          "meanRawGain": 0.0041,
+          "meanNetPerGroup": 2.9056,
+          "meanAppropriateNet": 124.5257,
+          "paybackMixedGroups": 605.7269,
+          "paybackAppropriateGroups": 14.1336,
+          "appropriateGroups": 7,
+          "allTargetGroups": 0
+        },
+        "armSeats": {
+          "guests": 1200,
+          "capitalCost": 2160,
+          "meanRawGain": 0.0081,
+          "meanNetPerGroup": 5.1749,
+          "meanAppropriateNet": 62.0992,
+          "paybackMixedGroups": 417.3994,
+          "paybackAppropriateGroups": 34.7831,
+          "appropriateGroups": 25,
+          "allTargetGroups": 0
+        },
+        "fan": {
+          "guests": 1200,
+          "capitalCost": 500,
+          "meanRawGain": -0.0244,
+          "meanNetPerGroup": -11.5267,
+          "meanAppropriateNet": 37.9322,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 13.1814,
+          "appropriateGroups": 23,
+          "allTargetGroups": 0
+        },
+        "aircon": {
+          "guests": 1200,
+          "capitalCost": 1800,
+          "meanRawGain": 0.0066,
+          "meanNetPerGroup": -7.8627,
+          "meanAppropriateNet": 38.6609,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 46.5587,
+          "appropriateGroups": 23,
+          "allTargetGroups": 0
+        },
+        "soundproof": {
+          "guests": 1200,
+          "capitalCost": 900,
+          "meanRawGain": 0.0561,
+          "meanNetPerGroup": 14.3161,
+          "meanAppropriateNet": 57.1839,
+          "paybackMixedGroups": 62.8663,
+          "paybackAppropriateGroups": 15.7387,
+          "appropriateGroups": 97,
+          "allTargetGroups": 1
+        },
+        "dimmer": {
+          "guests": 1200,
+          "capitalCost": 270,
+          "meanRawGain": 0.0061,
+          "meanNetPerGroup": -1.29,
+          "meanAppropriateNet": 11.0513,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 24.4315,
+          "appropriateGroups": 39,
+          "allTargetGroups": 0
+        },
+        "cookies": {
+          "guests": 1200,
+          "capitalCost": 400,
+          "meanRawGain": 0.0218,
+          "meanNetPerGroup": 5.3441,
+          "meanAppropriateNet": 23.0664,
+          "paybackMixedGroups": 74.8489,
+          "paybackAppropriateGroups": 17.3412,
+          "appropriateGroups": 94,
+          "allTargetGroups": 1
+        },
+        "water": {
+          "guests": 1200,
+          "capitalCost": 500,
+          "meanRawGain": 0.0076,
+          "meanNetPerGroup": 0.6391,
+          "meanAppropriateNet": 18.8518,
+          "paybackMixedGroups": 782.3502,
+          "paybackAppropriateGroups": 26.5227,
+          "appropriateGroups": 49,
+          "allTargetGroups": 0
+        },
+        "tea": {
+          "guests": 1200,
+          "capitalCost": 350,
+          "meanRawGain": 0.0075,
+          "meanNetPerGroup": -0.3044,
+          "meanAppropriateNet": 15.3564,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 22.7918,
+          "appropriateGroups": 44,
+          "allTargetGroups": 0
+        },
+        "coffee": {
+          "guests": 1200,
+          "capitalCost": 1200,
+          "meanRawGain": 0.0081,
+          "meanNetPerGroup": -2.8445,
+          "meanAppropriateNet": 13.5967,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 88.2567,
+          "appropriateGroups": 48,
+          "allTargetGroups": 0
+        },
+        "cold": {
+          "guests": 1200,
+          "capitalCost": 1600,
+          "meanRawGain": 0.0063,
+          "meanNetPerGroup": -6.8117,
+          "meanAppropriateNet": 8.8284,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 181.2333,
+          "appropriateGroups": 38,
+          "allTargetGroups": 0
+        }
+      },
+      "informed": {
+        "tableComfort": {
+          "guests": 1200,
+          "capitalCost": 1040,
+          "meanRawGain": 0.2389,
+          "meanNetPerGroup": 45.0644,
+          "meanAppropriateNet": 45.5196,
+          "paybackMixedGroups": 23.0781,
+          "paybackAppropriateGroups": 22.8473,
+          "appropriateGroups": 297,
+          "allTargetGroups": 174
+        },
+        "dice": {
+          "guests": 1200,
+          "capitalCost": 150,
+          "meanRawGain": 0.0534,
+          "meanNetPerGroup": 15.4277,
+          "meanAppropriateNet": 22.3589,
+          "paybackMixedGroups": 9.7228,
+          "paybackAppropriateGroups": 6.7087,
+          "appropriateGroups": 207,
+          "allTargetGroups": 4
+        },
+        "mat": {
+          "guests": 1200,
+          "capitalCost": 220,
+          "meanRawGain": 0.0763,
+          "meanNetPerGroup": 16.1211,
+          "meanAppropriateNet": 20.0678,
+          "paybackMixedGroups": 13.6467,
+          "paybackAppropriateGroups": 10.9628,
+          "appropriateGroups": 241,
+          "allTargetGroups": 3
+        },
+        "miniatures": {
+          "guests": 1200,
+          "capitalCost": 450,
+          "meanRawGain": 0.0677,
+          "meanNetPerGroup": 12.5754,
+          "meanAppropriateNet": 23.5789,
+          "paybackMixedGroups": 35.7842,
+          "paybackAppropriateGroups": 19.0849,
+          "appropriateGroups": 160,
+          "allTargetGroups": 0
+        },
+        "screen": {
+          "guests": 1200,
+          "capitalCost": 200,
+          "meanRawGain": 0.0541,
+          "meanNetPerGroup": 11.3872,
+          "meanAppropriateNet": 16.7459,
+          "paybackMixedGroups": 17.5636,
+          "paybackAppropriateGroups": 11.9432,
+          "appropriateGroups": 204,
+          "allTargetGroups": 3
+        },
+        "allTable": {
+          "guests": 1200,
+          "capitalCost": 2060,
+          "meanRawGain": 0.4413,
+          "meanNetPerGroup": 67.5989,
+          "meanAppropriateNet": 68.2818,
+          "paybackMixedGroups": 30.4739,
+          "paybackAppropriateGroups": 30.1691,
+          "appropriateGroups": 297,
+          "allTargetGroups": 175
+        },
+        "board": {
+          "guests": 1200,
+          "capitalCost": 700,
+          "meanRawGain": 0.0731,
+          "meanNetPerGroup": 35.5609,
+          "meanAppropriateNet": 156.8865,
+          "paybackMixedGroups": 19.6845,
+          "paybackAppropriateGroups": 4.4618,
+          "appropriateGroups": 68,
+          "allTargetGroups": 0
+        },
+        "tablet": {
+          "guests": 1200,
+          "capitalCost": 1600,
+          "meanRawGain": 0.1276,
+          "meanNetPerGroup": 56.6211,
+          "meanAppropriateNet": 209.9564,
+          "paybackMixedGroups": 28.258,
+          "paybackAppropriateGroups": 7.6206,
+          "appropriateGroups": 84,
+          "allTargetGroups": 4
+        },
+        "softSeats": {
+          "guests": 1200,
+          "capitalCost": 1760,
+          "meanRawGain": 0.0075,
+          "meanNetPerGroup": 5.0703,
+          "meanAppropriateNet": 126.7567,
+          "paybackMixedGroups": 347.1195,
+          "paybackAppropriateGroups": 13.8849,
+          "appropriateGroups": 12,
+          "allTargetGroups": 0
+        },
+        "armSeats": {
+          "guests": 1200,
+          "capitalCost": 2160,
+          "meanRawGain": 0.0207,
+          "meanNetPerGroup": 9.6065,
+          "meanAppropriateNet": 49.689,
+          "paybackMixedGroups": 224.8478,
+          "paybackAppropriateGroups": 43.4704,
+          "appropriateGroups": 58,
+          "allTargetGroups": 0
+        },
+        "fan": {
+          "guests": 1200,
+          "capitalCost": 500,
+          "meanRawGain": -0.0269,
+          "meanNetPerGroup": -7.6344,
+          "meanAppropriateNet": 26.5389,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 18.8403,
+          "appropriateGroups": 35,
+          "allTargetGroups": 0
+        },
+        "aircon": {
+          "guests": 1200,
+          "capitalCost": 1800,
+          "meanRawGain": 0.0125,
+          "meanNetPerGroup": -5.8545,
+          "meanAppropriateNet": 35.5331,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 50.657,
+          "appropriateGroups": 35,
+          "allTargetGroups": 0
+        },
+        "soundproof": {
+          "guests": 1200,
+          "capitalCost": 900,
+          "meanRawGain": 0.0601,
+          "meanNetPerGroup": 12.2209,
+          "meanAppropriateNet": 47.4535,
+          "paybackMixedGroups": 73.6443,
+          "paybackAppropriateGroups": 18.9659,
+          "appropriateGroups": 102,
+          "allTargetGroups": 2
+        },
+        "dimmer": {
+          "guests": 1200,
+          "capitalCost": 270,
+          "meanRawGain": 0.0134,
+          "meanNetPerGroup": 0.3185,
+          "meanAppropriateNet": 12.9775,
+          "paybackMixedGroups": 847.7237,
+          "paybackAppropriateGroups": 20.8052,
+          "appropriateGroups": 64,
+          "allTargetGroups": 2
+        },
+        "cookies": {
+          "guests": 1200,
+          "capitalCost": 400,
+          "meanRawGain": 0.0498,
+          "meanNetPerGroup": 11.9981,
+          "meanAppropriateNet": 29.2237,
+          "paybackMixedGroups": 33.3386,
+          "paybackAppropriateGroups": 13.6875,
+          "appropriateGroups": 136,
+          "allTargetGroups": 16
+        },
+        "water": {
+          "guests": 1200,
+          "capitalCost": 500,
+          "meanRawGain": 0.0147,
+          "meanNetPerGroup": 1.8339,
+          "meanAppropriateNet": 14.9508,
+          "paybackMixedGroups": 272.643,
+          "paybackAppropriateGroups": 33.443,
+          "appropriateGroups": 78,
+          "allTargetGroups": 1
+        },
+        "tea": {
+          "guests": 1200,
+          "capitalCost": 350,
+          "meanRawGain": 0.0175,
+          "meanNetPerGroup": 2.9931,
+          "meanAppropriateNet": 15.709,
+          "paybackMixedGroups": 116.9356,
+          "paybackAppropriateGroups": 22.2802,
+          "appropriateGroups": 93,
+          "allTargetGroups": 0
+        },
+        "coffee": {
+          "guests": 1200,
+          "capitalCost": 1200,
+          "meanRawGain": 0.017,
+          "meanNetPerGroup": -0.3896,
+          "meanAppropriateNet": 13.3063,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 90.1828,
+          "appropriateGroups": 82,
+          "allTargetGroups": 0
+        },
+        "cold": {
+          "guests": 1200,
+          "capitalCost": 1600,
+          "meanRawGain": 0.0153,
+          "meanNetPerGroup": -4.5783,
+          "meanAppropriateNet": 7.507,
+          "paybackMixedGroups": null,
+          "paybackAppropriateGroups": 213.1344,
+          "appropriateGroups": 74,
+          "allTargetGroups": 0
+        }
+      }
+    }
+  },
+  "guests": {
+    "sourceHashes": {
+      "src/model/campaign-rating.js": "12f7602ece20d626705cfa739d732219644bd2f9c12c06b62737dab6881110c2",
+      "src/data/balance.js": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08",
+      "src/model/finances.js": "627588720ce4dbea83db9a197bd34ec8c6583a96a2c1db377ed4b878554b812b"
+    },
+    "opening100": {
+      "firstMean": 9.328574999999999,
+      "bestMean": 9.489449999999998,
+      "worstMean": 7.336300000000002,
+      "firstPaidMean": 3.88,
+      "bestPaidMean": 3.96,
+      "worstPaidMean": 2.38,
+      "bestUnviable": []
+    },
+    "sameFour": {
+      "baseline": {
+        "sessionId": "dark",
+        "title": "Высшая Тьма",
+        "masterId": "hire-0",
+        "hourlyWage": 160,
+        "hours": 2,
+        "names": [
+          "Ирина",
+          "Ксения",
+          "Валерия",
+          "Вера"
+        ],
+        "scores": [
+          6,
+          7,
+          7,
+          6
+        ],
+        "satisfaction": [
+          5.91,
+          6.73,
+          7.04,
+          5.72
+        ],
+        "average": 6.35,
+        "paid": 1,
+        "paymentShares": [
+          0.7275,
+          0.9325,
+          1,
+          0.68
+        ],
+        "fullPayEquivalent": 3.3400000000000003,
+        "contributionPerHour": 328.0000000000001,
+        "violations": 0,
+        "details": [
+          {
+            "name": "Ирина",
+            "score": 6,
+            "satisfaction": 5.91,
+            "reason": "Мне удобно 5 ч, а эта игра длилась 2 ч.",
+            "violations": []
+          },
+          {
+            "name": "Ксения",
+            "score": 7,
+            "satisfaction": 6.73,
+            "reason": "Хотела сыграть по книге, а у мастера свои изменения правил.",
+            "violations": []
+          },
+          {
+            "name": "Валерия",
+            "score": 7,
+            "satisfaction": 7.04,
+            "reason": "Мне удобно 5 ч, а эта игра длилась 2 ч.",
+            "violations": []
+          },
+          {
+            "name": "Вера",
+            "score": 6,
+            "satisfaction": 5.72,
+            "reason": "Мне хотелось совсем другой истории.",
+            "violations": []
+          }
+        ]
+      },
+      "best": {
+        "sessionId": "club-cheese-train",
+        "title": "Сырный поезд на закате",
+        "masterId": "hire-0",
+        "hourlyWage": 160,
+        "hours": 3,
+        "names": [
+          "Ирина",
+          "Ксения",
+          "Валерия",
+          "Вера"
+        ],
+        "scores": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "satisfaction": [
+          6,
+          7.34,
+          7.54,
+          9.05
+        ],
+        "average": 7.4825,
+        "paid": 3,
+        "paymentShares": [
+          0.75,
+          1,
+          1,
+          1
+        ],
+        "fullPayEquivalent": 3.75,
+        "contributionPerHour": 410,
+        "violations": 0,
+        "details": [
+          {
+            "name": "Ирина",
+            "score": 6,
+            "satisfaction": 6,
+            "reason": "Хотела сыграть по книге, а у мастера свои изменения правил.",
+            "violations": []
+          },
+          {
+            "name": "Ксения",
+            "score": 7,
+            "satisfaction": 7.34,
+            "reason": "Хотела сыграть по книге, а у мастера свои изменения правил.",
+            "violations": []
+          },
+          {
+            "name": "Валерия",
+            "score": 8,
+            "satisfaction": 7.54,
+            "reason": "Мне удобно 5 ч, а эта игра длилась 3 ч.",
+            "violations": []
+          },
+          {
+            "name": "Вера",
+            "score": 9,
+            "satisfaction": 9.05,
+            "reason": "Мне удобно 4–5 ч, а эта игра длилась 3 ч.",
+            "violations": []
+          }
+        ]
+      },
+      "bestWithoutViolations": {
+        "sessionId": "club-cheese-train",
+        "title": "Сырный поезд на закате",
+        "masterId": "hire-0",
+        "hourlyWage": 160,
+        "hours": 3,
+        "names": [
+          "Ирина",
+          "Ксения",
+          "Валерия",
+          "Вера"
+        ],
+        "scores": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "satisfaction": [
+          6,
+          7.34,
+          7.54,
+          9.05
+        ],
+        "average": 7.4825,
+        "paid": 3,
+        "paymentShares": [
+          0.75,
+          1,
+          1,
+          1
+        ],
+        "fullPayEquivalent": 3.75,
+        "contributionPerHour": 410,
+        "violations": 0,
+        "details": [
+          {
+            "name": "Ирина",
+            "score": 6,
+            "satisfaction": 6,
+            "reason": "Хотела сыграть по книге, а у мастера свои изменения правил.",
+            "violations": []
+          },
+          {
+            "name": "Ксения",
+            "score": 7,
+            "satisfaction": 7.34,
+            "reason": "Хотела сыграть по книге, а у мастера свои изменения правил.",
+            "violations": []
+          },
+          {
+            "name": "Валерия",
+            "score": 8,
+            "satisfaction": 7.54,
+            "reason": "Мне удобно 5 ч, а эта игра длилась 3 ч.",
+            "violations": []
+          },
+          {
+            "name": "Вера",
+            "score": 9,
+            "satisfaction": 9.05,
+            "reason": "Мне удобно 4–5 ч, а эта игра длилась 3 ч.",
+            "violations": []
+          }
+        ]
+      },
+      "worstWithoutViolations": {
+        "sessionId": "noon",
+        "title": "Демоны полудня",
+        "masterId": "hire-18",
+        "hourlyWage": 275,
+        "hours": 2,
+        "names": [
+          "Ирина",
+          "Ксения",
+          "Валерия",
+          "Вера"
+        ],
+        "scores": [
+          2,
+          3,
+          3,
+          3
+        ],
+        "satisfaction": [
+          2.09,
+          3.45,
+          3.27,
+          2.81
+        ],
+        "average": 2.9050000000000002,
+        "paid": 0,
+        "paymentShares": [
+          0,
+          0.1125,
+          0.0675,
+          0
+        ],
+        "fullPayEquivalent": 0.18,
+        "contributionPerHour": -419,
+        "violations": 0,
+        "details": [
+          {
+            "name": "Ирина",
+            "score": 2,
+            "satisfaction": 2.09,
+            "reason": "Для новой системы мне требовались объяснения, а времени мастера на все вопросы не хватило.",
+            "violations": []
+          },
+          {
+            "name": "Ксения",
+            "score": 3,
+            "satisfaction": 3.45,
+            "reason": "Мне требовалась помощь с кубиками на первом ходу, а мастер не успевал помочь всем.",
+            "violations": []
+          },
+          {
+            "name": "Валерия",
+            "score": 3,
+            "satisfaction": 3.27,
+            "reason": "Для новой системы мне требовались объяснения, а времени мастера на все вопросы не хватило.",
+            "violations": []
+          },
+          {
+            "name": "Вера",
+            "score": 3,
+            "satisfaction": 2.81,
+            "reason": "Для новой системы мне требовались объяснения, а времени мастера на все вопросы не хватило.",
+            "violations": []
+          }
+        ]
+      },
+      "worst": {
+        "sessionId": "club-family-debt",
+        "title": "Долг угасшего рода",
+        "masterId": "hire-17",
+        "hourlyWage": 265,
+        "hours": 6,
+        "names": [
+          "Ирина",
+          "Ксения",
+          "Валерия",
+          "Вера"
+        ],
+        "scores": [
+          4,
+          3,
+          4,
+          4
+        ],
+        "satisfaction": [
+          4,
+          2.86,
+          4,
+          4
+        ],
+        "average": 3.715,
+        "paid": 0,
+        "paymentShares": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "fullPayEquivalent": 0,
+        "contributionPerHour": -445,
+        "violations": 3,
+        "details": [
+          {
+            "name": "Ирина",
+            "score": 4,
+            "satisfaction": 4,
+            "reason": "В истории была тема, которую я просила исключить.",
+            "violations": [
+              "В истории была тема, которую я просила исключить."
+            ]
+          },
+          {
+            "name": "Ксения",
+            "score": 3,
+            "satisfaction": 2.86,
+            "reason": "Мне требовалась помощь с кубиками на первом ходу, а мастер не успевал помочь всем.",
+            "violations": []
+          },
+          {
+            "name": "Валерия",
+            "score": 4,
+            "satisfaction": 4,
+            "reason": "Мне нужно было уйти раньше, чем закончилась игра.",
+            "violations": [
+              "Мне нужно было уйти раньше, чем закончилась игра."
+            ]
+          },
+          {
+            "name": "Вера",
+            "score": 4,
+            "satisfaction": 4,
+            "reason": "Я заранее сказал, что не хочу играть в этот жанр.",
+            "violations": [
+              "Я заранее сказал, что не хочу играть в этот жанр."
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "teaching": {
+    "novices": [
+      {
+        "id": "hire-1",
+        "label": "Марк",
+        "hourlyWage": 220,
+        "teachingCapacity": 2,
+        "teachingSkill": 0.85,
+        "systemSkill": 85,
+        "scores": [
+          7,
+          6,
+          6,
+          7
+        ],
+        "satisfaction": [
+          7.34,
+          5.79,
+          6.25,
+          6.83
+        ],
+        "average": 6.5525,
+        "masterComponent": 0.5975574358974358,
+        "fullEquivalent": 3.4675,
+        "payments": 2080.5,
+        "afterWagesBeforeOtherCosts": 1420.5,
+        "violations": 0
+      },
+      {
+        "id": "hire-22",
+        "label": "Алина",
+        "hourlyWage": 310,
+        "teachingCapacity": 4,
+        "teachingSkill": 0.98,
+        "systemSkill": 91,
+        "scores": [
+          10,
+          8,
+          8,
+          9
+        ],
+        "satisfaction": [
+          9.83,
+          7.79,
+          8.2,
+          8.69
+        ],
+        "average": 8.6275,
+        "masterComponent": 0.721228,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1470,
+        "violations": 0
+      },
+      {
+        "id": "hire-13",
+        "label": "Саша",
+        "hourlyWage": 285,
+        "teachingCapacity": 1,
+        "teachingSkill": 0.95,
+        "systemSkill": 98,
+        "scores": [
+          6,
+          5,
+          5,
+          6
+        ],
+        "satisfaction": [
+          6.32,
+          4.86,
+          5.35,
+          6
+        ],
+        "average": 5.6325,
+        "masterComponent": 0.5382306666666666,
+        "fullEquivalent": 2.6325,
+        "payments": 1579.5,
+        "afterWagesBeforeOtherCosts": 724.5,
+        "violations": 0
+      },
+      {
+        "id": "hire-17",
+        "label": "Павел",
+        "hourlyWage": 265,
+        "teachingCapacity": 0,
+        "teachingSkill": 0.67,
+        "systemSkill": 93,
+        "scores": [
+          6,
+          4,
+          5,
+          5
+        ],
+        "satisfaction": [
+          5.68,
+          3.94,
+          4.52,
+          5.37
+        ],
+        "average": 4.8774999999999995,
+        "masterComponent": 0.41165999999999997,
+        "fullEquivalent": 1.8775000000000002,
+        "payments": 1126.5,
+        "afterWagesBeforeOtherCosts": 331.5,
+        "violations": 0
+      },
+      {
+        "id": "hire-0",
+        "label": "Ася после освоения D&D",
+        "hourlyWage": 160,
+        "teachingCapacity": 2,
+        "teachingSkill": 0.75,
+        "systemSkill": 75,
+        "scores": [
+          7,
+          6,
+          6,
+          7
+        ],
+        "satisfaction": [
+          6.96,
+          6.13,
+          6.41,
+          6.89
+        ],
+        "average": 6.5975,
+        "masterComponent": 0.6409999999999999,
+        "fullEquivalent": 3.5975,
+        "payments": 2158.5,
+        "afterWagesBeforeOtherCosts": 1678.5,
+        "violations": 0
+      },
+      {
+        "id": "hire-0",
+        "label": "Ася после D&D и курса преподавания",
+        "hourlyWage": 160,
+        "teachingCapacity": 3,
+        "teachingSkill": 0.95,
+        "systemSkill": 75,
+        "scores": [
+          9,
+          8,
+          9,
+          9
+        ],
+        "satisfaction": [
+          8.79,
+          8.37,
+          8.51,
+          8.69
+        ],
+        "average": 8.589999999999998,
+        "masterComponent": 0.821,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1920,
+        "violations": 0
+      }
+    ],
+    "prepared": [
+      {
+        "id": "hire-1",
+        "label": "Марк",
+        "hourlyWage": 220,
+        "teachingCapacity": 2,
+        "teachingSkill": 0.85,
+        "systemSkill": 85,
+        "scores": [
+          8,
+          9,
+          9,
+          8
+        ],
+        "satisfaction": [
+          8.1,
+          8.58,
+          8.56,
+          7.65
+        ],
+        "average": 8.2225,
+        "masterComponent": 0.6255,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1740,
+        "violations": 0
+      },
+      {
+        "id": "hire-22",
+        "label": "Алина",
+        "hourlyWage": 310,
+        "teachingCapacity": 4,
+        "teachingSkill": 0.98,
+        "systemSkill": 91,
+        "scores": [
+          8,
+          9,
+          9,
+          8
+        ],
+        "satisfaction": [
+          8.1,
+          8.58,
+          8.56,
+          7.89
+        ],
+        "average": 8.2825,
+        "masterComponent": 0.636,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1470,
+        "violations": 0
+      },
+      {
+        "id": "hire-13",
+        "label": "Саша",
+        "hourlyWage": 285,
+        "teachingCapacity": 1,
+        "teachingSkill": 0.95,
+        "systemSkill": 98,
+        "scores": [
+          8,
+          9,
+          9,
+          8
+        ],
+        "satisfaction": [
+          8.1,
+          8.58,
+          8.56,
+          7.65
+        ],
+        "average": 8.2225,
+        "masterComponent": 0.6255,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1545,
+        "violations": 0
+      },
+      {
+        "id": "hire-17",
+        "label": "Павел",
+        "hourlyWage": 265,
+        "teachingCapacity": 0,
+        "teachingSkill": 0.67,
+        "systemSkill": 93,
+        "scores": [
+          8,
+          9,
+          9,
+          8
+        ],
+        "satisfaction": [
+          8.1,
+          8.58,
+          8.56,
+          7.65
+        ],
+        "average": 8.2225,
+        "masterComponent": 0.6255,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1605,
+        "violations": 0
+      },
+      {
+        "id": "hire-0",
+        "label": "Ася после освоения D&D",
+        "hourlyWage": 160,
+        "teachingCapacity": 2,
+        "teachingSkill": 0.75,
+        "systemSkill": 75,
+        "scores": [
+          9,
+          9,
+          9,
+          9
+        ],
+        "satisfaction": [
+          9.07,
+          8.96,
+          8.93,
+          9.09
+        ],
+        "average": 9.0125,
+        "masterComponent": 0.80972,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1920,
+        "violations": 0
+      },
+      {
+        "id": "hire-0",
+        "label": "Ася после D&D и курса преподавания",
+        "hourlyWage": 160,
+        "teachingCapacity": 3,
+        "teachingSkill": 0.95,
+        "systemSkill": 75,
+        "scores": [
+          9,
+          9,
+          9,
+          9
+        ],
+        "satisfaction": [
+          9.07,
+          8.96,
+          8.93,
+          9.09
+        ],
+        "average": 9.0125,
+        "masterComponent": 0.80972,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1920,
+        "violations": 0
+      }
+    ],
+    "materials": {
+      "ordinary": {
+        "id": "hire-1",
+        "label": "Марк",
+        "hourlyWage": 220,
+        "teachingCapacity": 2,
+        "teachingSkill": 0.85,
+        "systemSkill": 85,
+        "scores": [
+          7,
+          6,
+          6,
+          7
+        ],
+        "satisfaction": [
+          7.34,
+          5.79,
+          6.25,
+          6.83
+        ],
+        "average": 6.5525,
+        "masterComponent": 0.5975574358974358,
+        "fullEquivalent": 3.4675,
+        "payments": 2080.5,
+        "afterWagesBeforeOtherCosts": 1420.5,
+        "violations": 0
+      },
+      "board": {
+        "id": "hire-1",
+        "label": "Марк",
+        "hourlyWage": 220,
+        "teachingCapacity": 2,
+        "teachingSkill": 0.85,
+        "systemSkill": 85,
+        "scores": [
+          9,
+          7,
+          7,
+          8
+        ],
+        "satisfaction": [
+          8.61,
+          7.14,
+          7.23,
+          7.77
+        ],
+        "average": 7.6875,
+        "masterComponent": 0.6528458974358974,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1740,
+        "violations": 0
+      },
+      "tablet": {
+        "id": "hire-1",
+        "label": "Марк",
+        "hourlyWage": 220,
+        "teachingCapacity": 2,
+        "teachingSkill": 0.85,
+        "systemSkill": 85,
+        "scores": [
+          9,
+          8,
+          8,
+          8
+        ],
+        "satisfaction": [
+          9.36,
+          7.77,
+          7.82,
+          8.33
+        ],
+        "average": 8.32,
+        "masterComponent": 0.6860189743589743,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1740,
+        "violations": 0
+      },
+      "both": {
+        "id": "hire-1",
+        "label": "Марк",
+        "hourlyWage": 220,
+        "teachingCapacity": 2,
+        "teachingSkill": 0.85,
+        "systemSkill": 85,
+        "scores": [
+          9,
+          8,
+          8,
+          8
+        ],
+        "satisfaction": [
+          9.36,
+          7.77,
+          7.82,
+          8.33
+        ],
+        "average": 8.32,
+        "masterComponent": 0.6860189743589743,
+        "fullEquivalent": 4,
+        "payments": 2400,
+        "afterWagesBeforeOtherCosts": 1740,
+        "violations": 0
+      },
+      "tabletNoCoach": {
+        "id": "hire-17",
+        "label": "Павел",
+        "hourlyWage": 265,
+        "teachingCapacity": 0,
+        "teachingSkill": 0.67,
+        "systemSkill": 93,
+        "scores": [
+          7,
+          6,
+          6,
+          7
+        ],
+        "satisfaction": [
+          7.07,
+          6.12,
+          6.04,
+          6.63
+        ],
+        "average": 6.465,
+        "masterComponent": 0.5901215384615384,
+        "fullEquivalent": 3.4475,
+        "payments": 2068.5,
+        "afterWagesBeforeOtherCosts": 1273.5,
+        "violations": 0
+      }
+    },
+    "trainingUnlock": {
+      "beforeAsyaKnows": false,
+      "after": true,
+      "systemSkill": 75,
+      "course": {
+        "cost": 1200,
+        "hours": 12,
+        "beforeCapacity": 2,
+        "afterCapacity": 3,
+        "beforeSkill": 0.75,
+        "afterSkill": 0.95
+      },
+      "description": "System training state is a paid-course counterfactual, guest profiles are unchanged. Teaching course completion exercised through progressStaff."
+    }
+  },
+  "singleSeat": {
+    "source": {
+      "src/model/campaign-rating.js": "5a232249558012238cdd4486746d0a00211558feea91d3526bf4d73933069f60",
+      "src/model/upgrades.js": "5a80df7462fadd8e58e506c42f93596890822854415672c182723f47b9198a68",
+      "src/data/build-catalog.js": "68c8046a3f6e30c791337a9f11195347c5701641f8df774422dba339782368d7",
+      "src/data/balance.js": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08",
+      "src/model/finances.js": "627588720ce4dbea83db9a197bd34ec8c6583a96a2c1db377ed4b878554b812b"
+    },
+    "results": {
+      "random": {
+        "oneSoftSeat": {
+          "guests": 1200,
+          "capitalCost": 440,
+          "meanRawGain": 0.0019,
+          "meanNetPerGroup": 1.5083,
+          "meanAppropriateNet": 90.5,
+          "paybackMixedGroups": 291.7192,
+          "paybackAppropriateGroups": 4.8619,
+          "appropriateGroups": 5,
+          "allTargetGroups": 0
+        },
+        "oneArmSeat": {
+          "guests": 1200,
+          "capitalCost": 540,
+          "meanRawGain": 0.0044,
+          "meanNetPerGroup": 2.899,
+          "meanAppropriateNet": 48.3167,
+          "paybackMixedGroups": 186.2711,
+          "paybackAppropriateGroups": 11.1763,
+          "appropriateGroups": 18,
+          "allTargetGroups": 0
+        }
+      },
+      "informed": {
+        "oneSoftSeat": {
+          "guests": 1200,
+          "capitalCost": 440,
+          "meanRawGain": 0.0046,
+          "meanNetPerGroup": 2.1769,
+          "meanAppropriateNet": 54.4233,
+          "paybackMixedGroups": 202.1223,
+          "paybackAppropriateGroups": 8.0848,
+          "appropriateGroups": 12,
+          "allTargetGroups": 0
+        },
+        "oneArmSeat": {
+          "guests": 1200,
+          "capitalCost": 540,
+          "meanRawGain": 0.0133,
+          "meanNetPerGroup": 4.5735,
+          "meanAppropriateNet": 24.5007,
+          "paybackMixedGroups": 118.0715,
+          "paybackAppropriateGroups": 22.0402,
+          "appropriateGroups": 56,
+          "allTargetGroups": 0
+        }
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@ import {chargeInterval,serviceAt} from './finances.js';
 import {receiveOrders,storageCold} from './inventory.js';
 import {ensureOperations,integrateOperations,safetyEvents,finishOperationTasks,checkIncidents,equipmentRunning} from './operations.js';
 import {kitDeadlines,finishKitTasks} from './kit-lifecycle.js';
+import {guestFlowBoundary} from './guest-flow.js';
 
 function nextBoundary(club,target){
  const now=minute(club.clock),times=[minute(target),(Math.floor(now/60)+1)*60],add=t=>{const m=minute(t);if(m>now)times.push(m);};
@@ -17,6 +18,7 @@ function nextBoundary(club,target){
  for(const master of club.staff)if(master.training)add(master.training.endsAt);
  for(const deadline of kitDeadlines(club))add(deadline);
  for(const room of club.rooms)if(room.status==='running')add(room.run.endsAt);
+ add(guestFlowBoundary(club));
  for(const guest of club.guests)add(guest.schedule.leaveAt);
  for(const [zoneId,state] of Object.entries(club.operations.zones)){
   const count=club.guests.filter(g=>(g.roomId??'common')===zoneId&&(club.rooms.some(r=>r.id===g.roomId&&r.status==='running')||g.schedule.leaveAt>club.clock)).length;

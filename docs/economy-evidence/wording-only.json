@@ -1,0 +1,11 @@
+{
+  "file": "src/model/campaign-rating.js",
+  "before": "5a232249558012238cdd4486746d0a00211558feea91d3526bf4d73933069f60",
+  "after": "e49070c1fff24cc2437c69d4ed3fd53333a33d6dc899acfd5f1e637c7a83c1b9",
+  "onlyReplacement": {
+    "from": "Доска или планшет помогли разобраться с правилом.",
+    "to": "Наглядные материалы помогли разобраться с правилом."
+  },
+  "inverseRestoresAuditedBytes": true,
+  "reason": "Miniatures may also supply learning materials. This exact text-only edit does not change formulas, conditions, constants or payment."
+}

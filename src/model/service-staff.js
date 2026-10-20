@@ -1,5 +1,5 @@
 import {recordMoney} from './finances.js';
-export const SERVICE_STAFF={fee:600,hourlyWage:60,capacityMultiplier:1.5};
+export const SERVICE_STAFF={fee:600,hourlyWage:25,capacityMultiplier:1.5};
 export const serviceStaffOnShift=club=>(club.serviceStaff??[]).filter(person=>person.onShift);
 export const serviceHourlyCost=club=>serviceStaffOnShift(club).reduce((sum,person)=>sum+person.hourlyWage,0);
 export const serviceCapacity=(club,base,itemId)=>Math.floor(base*(serviceStaffOnShift(club).some(person=>person.assignment?.type==='service'&&person.assignment.itemId===itemId&&!club.operations?.tasks.some(t=>t.helperId===person.id&&t.state==='active'))?SERVICE_STAFF.capacityMultiplier:1));
@@ -13,7 +13,7 @@ export function hireServiceStaff(club){
  if(club.campaign.status==='bankrupt')return {ok:false,reason:'Это прохождение завершено.'};
  if(club.serviceStaff?.length)return {ok:false,reason:'Помощник сервиса уже нанят.'};
  if(club.finance.cash<SERVICE_STAFF.fee)return {ok:false,reason:club.finance.cash<0?'Сначала погасите долг.':'На приглашение помощника нужно 600 ₽.'};
- const person={id:'service-1',name:'Помощник сервиса',fee:SERVICE_STAFF.fee,hourlyWage:SERVICE_STAFF.hourlyWage,onShift:false};
+ const person={id:'service-1',name:'Помощник сервиса',fee:SERVICE_STAFF.fee,hourlyWage:SERVICE_STAFF.hourlyWage,balanceVersion:8,onShift:false};
  club.serviceStaff=[person];recordMoney(club,-person.fee,'hire-service','Приглашён помощник сервиса');return {ok:true,cost:person.fee,person};
 }
 export function setServiceShift(club,idOrEnabled,enabled){
@@ -26,5 +26,8 @@ export function setServiceShift(club,idOrEnabled,enabled){
 }
 export function validateServiceStaff(club){
  if(club.serviceStaff===undefined)club.serviceStaff=[];
- if(!Array.isArray(club.serviceStaff)||club.serviceStaff.length>1||club.serviceStaff.some(p=>p.id!=='service-1'||p.fee!==600||p.hourlyWage!==60||typeof p.onShift!=='boolean'||p.assignment&&(p.assignment.type!=='service'||!club.layout.objects.some(i=>i.id===p.assignment.itemId))))throw new Error('Повреждено сохранение помощника сервиса.');return club;
+ if(!Array.isArray(club.serviceStaff)||club.serviceStaff.length>1||club.serviceStaff.some(p=>p.id!=='service-1'||p.fee!==600||![60,SERVICE_STAFF.hourlyWage].includes(p.hourlyWage)||typeof p.onShift!=='boolean'||p.assignment&&(p.assignment.type!=='service'||!club.layout.objects.some(i=>i.id===p.assignment.itemId))))throw new Error('Повреждено сохранение помощника сервиса.');
+ // Only future shift costs change. Past ledger entries and signed contracts stay intact.
+ for(const person of club.serviceStaff){person.hourlyWage=SERVICE_STAFF.hourlyWage;person.balanceVersion=8;}
+ return club;
 }

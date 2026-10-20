@@ -132,10 +132,13 @@ export function chargeInterval(club,from,to){
 }
 export function settlementFor(run,review){
  const hours=run.endsAt-run.startedAt,price=run.contract?.guestPrice??hours*ECONOMY.guestHour;
- const paid=review.score>=ECONOMY.payThreshold?price:0;
- const useful=Boolean(review.comfort?.helped?.length),chance=review.score>=7?Math.min(.5,(review.score-6)*.1+(useful?.1:0)):0;
- const draw=run.contract?.tipRolls?.[review.guestId]??1,tips=paid&&draw<chance?Math.round(price*.1):0;
- return{price,payment:paid,tips,chance,draw,paid:Boolean(paid)};
+ const continuous=run.contract?.pricingVersion===3&&run.contract.paymentCurve===3;
+ const satisfaction=Number.isFinite(review.satisfactionValue)?review.satisfactionValue:Number.isFinite(review.satisfaction)?review.satisfaction:review.score;
+ const coefficient=continuous?(review.violations?.length?0:Math.max(0,Math.min(1,(satisfaction-3)/4))):(review.score>=ECONOMY.payThreshold?1:0);
+ const payment=continuous?Math.round(price*coefficient*100)/100:price*coefficient;
+ const useful=Boolean(review.comfort?.helped?.length),tipScore=continuous?satisfaction:review.score,chance=tipScore>=7?Math.min(.5,(tipScore-6)*.1+(useful?.1:0)):0;
+ const draw=run.contract?.tipRolls?.[review.guestId]??1,tips=payment&&(!continuous||coefficient===1)&&draw<chance?Math.round(price*.1):0;
+ return{price,payment,tips,chance,draw,paid:Boolean(payment),...(continuous?{coefficient,satisfaction,refund:Math.round((price-payment)*100)/100,fullPayment:coefficient===1,paymentCurve:3}:{})};
 }
 export function settleRun(club,run,reviews){
  if(club.finance.settledRuns.includes(run.id))return null;
@@ -144,5 +147,6 @@ export function settleRun(club,run,reviews){
  recordMoney(club,payments,'session','Оплата гостей',{id:'payment-'+run.id});recordMoney(club,tips,'tips','Чаевые гостей',{id:'tips-'+run.id});
  recordMoney(club,-wages,'wage',`Мастер ${run.room.master.name}: ${run.endsAt-run.startedAt} ч`,{id:'wage-'+run.id});
  club.finance.settledRuns.push(run.id);
- return{reviews:results,payments,tips,wages,paidCount:results.filter(r=>r.financial.paid).length};
+ const continuous=run.contract?.pricingVersion===3&&run.contract.paymentCurve===3;
+ return{reviews:results,payments,tips,wages,paidCount:results.filter(r=>r.financial.paid).length,...(continuous?{fullPaidCount:results.filter(r=>r.financial.fullPayment).length,partialPaidCount:results.filter(r=>r.financial.coefficient>0&&r.financial.coefficient<1).length,refunds:Math.round(results.reduce((n,r)=>n+r.financial.refund,0)*100)/100,paymentCurve:3}:{})};
 }

@@ -1,7 +1,7 @@
-// Fictional prototype prices: «Экономика и развитие НРИ Клуб Тайкун», v0.2,
-// 19 October 2026, pp. 2–4. Footprints are authored grid geometry, not prices.
+import {PURCHASE_BALANCE} from './balance.js';
+// Authored geometry is independent of the reviewed purchase/operating prices.
 const item = (kind, name, category, price, width = 1, height = 1, layer = 'floor', extras = {}) =>
-  Object.freeze({kind, name, category, price, width, height, layer, passable: layer !== 'floor', ...extras});
+  Object.freeze({kind, name, category, price, width, height, layer, passable: layer !== 'floor', ...extras,...(PURCHASE_BALANCE[kind]??{})});
 
 export const BUILD_CATALOG = Object.freeze(Object.fromEntries([
   item('reception', 'Стойка ресепшна', 'waiting', 1200, 2, 1, 'floor', {family: 'reception'}),

@@ -1,0 +1,17 @@
+{
+  "finished": true,
+  "passed": true,
+  "audio": "Pure model tests; -noaudio; ReviewAudioSilence",
+  "checks": [
+    "planning never reveals unanswered time, preferences, needs or relationships",
+    "heard deadlines and boundaries identify concrete risks without a score or automatic assignment",
+    "learning forecast counts heard system knowledge and learning method only",
+    "pair conflicts require relevant answers from both guests and show master mitigation",
+    "a story answer reveals its main interest without revealing unasked secondary tastes",
+    "running tables are planned from the contract snapshot and do not follow edited waiting guests",
+    "quick interview asks real questions once and never seats or configures anyone",
+    "quick interview cannot interview playing or absent guests and preserves their state",
+    "the new learning forecast uses the V8 workload while an accepted V7 table keeps its old workload"
+  ],
+  "failures": []
+}

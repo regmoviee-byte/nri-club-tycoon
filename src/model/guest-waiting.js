@@ -19,7 +19,7 @@ export function guestWaitingStatus(club){
   const approaches=objectApproaches(club.layout,object),cells=objectCells(object);
   if(object.rotation===2||object.rotation===3)cells.reverse();
   for(const [seatIndex,cell] of cells.slice(0,item.capacity).entries()){
-   if(approaches.some(a=>same(a.destination,cell)))seats.push({objectId:object.id,seatIndex,roomId:object.roomId??null,...cell,rotation:object.rotation});
+   if(approaches.some(a=>same(a.destination,cell)))seats.push({objectId:object.id,seatIndex,roomId:object.roomId??null,...cell,rotation:object.rotation,kind:object.kind});
   }
  }
  const queue=active(club).filter(g=>!g.roomId).map((guest,index)=>({guest,index})).sort((a,b)=>(a.guest.schedule?.arrivalAt??club.clock)-(b.guest.schedule?.arrivalAt??club.clock)||a.index-b.index);
@@ -57,11 +57,12 @@ export function trackGuestWaiting(club,from,to){
  if(!(to>from))return;
  adoptGuestWaiting(club);
  syncGuestWaiting(club);
- const status=guestWaitingStatus(club),seated=new Set(status.assignments.filter(a=>a.seat).map(a=>a.guestId));
+ const status=guestWaitingStatus(club),seated=new Set(status.assignments.filter(a=>a.seat).map(a=>a.guestId)),sofas=new Set(status.assignments.filter(a=>a.seat?.kind==='sofa').map(a=>a.guestId));
  for(const guest of active(club)){
   const record=club.waitingArea.stats[guest.id],duration=Math.max(0,to-Math.max(from,guest.schedule?.arrivalAt??from));
   record.totalHours+=duration;
   if(seated.has(guest.id)||gameChair(club,guest))record.seatedHours+=duration;
+  if(sofas.has(guest.id))record.sofaHours=(record.sofaHours??0)+duration;
  }
 }
 
@@ -79,7 +80,7 @@ export function guestWaitingSummary(club,guest,status=guestWaitingStatus(club)){
 }
 
 export function validateGuestWaiting(club){
- const valid=record=>record&&['totalHours','seatedHours','legacyHours'].every(k=>Number.isFinite(record[k])&&record[k]>=0)&&record.seatedHours<=record.totalHours+1e-7&&record.legacyHours<=record.totalHours+1e-7;
+ const valid=record=>record&&['totalHours','seatedHours','legacyHours'].every(k=>Number.isFinite(record[k])&&record[k]>=0)&&record.seatedHours<=record.totalHours+1e-7&&record.legacyHours<=record.totalHours+1e-7&&(record.sofaHours===undefined||Number.isFinite(record.sofaHours)&&record.sofaHours>=0&&record.sofaHours<=record.seatedHours+1e-7);
  const area=club.waitingArea;
  if(area!==undefined){
   if(!area||area.version!==1||!Number.isFinite(area.adoptedAt)||area.adoptedAt>club.clock||!area.stats||typeof area.stats!=='object'||Array.isArray(area.stats))throw new Error('Повреждён учёт мест ожидания.');

@@ -21,7 +21,9 @@ import {advanceEventClock} from './event-clock.js';
 import {adoptGuestWaiting,syncGuestWaiting,trackGuestWaiting,guestWaitingSummary,validateGuestWaiting} from './guest-waiting.js';
 import {ensureKits,validateKits,kitStatus,kitSalvage,roomPreparation,prepareAfterRun,kitDeadlines,repairKit} from './kit-lifecycle.js';
 import {ensureGuestRegistry,hasGuestIdentity,returningGuest,registerGuestVisit,recordGuestOutcome,recordGuestDeparture,validateGuestRegistry} from './guests-history.js';
+import {ensureGuestFlow,validateGuestFlow,accrueGuestFlow,guestFlowRelease,issueGuestCredit,guestFlowStatus} from './guest-flow.js';
 export {clockText,clubRating,lockedGuest,reserveRequired,obligations,hourlyCosts,restock};
+export {guestFlowStatus};
 export const CLUB_KEY='nri-club-tycoon:club:v4';
 export const runningRooms=club=>club.rooms.filter(r=>r.status==='running');
 export const openRooms=club=>club.rooms.filter(r=>r.operational&&r.status==='seating');
@@ -85,13 +87,27 @@ export function makeGuest(club,{opening=false}={}){
  if(opening&&arrival<4){guest.preferences.rulesPolicy='announced';guest.preferences.learning='table';guest.preferences.knowledge.fate=arrival;guest.preferences.tone='mixed';guest.preferences.stakes='safe';if(arrival===3)guest.preferences.giveHelp='asked';}
  return registerGuestVisit(club,guest);
 }
-export function replenish(club,{removeExpired=false,opening=false}={}){
+export function replenish(club,{removeExpired=false,opening=false,arrivals=false,completed=false}={}){
+ const flow=ensureGuestFlow(club);
  club.receptionAway??=[];
- if(removeExpired)club.guests=club.guests.filter(g=>lockedGuest(club,g)||g.schedule.leaveAt>club.clock);
+ if(removeExpired){
+  for(const guest of club.guests)if(!lockedGuest(club,guest)&&guest.schedule.leaveAt<=club.clock)recordGuestDeparture(club,guest,'expired');
+  club.guests=club.guests.filter(g=>lockedGuest(club,g)||g.schedule.leaveAt>club.clock);
+ }
  const target=targetGuestCount(club);
+ for(const guest of club.receptionAway)if(guest.schedule.leaveAt<=club.clock)recordGuestDeparture(club,guest,'expired');
  club.receptionAway=club.receptionAway.filter(g=>g.schedule.leaveAt>club.clock);
  const receptionReady=receptionStatus(club).ready;
- while(receptionReady&&club.guests.length<target)club.guests.push(club.receptionAway.shift()??makeGuest(club,{opening}));
+ // Previously admitted people remain finite people, not new generated visits.
+ while(receptionReady&&club.guests.length<target&&club.receptionAway.length)club.guests.push(club.receptionAway.shift());
+ if(opening&&!flow.openingIssued){
+  while(receptionReady&&club.guests.length<target)club.guests.push(makeGuest(club,{opening:true}));
+  flow.openingIssued=true;
+ }
+ let available=arrivals?guestFlowRelease(club,{completed}):0;
+ while(receptionReady&&club.guests.length<target&&available>0){
+  if(!issueGuestCredit(club))break;club.guests.push(makeGuest(club));available--;
+ }
  // Capacity changes never silently discard a waiting person or their conversation.
  if(!actorById(club,club.selectedId))club.selectedId=waitingGuests(club)[0]?.id??club.guests[0]?.id??null;
  syncGuestWaiting(club);return club.guests;
@@ -99,7 +115,7 @@ export function replenish(club,{removeExpired=false,opening=false}={}){
 export function createCampaign(seed){
  const club={version:7,seed:String(seed),clock:12,phase:'placing',drag:null,rooms:[],guests:[],selectedId:null,arrivals:0,step:0,nextRoomNumber:1,layout:starterLayout(),library:{copies:[{id:'kit-1',systemId:'fate',price:900}],adventures:['dark'],nextId:2},staff:[masterCandidate(0)],personnelArchive:[],staffRoomLegacyIds:[],serviceStaff:[],finance:{cash:ECONOMY.initialBudget,ledger:[],nextId:1,settledRuns:[],serviceIds:[]},activity:{},rating:{sum:0,count:0},reviewIds:[],departures:[],lastReport:null,campaign:{won:false,wonAt:null,status:'playing',goal:{rooms:5,participations:100,rating:8,reserve:8000,systems:4},openingHelp:true},construction:{version:1,transactions:[]},campaignActions:[]};
  club.waitingArea={version:1,adoptedAt:club.clock,stats:{}};
- recordMoney(club,-ECONOMY.openingSpent,'opening','Игровая комната, отдых мастеров, игра и первый мастер');ensureKits(club);ensureOperations(club);ensureGuestRegistry(club);syncRooms(club);replenish(club,{opening:true});return club;
+ recordMoney(club,-ECONOMY.openingSpent,'opening','Игровая комната, отдых мастеров, игра и первый мастер');ensureKits(club);ensureOperations(club);ensureGuestRegistry(club);syncRooms(club);ensureGuestFlow(club,{newCampaign:true});replenish(club,{opening:true});return club;
 }
 export const build=(club,action,args={})=>buildPhysical(club,action,args);
 export function buyGame(club,systemId){
@@ -176,7 +192,7 @@ export function startRoom(club,id,{acceptRisk=false}={}){
  const guests=roomOccupants(club,id).map(g=>({...structuredClone(g),waiting:guestWaitingSummary(club,g)})),runId=`${club.seed}|${id}|${room.turn}|${club.clock}`;
  const equipment=equipRoom(club,room.layout),hours=room.hours??2,snapshot=structuredClone({...room,run:null,equipment,environment:{hot:hours>=5&&room.layout.cells.length<=28,noisyAppliances:commerceItems(club.layout).some(i=>i.enabled&&equipmentRunning(club,i)&&PRODUCTS[i.type].noisy&&room.layout.cells.some(k=>{const [x,y]=k.split(',').map(Number);return Math.abs(i.x-x)+Math.abs(i.y-y)<=2;}))}});
  const forecast=sessionForecast(club,id);
- const run={id:runId,ratingVersion:CAMPAIGN_RATING_VERSION,startedAt:club.clock,endsAt:club.clock+hours,room:snapshot,guests,contract:{pricingVersion:2,hourlyRate:ECONOMY.guestHour,guestPrice:hours*ECONOMY.guestHour,wageTotal:hours*room.master.hourlyWage,forecast,tipRolls:Object.fromEntries(guests.map(g=>[g.id,hash(club.seed+'|tips|'+runId+'|'+g.id)/4294967296]))}};
+ const run={id:runId,ratingVersion:CAMPAIGN_RATING_VERSION,startedAt:club.clock,endsAt:club.clock+hours,room:snapshot,guests,contract:{pricingVersion:3,paymentCurve:3,hourlyRate:ECONOMY.guestHour,guestPrice:hours*ECONOMY.guestHour,wageTotal:hours*room.master.hourlyWage,forecast,tipRolls:Object.fromEntries(guests.map(g=>[g.id,hash(club.seed+'|tips|'+runId+'|'+g.id)/4294967296]))}};
  const trial=structuredClone(club);trial.rooms.find(r=>r.id===id).status='running';trial.rooms.find(r=>r.id===id).run=run;const reserve=reserveRequired(trial);
  if(!acceptRisk&&money(club)<reserve)return{ok:false,needsRiskConfirmation:true,reserve,cash:money(club),reason:`Если никто не заплатит, текущие партии и клуб потребуют до ${reserve} ₽. В кассе ${Math.round(money(club))} ₽.`};
  room.status='running';room.run=freeze(run);club.activity[runId]={noiseHours:0,services:[]};club.campaign.openingHelp=false;syncGuestWaiting(club);
@@ -197,27 +213,34 @@ export function waitForOperation(club){
  if(club.campaign.status==='bankrupt')return fail('Это прохождение завершено.');
  return advanceCampaignTo(club,Math.min(...deadlines));
 }
+export function waitForGuests(club){
+ if(club.campaign.status==='bankrupt')return fail('Это прохождение завершено.');
+ ensureGuestFlow(club);const status=guestFlowStatus(club);
+ if(!status.enabled)return fail(status.reason);
+ if(club.finance.cash<status.waitingCost)return fail(`До следующего прихода понадобится до ${status.waitingCost} ₽ на содержание. Сначала закройте пустые комнаты или освободите деньги.`);
+ return advanceCampaignTo(club,status.waitingUntil);
+}
 function advanceCampaignTo(club,target){
- const completed=[],departures=[],beforeCash=money(club),ledgerStart=club.finance.ledger.length;
+ const completed=[],departures=[],beforeCash=money(club),ledgerStart=club.finance.ledger.length;let completedAtTimestamp=false;
  const result=advanceEventClock(club,target,{
   progressInterval(from,to){
-   trackGuestWaiting(club,from,to);progressStaff(club,from,to);const active=runningRooms(club);
+   trackGuestWaiting(club,from,to);progressStaff(club,from,to);accrueGuestFlow(club,from,to);const active=runningRooms(club);
    for(const room of active){const exposure=club.activity[room.run.id]??={noiseHours:0,services:[]},cells=new Set(room.layout.cells);if(active.some(r=>r.id!==room.id&&r.layout.cells.some(k=>{const [x,y]=k.split(',').map(Number);return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>cells.has(cellKey(x+dx,y+dy)));})))exposure.noiseHours+=to-from;}
   },
   settleSessions(time){
    const gone=new Set();
    for(const room of runningRooms(club).filter(r=>Math.abs(r.run.endsAt-time)<1e-8)){
-    const run={...room.run,observed:club.activity[room.run.id]??{}},reviews=run.guests.map(g=>[3,4,5,6,7].includes(run.ratingVersion)?rateCampaignGuest(run,g):rateLegacyGuest(run,g));
+    const run={...room.run,observed:club.activity[room.run.id]??{}},reviews=run.guests.map(g=>[3,4,5,6,7,8].includes(run.ratingVersion)?rateCampaignGuest(run,g):rateLegacyGuest(run,g));
     const settlement=settleRun(club,run,reviews);if(!settlement)throw new Error('Эта игра уже рассчитана.');
     recordGuestOutcome(club,run,settlement.reviews);prepareAfterRun(club,run,room);
     for(const review of settlement.reviews)if(!club.reviewIds.includes(review.reviewId)){club.reviewIds.push(review.reviewId);club.rating.sum+=review.score;club.rating.count++;}
     completed.push({sessionId:run.id,roomId:room.id,number:room.number,title:run.room.session.title,game:run.room.session.game,master:run.room.master.name,startedAt:run.startedAt,endsAt:run.endsAt,...settlement});departures.push({roomId:room.id,sessionId:run.id,guests:run.guests});
     for(const guest of run.guests)gone.add(guest.id);
-    room.turn++;room.status='seating';room.run=null;delete club.activity[run.id];
+    room.turn++;room.status='seating';room.run=null;delete club.activity[run.id];completedAtTimestamp=true;
    }
    club.guests=club.guests.filter(g=>!gone.has(g.id));
   },
-  afterTimestamp(){syncRooms(club);replenish(club);updateCampaign(club);},
+  afterTimestamp(){syncRooms(club);replenish(club,{removeExpired:true,arrivals:true,completed:completedAtTimestamp});completedAtTimestamp=false;updateCampaign(club);},
  });
  club.step++;club.departures=departures;club.drag=null;
  const entries=club.finance.ledger.slice(ledgerStart),incoming=Math.round(entries.reduce((sum,e)=>sum+Math.max(0,e.amount),0)*100)/100,outgoing=Math.round(entries.reduce((sum,e)=>sum+Math.max(0,-e.amount),0)*100)/100;
@@ -255,10 +278,10 @@ export function decodeClub(raw){
  if(!Number.isInteger(club.step)||club.step<0||!Number.isInteger(club.arrivals)||club.arrivals<0||new Set(club.rooms.map(r=>r.id)).size!==club.rooms.length||club.rooms.some(r=>r.capacity!==4||!Number.isInteger(r.turn)||r.turn<0||!Number.isInteger(r.hours)||r.hours<2||r.hours>6))throw new Error('Повреждены события клуба.');
  const ids=new Set(),seats=new Set();
  for(const g of club.guests){if(ids.has(g.id)||!g.identity?.portrait||!g.profile||!Array.isArray(g.dialogue)||!Array.isArray(g.asked)||!Number.isFinite(g.schedule?.leaveAt)||!g.preferences)throw new Error('Повреждён гость.');ids.add(g.id);if(g.roomId){const room=roomById(club,g.roomId),key=g.roomId+':'+g.seat;if(!room||!Number.isInteger(g.seat)||g.seat<0||g.seat>3||seats.has(key))throw new Error('Повреждена рассадка.');seats.add(key);}g.dialogueVersion??=1;g.dialogue.forEach(a=>{if(!QUESTIONS.some(q=>q.id===a.questionId))throw new Error('Повреждён разговор.');a.reply??=answerText(g,a.questionId,a.variant);});if(g.lastAnswer)g.lastAnswer=g.dialogue.find(a=>a.questionId===g.lastAnswer.questionId&&a.variant===g.lastAnswer.variant)??null;}
- for(const r of club.rooms)if(r.status==='running'){const run=r.run;if(!run||![1,2,3,4,5,6,7].includes(run.ratingVersion??1)||run.endsAt<=club.clock||run.guests.length!==4||new Set(run.guests.map(g=>g.id)).size!==4||run.endsAt!==run.startedAt+run.room.session.minutes/60||run.guests.some(g=>!roomOccupants(club,r.id).some(p=>p.id===g.id))||!Number.isFinite(run.contract?.guestPrice)||run.contract.guestPrice<0||run.contract.wageTotal<0||!Number.isFinite(run.contract?.wageTotal)||run.ratingVersion>=3&&run.guests.some(g=>!Number.isFinite(run.contract.tipRolls?.[g.id])||run.contract.tipRolls[g.id]<0||run.contract.tipRolls[g.id]>=1))throw new Error('Повреждена начатая игра.');freeze(run);}
+ for(const r of club.rooms)if(r.status==='running'){const run=r.run;if(!run||![1,2,3,4,5,6,7,8].includes(run.ratingVersion??1)||run.endsAt<=club.clock||run.guests.length!==4||new Set(run.guests.map(g=>g.id)).size!==4||run.endsAt!==run.startedAt+run.room.session.minutes/60||run.guests.some(g=>!roomOccupants(club,r.id).some(p=>p.id===g.id))||!Number.isFinite(run.contract?.guestPrice)||run.contract.guestPrice<0||run.contract.wageTotal<0||!Number.isFinite(run.contract?.wageTotal)||run.contract.pricingVersion===3&&run.contract.paymentCurve!==3||run.ratingVersion>=3&&run.guests.some(g=>!Number.isFinite(run.contract.tipRolls?.[g.id])||run.contract.tipRolls[g.id]<0||run.contract.tipRolls[g.id]>=1))throw new Error('Повреждена начатая игра.');freeze(run);}
  validateGuestWaiting(club);adoptGuestWaiting(club);ensureGuestRegistry(club);validateGuestRegistry(club);
  club.construction??={version:1,transactions:[]};club.campaignActions??=[];
- club.drag=null;club.phase='placing';syncRooms(club);replenish(club,{removeExpired:false});freeze(club.lastReport);return club;
+ club.drag=null;club.phase='placing';syncRooms(club);validateGuestFlow(club);ensureGuestFlow(club);replenish(club,{removeExpired:false});freeze(club.lastReport);return club;
 }
 
 export function dismissGuest(club,id){
@@ -332,6 +355,7 @@ export function executeCampaignAction(club,action){
  case 'repairKit':result=repairKit(draft,action.kitId);break;
  case 'waitForPreparation':result=waitForPreparation(draft);break;
  case 'waitForOperation':result=waitForOperation(draft);break;
+ case 'waitForGuests':result=waitForGuests(draft);break;
  case 'restock':result=restock(draft,action.itemId,action.portions??20);break;
  case 'liquidate':{const plan=findRecoveryPlan(draft);if(!action.planId||action.planId!==plan?.id)return fail('План изменился. Откройте новый расчёт и подтвердите его заново.');result=recoverClub(draft);break;}
  case 'continueSandbox':draft.campaign.continued=true;result={ok:true};break;

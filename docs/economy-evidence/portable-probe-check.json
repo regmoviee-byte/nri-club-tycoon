@@ -1,0 +1,21 @@
+{
+  "finished": true,
+  "passed": true,
+  "compared": 38,
+  "differing": [],
+  "oldSource": {
+    "src/model/campaign-rating.js": "5a232249558012238cdd4486746d0a00211558feea91d3526bf4d73933069f60",
+    "src/model/upgrades.js": "5a80df7462fadd8e58e506c42f93596890822854415672c182723f47b9198a68",
+    "src/data/build-catalog.js": "68c8046a3f6e30c791337a9f11195347c5701641f8df774422dba339782368d7",
+    "src/data/balance.js": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08",
+    "src/model/finances.js": "627588720ce4dbea83db9a197bd34ec8c6583a96a2c1db377ed4b878554b812b"
+  },
+  "newSource": {
+    "src/model/campaign-rating.js": "e49070c1fff24cc2437c69d4ed3fd53333a33d6dc899acfd5f1e637c7a83c1b9",
+    "src/model/upgrades.js": "5a80df7462fadd8e58e506c42f93596890822854415672c182723f47b9198a68",
+    "src/data/build-catalog.js": "68c8046a3f6e30c791337a9f11195347c5701641f8df774422dba339782368d7",
+    "src/data/balance.js": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08",
+    "src/model/finances.js": "627588720ce4dbea83db9a197bd34ec8c6583a96a2c1db377ed4b878554b812b"
+  },
+  "note": "Published probe relocated from review to tools, plus exactly one audited wording replacement. Every common numerical result is compared."
+}

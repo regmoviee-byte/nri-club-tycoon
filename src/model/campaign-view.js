@@ -8,6 +8,7 @@ import {hourlyCosts,obligations,reserveRequired,reserveEstimate,sessionForecast}
 import {masterPreferences,sessionDurationRange} from './preferences.js';
 import {kitStatus,roomPreparation} from './kit-lifecycle.js';
 import {libraryStorageStatus} from './layout-club.js';
+import {SERVICE_STAFF} from './service-staff.js';
 
 const normalizeStaff=master=>{
  const fatigue=master.fatigue??0;
@@ -20,7 +21,7 @@ export function campaignMarket(club){
  return {
  staffRoom:staffRoomStatus(club),
  libraryStorage:libraryStorageStatus(club),
- serviceStaff:{hired:!!club.serviceStaff?.length,active:club.serviceStaff?.some(s=>s.onShift)??false,hireCost:600,hourlyWage:60},
+ serviceStaff:{hired:!!club.serviceStaff?.length,active:club.serviceStaff?.some(s=>s.onShift)??false,hireCost:SERVICE_STAFF.fee,hourlyWage:club.serviceStaff?.[0]?.hourlyWage??SERVICE_STAFF.hourlyWage},
  games:GAME_SHOP.map(g=>({...g,systemId:g.id,description:SYSTEMS[g.id]?.about,price:club.library.copies.some(k=>k.systemId===g.id)?Math.round(g.price*.6):g.price})),
  ownedGames:club.library.copies.map(k=>({...k,name:gameProduct(k.systemId).name,state:kitStatus(club,k.id),assignedRoomIds:club.rooms.filter(r=>r.kitId===k.id).map(r=>r.id)})),
  staff:club.staff.map(m=>({...normalizeStaff(m),restSeat:staffSeatForMaster(club,m.id),canRest:staffCanRest(club,m.id),dismissal:{busy:club.rooms.some(r=>r.status==='running'&&r.masterId===m.id),losesTraining:Boolean(m.training),trainingCost:m.training?.cost??null,warning:m.training?'Обучение будет прервано без возврата оплаты. Полученные ранее навыки сохранятся.':'Плата за приглашение не возвращается. Долги клуба сохраняются.'},training:m.training?{...m.training,label:m.training.systemId==='teaching'?'Объяснение правил':m.training.systemId==='turns'?'Работа с группой':SYSTEMS[m.training.systemId]?.name,remainingHours:Math.max(0,m.training.endsAt-club.clock)}:null})),candidates,
