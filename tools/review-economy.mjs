@@ -79,8 +79,8 @@ try{
  await page.locator('[data-action="service-shift"]').click();await idle();assert.equal((await snap()).serviceStaff[0].onShift,true);
  const helperClean=page.locator('[data-action="clean"][data-id="common"][data-helper="true"]');assert.equal(await helperClean.isEnabled(),true);assert.ok((await helperClean.innerText()).includes('16,25 ₽'));
  const beforeClean=await snap();await helperClean.click();await idle();const cleaning=await snap(),task=cleaning.operations.tasks.find(t=>t.zoneId==='common'&&t.state==='active');assert.equal(task.helperId,'service-1');assert.equal(beforeClean.finance.cash-cleaning.finance.cash,10);assert.equal(task.dueAt-cleaning.clock,.25);
- await nav('club');await page.locator('[data-action="wait-guests"]').click();await idle();
- assert.equal((await snap()).operations.tasks.find(t=>t.id===task.id).state,'done');assert.ok((await snap()).operations.zones.common.cleanliness>beforeClean.operations.zones.common.cleanliness);await nav('service');await page.locator('[data-action="service-shift"]').click();await idle();assert.equal((await snap()).serviceStaff[0].onShift,false);
+ await page.locator('[data-action="wait-operation"]').click();await idle();assert.equal((await snap()).clock,task.dueAt);assert.equal((await snap()).operations.zones.common.cleanliness,100);assert.ok(Math.abs(beforeClean.finance.cash-(await snap()).finance.cash-51.25)<.001);
+ assert.equal((await snap()).operations.tasks.find(t=>t.id===task.id).state,'done');await nav('service');await page.locator('[data-action="service-shift"]').click();await idle();assert.equal((await snap()).serviceStaff[0].onShift,false);
  await check('All ten panels stay integrated; the 25-ruble helper can actually clean a section in 15 minutes for 10 materials plus 6.25 wages, then leave shift');
  // The helper's appliance assignment must also be usable from the integrated UI.
  await nav('build');await page.locator('#catalog-category').selectOption('service');await page.locator('[data-action="build-item"][data-kind="water"]').click();

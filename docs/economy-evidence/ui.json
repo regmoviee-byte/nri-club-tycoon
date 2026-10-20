@@ -22,18 +22,18 @@
     "economy-mobile.png"
   ],
   "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage",
-  "url": "http://127.0.0.1:55630/",
+  "url": "http://127.0.0.1:58705/",
   "settlement": {
     "payments": 1600,
-    "tips": 120,
+    "tips": 80,
     "fullPaid": 4,
     "partialPaid": 0,
     "refunds": 0,
     "satisfaction": [
-      9.75,
       10,
-      9.63,
-      9.31
+      9.96,
+      9.38,
+      9.79
     ]
   },
   "wait": {
