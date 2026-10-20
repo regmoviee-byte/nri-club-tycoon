@@ -1,0 +1,91 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    "All four tabletop cells snap consistently from two pointer positions after zoom and pan; preview sits at tabletop height",
+    "Real dice purchase saves its integer cell; mat snaps to the full table and coexists with accessories",
+    "Occupied cell is rejected without spending money; moving a saved accessory keeps grid snapping and the raised preview",
+    "Miniatures and tablet use tabletop cells; screen stays on its chosen table edge in all four rotations, including invalid previews",
+    "Four guests and the master simultaneously occupy five distinct chairs, face the table and use chair-depth leg occlusion after walking",
+    "Reload retains all five seated people and the moved tabletop accessory"
+  ],
+  "errors": [],
+  "screenshots": [
+    "tabletop-grid.png",
+    "five-people-at-table.png",
+    "five-people-after-reload.png"
+  ],
+  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage",
+  "url": "http://127.0.0.1:59317/",
+  "occupiedChairs": [
+    {
+      "id": "room-1-chair-0",
+      "kind": "chair",
+      "x": 1,
+      "y": 1,
+      "rotation": 1,
+      "roomId": "room-1",
+      "role": "guest",
+      "seat": 0,
+      "price": 350,
+      "enabled": true,
+      "stock": 0,
+      "autoRefill": false
+    },
+    {
+      "id": "room-1-chair-1",
+      "kind": "chair",
+      "x": 1,
+      "y": 2,
+      "rotation": 1,
+      "roomId": "room-1",
+      "role": "guest",
+      "seat": 1,
+      "price": 350,
+      "enabled": true,
+      "stock": 0,
+      "autoRefill": false
+    },
+    {
+      "id": "room-1-chair-2",
+      "kind": "chair",
+      "x": 4,
+      "y": 1,
+      "rotation": 3,
+      "roomId": "room-1",
+      "role": "guest",
+      "seat": 2,
+      "price": 350,
+      "enabled": true,
+      "stock": 0,
+      "autoRefill": false
+    },
+    {
+      "id": "room-1-chair-3",
+      "kind": "chair",
+      "x": 4,
+      "y": 2,
+      "rotation": 3,
+      "roomId": "room-1",
+      "role": "guest",
+      "seat": 3,
+      "price": 350,
+      "enabled": true,
+      "stock": 0,
+      "autoRefill": false
+    },
+    {
+      "id": "room-1-master-chair",
+      "kind": "chair",
+      "x": 2,
+      "y": 3,
+      "rotation": 0,
+      "roomId": "room-1",
+      "role": "master",
+      "price": 350,
+      "enabled": true,
+      "stock": 0,
+      "autoRefill": false
+    }
+  ]
+}

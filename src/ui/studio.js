@@ -2,7 +2,7 @@ import {createCampaign,decodeClub,encodeClub,CLUB_KEY,campaignMarket,campaignSta
 import {askQuestion as askGuest,assignGuest,swapGuests,unassignGuest,roomOccupants} from '../model/club.js';
 import {createSaveStore,claimSaveWriter} from './save-store.js';
 import {readSaveFile,saveDownload} from './save-files.js';
-import {createConstructionService} from '../model/construction.js';
+import {createConstructionService,normalizeEdit} from '../model/construction.js';
 import {constructionBudgetAdapter} from '../model/campaign-construction.js';
 import {BUILD_CATALOG} from '../data/build-catalog.js';
 import {ECONOMY} from '../data/commerce.js';
@@ -13,7 +13,7 @@ import {roomEdit,rectangle,nearestEdge} from '../model/studio-building.js';
 import {objectCells,tileKey} from '../model/layout.js';
 import {ownedCells} from '../model/campaign-layout.js';
 import {syncGuestWaiting} from '../model/guest-waiting.js';
-import {createWorld,itemThumbnail} from './world.js';
+import {createWorld,itemThumbnail,TABLETOP_HEIGHT} from './world.js';
 import {sessionForecast} from '../model/finances.js';
 import {receptionStatus} from '../model/reception-area.js';
 import {visibleGuestHistory,visibleDemand} from '../model/guests-history.js';
@@ -45,7 +45,7 @@ function layout(){
 function setPanelWidth(value){const width=Math.max(280,Math.min(580,innerWidth*.5,value));root.style.setProperty('--panel-width',width+'px');try{localStorage.setItem('nri-studio-panel',String(width));}catch{}}
 function note(message,error=false){ui.message=message;ui.error=error;const n=root.querySelector('#message');if(n){n.textContent=message;n.classList.toggle('is-error',error);} }
 function nav(tab){ui.tab=tab;ui.pending=null;if(tab!=='build'){ui.tool='select';ui.preview=null;ui.cells.clear();}render(true);}
-function stateView(){return {tool:ui.tab==='build'?ui.tool:null,walls:ui.walls,objectId:ui.object,selectedGuest:ui.guest,cells:[...ui.cells.values()]};}
+function stateView(){return {tool:ui.tab==='build'?ui.tool:null,kind:ui.kind,walls:ui.walls,objectId:ui.object,selectedGuest:ui.guest,cells:[...ui.cells.values()]};}
 function render(resetScroll=false){
  if(!club)return;root.setAttribute('aria-busy',String(busy));root.classList.toggle('busy',busy);root.classList.toggle('mode-build',ui.tab==='build');
  const status=campaignStatus(club),prestige=clubPrestige(club),rating=club.rating.count?(club.rating.sum/club.rating.count).toFixed(1):'—';
@@ -233,16 +233,17 @@ function hideDrag(){root.querySelector('#drag-person').hidden=true;}
 function dropGuest(id,seatId){hideDrag();const o=club.layout.objects.find(o=>o.id===seatId);if(o?.role==='guest')seatGuest(id,o.roomId,o.seat);else note('Перетащите гостя на конкретный игровой стул. Место сохранено.');}
 function clearSelection(){ui.cells.clear();ui.edges.clear();ui.preview=null;ui.hover=null;}
 function cancelBuild(){clearSelection();if(world)world.drawPreview([]);renderPreview();}
-function currentPoint(p){return BUILD_CATALOG[ui.kind]?.layer==='tabletop'?{x:p.x+.75,y:p.y+.75}:p;}
+function currentPoint(p){const lift=BUILD_CATALOG[ui.kind]?.layer==='tabletop'?TABLETOP_HEIGHT/36:0;return {x:p.x+lift,y:p.y+lift};}
 function itemEdit(p){const q=currentPoint(p);return ui.tool==='move'?{type:'move',id:ui.object,x:Math.floor(q.x),y:Math.floor(q.y),rotation:ui.rotation}:{type:'place',object:{kind:ui.kind,x:Math.floor(q.x),y:Math.floor(q.y),rotation:ui.rotation}};}
-function hover(p){if(ui.tab!=='build'||!['item','move'].includes(ui.tool)||ui.preview)return;ui.hover=itemEdit(p);const object=ui.tool==='move'?{...club.layout.objects.find(o=>o.id===ui.object),...ui.hover}:ui.hover.object;const q=buildService.quote(ui.hover),shown=q.edit?.object??(q.edit?.type==='move'?{...object,...q.edit}:object);world.drawPreview(objectCells(shown),shown,q.ok);renderPreview(q,false);}
+function drawItemPreview(edit,quote=buildService.quote(edit)){const normalized=quote.edit??normalizeEdit(club,edit),object=normalized.object??{...club.layout.objects.find(o=>o.id===normalized.id),...normalized};world.drawPreview(objectCells(object),object,quote.ok);return quote;}
+function hover(p){if(ui.tab!=='build'||!['item','move'].includes(ui.tool)||ui.preview)return;ui.hover=itemEdit(p);const q=drawItemPreview(ui.hover);renderPreview(q,false);}
 function paintStart(p){
  if(busy||readOnly)return;ui.hover=null;
  if(!['land','floor'].includes(ui.tool))ui.cells.clear();ui.edges.clear();ui.preview=null;paintMove(p,p);
 }
 function paintMove(p,start){
  if(busy||readOnly)return;
- if(ui.tool==='item'||ui.tool==='move'){const edit=itemEdit(p),object=ui.tool==='move'?{...club.layout.objects.find(o=>o.id===ui.object),...edit}:edit.object;ui.hover=edit;const q=buildService.quote(edit),shown=q.edit?.object??(q.edit?.type==='move'?{...object,...q.edit}:object);world.drawPreview(objectCells(shown),shown,q.ok);return;}
+ if(ui.tool==='item'||ui.tool==='move'){ui.hover=itemEdit(p);drawItemPreview(ui.hover);return;}
  if(ui.tool==='room'){ui.cells=new Map(rectangle(start,p).map(c=>[tileKey(c.x,c.y),c]));}
  else if(['land','floor'].includes(ui.tool)){const c={x:Math.floor(p.x),y:Math.floor(p.y)};if(ui.tool!=='land'||!ownedCells(club.layout).has(tileKey(c.x,c.y)))ui.cells.set(tileKey(c.x,c.y),c);}
  else if(['wall','door','window'].includes(ui.tool)){const edge=nearestEdge(p);ui.edges.set(edge.axis+':'+edge.x+','+edge.y,edge);}
@@ -256,7 +257,7 @@ function makeEdit(){
  if(['wall','door','window'].includes(ui.tool))return {type:'batch',edits:[...ui.edges.values()].map(edge=>({type:'wall',edge,kind:ui.tool}))};
  return ui.hover;
 }
-function paintEnd(p,start){if(busy||readOnly)return;try{ui.preview=makeEdit();if(!ui.preview)return;ui.hover=null;const q=buildService.quote(ui.preview);if(q.ok&&(q.edit?.object||q.edit?.type==='move')){const shown=q.edit.object??{...club.layout.objects.find(o=>o.id===ui.object),...q.edit};world.drawPreview(objectCells(shown),shown,true);}renderPreview(q,true);}catch(e){note(e.message,true);}}
+function paintEnd(p,start){if(busy||readOnly)return;try{ui.preview=makeEdit();if(!ui.preview)return;ui.hover=null;const q=buildService.quote(ui.preview);if(ui.preview.type==='place'||ui.preview.type==='move')drawItemPreview(ui.preview,q);renderPreview(q,true);}catch(e){note(e.message,true);}}
 function renderPreview(quote=null,locked=Boolean(ui.preview)){
  const n=root.querySelector('#build-preview');if(ui.tab!=='build'||(!ui.preview&&!ui.hover&&!quote)){n.innerHTML='';n.hidden=true;return;}n.hidden=false;
  const q=quote??buildService.quote(ui.preview??ui.hover),net=(q.cost??0)-(q.refund??0),canPay=club.finance.cash>=net,valid=q.ok&&canPay;
@@ -283,7 +284,7 @@ async function handle(action,d){
  if(action==='library-tab'){ui.libraryTab=d.id;ui.librarySearch='';render(true);return;}if(action==='stories-for-system'){ui.libraryTab='adventures';ui.librarySearch=SYSTEMS[d.system]?.name??'';ui.tab='library';render(true);return;}if(action==='category'){ui.category=d.category;ui.catalogSearch='';render(true);return;}if(action==='team-tab'){ui.candidates=d.candidates==='true';render(true);return;}
  if(action==='tool'){clearSelection();ui.tool=d.tool;render();return;}if(action==='build-item'){clearSelection();ui.kind=d.kind;ui.tool='item';ui.rotation=0;render();return;}
  if(action==='cancel-build'){clearSelection();ui.tool='select';render();return;}
- if(action==='rotate'){ui.rotation=(ui.rotation+1)%4;if(ui.preview&&(ui.preview.type==='place'||ui.preview.type==='move')){if(ui.preview.object)ui.preview.object.rotation=ui.rotation;else ui.preview.rotation=ui.rotation;const o=ui.preview.object??{...club.layout.objects.find(o=>o.id===ui.object),...ui.preview};world.drawPreview(objectCells(o),o,buildService.quote(ui.preview).ok);}else if(ui.hover){if(ui.hover.object)ui.hover.object.rotation=ui.rotation;else ui.hover.rotation=ui.rotation;const o=ui.hover.object??{...club.layout.objects.find(o=>o.id===ui.object),...ui.hover};world.drawPreview(objectCells(o),o,buildService.quote(ui.hover).ok);}renderPreview();return;}
+ if(action==='rotate'){ui.rotation=(ui.rotation+1)%4;if(ui.preview&&(ui.preview.type==='place'||ui.preview.type==='move')){if(ui.preview.object)ui.preview.object.rotation=ui.rotation;else ui.preview.rotation=ui.rotation;drawItemPreview(ui.preview);}else if(ui.hover){if(ui.hover.object)ui.hover.object.rotation=ui.rotation;else ui.hover.rotation=ui.rotation;drawItemPreview(ui.hover);}renderPreview();return;}
  if(action==='apply-build'){await applyBuild();return;}
  if(action==='export'){download();return;}if(action==='more-ledger'){ui.ledgerLimit+=40;render();return;}
  if(action==='cancel-confirm'){ui.pending=null;render();return;}if(action==='confirm'){const pending=ui.pending;ui.pending=null;if(pending)await pending.run();render();return;}

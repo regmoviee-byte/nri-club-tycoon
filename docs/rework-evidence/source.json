@@ -1,11 +1,11 @@
 {
   "baseRepository": "https://github.com/regmoviee-byte/nri-club-tycoon",
-  "baseCommit": "9a0a6e95d6c8a215a5164abe3da34a3f062b5684",
+  "baseCommit": "b32270ecbe268079c9deaea7a46c6b9114758f20",
   "date": "2026-10-20",
-  "scope": "Solid seat and leg geometry with view-depth occlusion. Evidence files excluded to avoid self-reference.",
+  "scope": "Tabletop grid and raised previews; real five-person seating verification. Evidence files excluded to avoid self-reference.",
   "modelChecks": 62,
   "browserCheckBlocks": 22,
-  "seatingCheckBlocks": 8,
+  "tableCheckBlocks": 6,
   "files": [
     {
       "path": ".gitignore",
@@ -53,9 +53,14 @@
       "bytes": 3857
     },
     {
+      "path": "docs/TABLE-GRID.md",
+      "sha256": "2a6e9872f6facf07e632226329ba51895262a582252f9c6c236eda0a93160047",
+      "bytes": 3138
+    },
+    {
       "path": "index.html",
-      "sha256": "190bf6160f39d93c3beb48de68230b4fa809f80f6c01edacdcaa0d2ccf34df21",
-      "bytes": 6656
+      "sha256": "6d1d4ce74954462c1eca724f51c1194fc5f56d8f0ae7fe8151192369e7dfa186",
+      "bytes": 6360
     },
     {
       "path": "package.json",
@@ -469,13 +474,13 @@
     },
     {
       "path": "src/ui/studio.js",
-      "sha256": "d0cd2cee84ece941ef33a6ec66b9fdd3a5d5cc6a650a8a93fed52cce2a409ae7",
-      "bytes": 67262
+      "sha256": "ed5aa1bb171d74ebc7603f1429f28e9d35e20735d53cfdfe6d448425e953ad99",
+      "bytes": 66775
     },
     {
       "path": "src/ui/world.js",
-      "sha256": "bc941f6487e52d0e87ab1b538f768f79a3abbf324c74377e0eb7d8b19fb9f8c3",
-      "bytes": 28529
+      "sha256": "c7a24eb3a0eb50c5c32eb5acfb55f40044c5f2ec8f1f97a64234d57672c3777c",
+      "bytes": 29220
     },
     {
       "path": "Start-Club.cmd",
@@ -514,8 +519,8 @@
     },
     {
       "path": "tools/prepare-entry.mjs",
-      "sha256": "7321f30fc2b436ef5205bbec7c5242fa9ef9ad73cfa022783c9c08797401fce6",
-      "bytes": 1093
+      "sha256": "ff0c6bc3bc98c53c2f6c975dcde01ff20e95d217bcbe1c3a6e35ca5e177949f9",
+      "bytes": 1089
     },
     {
       "path": "tools/review-live.mjs",
@@ -526,6 +531,11 @@
       "path": "tools/review-seating.mjs",
       "sha256": "30a57aba8a28de2f3462696509eb3c3611d59c7e5c45d81222824fee6ec02bd3",
       "bytes": 12414
+    },
+    {
+      "path": "tools/review-table.mjs",
+      "sha256": "15e671387109506746924504feaff9e1f185e266e8ae05306357d3cca5678dbf",
+      "bytes": 11945
     },
     {
       "path": "tools/review.mjs",

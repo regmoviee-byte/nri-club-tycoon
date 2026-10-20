@@ -10,8 +10,7 @@ import {seatedPersonArt} from './seated-person.js';
 import {solidArt} from './isometric-solids.js';
 import {chairBaseFaces} from './seat-solids.js';
 export {project,unproject,seatedPersonArt};
-
-
+export const TABLETOP_HEIGHT=27;
 
 const points=list=>list.map(p=>p.x+','+p.y).join(' ');
 const polygon=(list,fill,stroke='#43505b',extra='')=>'<polygon points="'+points(list)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width=".7" '+extra+'/>';
@@ -68,11 +67,11 @@ export function furnitureArt(o,layout,{selected=false,ghost=false,occupied=false
   return group(a+'</g>');
  }
  if(item.layer==='tabletop'){
-  const tableZ=27;
+  const tableZ=TABLETOP_HEIGHT;
   if(o.kind==='mat')return group(polygon(diamond(o.x+.06,o.y+.06,w-.12,h-.12,tableZ),'#648078','#425e59')+polygon(diamond(o.x+.13,o.y+.13,w-.26,h-.26,tableZ+.2),'none','#a8bba0'));
   if(o.kind==='screen'){
    const pairs=[[[o.x+.08,o.y+.08],[o.x+.92,o.y+.08]],[[o.x+.92,o.y+.08],[o.x+.92,o.y+.92]],[[o.x+.08,o.y+.92],[o.x+.92,o.y+.92]],[[o.x+.08,o.y+.08],[o.x+.08,o.y+.92]]][o.rotation];
-   const a=project(...pairs[0],27),b=project(...pairs[1],27),m={x:(a.x+b.x)/2+2,y:(a.y+b.y)/2-2};
+   const a=project(...pairs[0],tableZ),b=project(...pairs[1],tableZ),m={x:(a.x+b.x)/2+2,y:(a.y+b.y)/2-2};
    return group(polygon([a,{x:a.x,y:a.y-19},{x:m.x,y:m.y-19},m],'#776755','#4d4d43')+polygon([m,{x:m.x,y:m.y-19},{x:b.x,y:b.y-19},b],'#8e8063','#4d4d43'));
   }
   const q=project(o.x+.5,o.y+.5,tableZ+1);
@@ -131,7 +130,12 @@ export function createWorld(host,callbacks={}){
    const spec=BUILD_CATALOG[object.kind];if(spec.layer==='tabletop')continue;
    const cells=objectCells(object),w=spec.width,h=spec.height,depth=object.x+object.y+(w+h)/2;
    let art=furnitureArt(object,layout,{selected:state.objectId===object.id});
-   if(spec.family==='table')for(const item of layout.objects.filter(o=>BUILD_CATALOG[o.kind].layer==='tabletop'&&o.roomId===object.roomId))art+=furnitureArt(item,layout);
+   if(spec.family==='table'){
+    const items=layout.objects.filter(o=>BUILD_CATALOG[o.kind].layer==='tabletop'&&o.roomId===object.roomId);
+    for(const item of items.filter(o=>o.kind==='mat'))art+=furnitureArt(item,layout);
+    if(['item','move'].includes(state.tool)&&BUILD_CATALOG[state.kind]?.layer==='tabletop')art+='<g data-table-grid="'+esc(object.id)+'">'+cells.map(c=>polygon(diamond(c.x,c.y,1,1,TABLETOP_HEIGHT+.4),'#d6e4ba','#657a60','data-grid-cell="'+c.x+','+c.y+'" fill-opacity=".12"')).join('')+'</g>';
+    for(const item of items.filter(o=>o.kind!=='mat'))art+=furnitureArt(item,layout);
+   }
    const room=club.rooms.find(r=>r.id===object.roomId),guest=object.role==='guest'?club.guests.find(g=>g.roomId===object.roomId&&g.seat===object.seat):null;
    const master=object.role==='master'&&room?.status==='running'?club.staff.find(m=>m.id===room.masterId):null;
    const people=[];if(guest)people.push({person:guest,master:false,x:object.x+.5,y:object.y+.5});if(master)people.push({person:master,master:true,x:object.x+.5,y:object.y+.5});
@@ -186,7 +190,7 @@ export function createWorld(host,callbacks={}){
   for(const o of club.layout.objects.filter(o=>o.role==='guest')){const p=project(o.x+.5,o.y+.5,19),d=Math.hypot(c.x-camera.x-p.x*camera.zoom,c.y-camera.y-p.y*camera.zoom);if(d<distance){best=o;distance=d;}}
   return distance<=Math.max(12,21*camera.zoom)?best:null;
  }
- function drawPreview(cells=[],object=null,valid=true){preview.innerHTML=cells.map(c=>polygon(diamond(c.x,c.y,1,1,.6),valid?'#d6b267':'#cf7264','white','opacity=".55"')).join('')+(object?furnitureArt(object,club.layout,{ghost:true}):'');}
+ function drawPreview(cells=[],object=null,valid=true){const tabletop=BUILD_CATALOG[object?.kind]?.layer==='tabletop',height=tabletop?TABLETOP_HEIGHT+.6:.6;preview.innerHTML=cells.map(c=>polygon(diamond(c.x,c.y,1,1,height),valid?'#d6b267':'#cf7264','white','data-preview-plane="'+(tabletop?'tabletop':'floor')+'" data-preview-cell="'+c.x+','+c.y+'" opacity=".55"')).join('')+(object?furnitureArt(object,club.layout,{ghost:true}):'');}
  svg.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(-e.deltaY*.0015),local(e));},{passive:false});
  svg.addEventListener('contextmenu',e=>{e.preventDefault();callbacks.onInspect?.(e.target.closest('[data-object],[data-guest-id],[data-master-id],[data-room]')?.dataset??{});});
  svg.addEventListener('pointerdown',e=>{
