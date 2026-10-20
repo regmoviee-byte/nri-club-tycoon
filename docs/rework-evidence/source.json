@@ -1,10 +1,11 @@
 {
   "baseRepository": "https://github.com/regmoviee-byte/nri-club-tycoon",
-  "baseCommit": "e3934203840359d4a7c2f3e95d479be07d10f67b",
+  "baseCommit": "b9934f53e087598529ef3955bac0b04878a5c4a5",
   "date": "2026-10-20",
-  "scope": "Source after adventure duration, economy, seating and UI update. Evidence files excluded to avoid self-reference.",
+  "scope": "Source after chair-local seated figure correction. Evidence files excluded to avoid self-reference.",
   "modelChecks": 60,
   "browserCheckBlocks": 22,
+  "seatingCheckBlocks": 7,
   "files": [
     {
       "path": ".gitignore",
@@ -23,8 +24,8 @@
     },
     {
       "path": "docs/ADVENTURE-ECONOMY-UPDATE.md",
-      "sha256": "9a1ccb1293f6f1ded2be92bd06e90380ec3016de790c710e5f73cce1ea7cba36",
-      "bytes": 6094
+      "sha256": "758d616e21e15ecc417ae4d471690719993345ead07bc7a05642c20480f934cd",
+      "bytes": 6424
     },
     {
       "path": "docs/CLUB_CYCLE.md",
@@ -47,9 +48,14 @@
       "bytes": 8808
     },
     {
+      "path": "docs/SEATING-FIX.md",
+      "sha256": "3d3ab75510f81bce3c850de3e867cc0547cf4dd77e5234e5e333d3764bd2ce47",
+      "bytes": 3127
+    },
+    {
       "path": "index.html",
-      "sha256": "44c64c414fef2fa1e66439cef7417cf2f1da6ebd3839e998441e0d360310285f",
-      "bytes": 6040
+      "sha256": "38d3f57d4ea922ef74c4b552c2784d49aba7958a4999407c8c05011b4babd8cb",
+      "bytes": 5980
     },
     {
       "path": "package.json",
@@ -393,8 +399,8 @@
     },
     {
       "path": "src/ui/people.js",
-      "sha256": "92ccf1dd1b54990c6f876d85f084d93332e3e48c6762bc44e5637655a23d4112",
-      "bytes": 12575
+      "sha256": "c9cb530d71ab7f1cd26821607d08bcca792d2b692576d55df2567572d8c2a9da",
+      "bytes": 12888
     },
     {
       "path": "src/ui/portrait.js",
@@ -437,6 +443,16 @@
       "bytes": 1265
     },
     {
+      "path": "src/ui/seat-frame.js",
+      "sha256": "a7a71819c1dc8dbc0648aee97dc03c32c77cc0773d54a6a1c04bdc91e71d2911",
+      "bytes": 690
+    },
+    {
+      "path": "src/ui/seated-person.js",
+      "sha256": "3f313400b01bf241d3bd297f12c5f81d83c838096fd5a6833d62f58cd0f8224f",
+      "bytes": 3526
+    },
+    {
       "path": "src/ui/studio.css",
       "sha256": "922846aed86714aec530b56bd3010bda5470814f2699266846ee007c465572a7",
       "bytes": 33677
@@ -448,8 +464,8 @@
     },
     {
       "path": "src/ui/world.js",
-      "sha256": "7981bb91a6fd03c1eb8da5b659205c74e26247c136cbd043b08a38f89602dcbb",
-      "bytes": 28302
+      "sha256": "684732a78c6d86bb32429b126ce2b3e81e3b277477b6c5095f5bf002d39a1ac7",
+      "bytes": 28458
     },
     {
       "path": "Start-Club.cmd",
@@ -483,8 +499,8 @@
     },
     {
       "path": "tools/prepare-entry.mjs",
-      "sha256": "bae089810fb8c0e0fb8313fdff20dc3d4deb262dbb5f909605bea1f3d6e2cb54",
-      "bytes": 1082
+      "sha256": "5f6178b6a32f5b0c6326e1338f301c400bcf252bd0ff798aa80b18a2dfde2604",
+      "bytes": 1079
     },
     {
       "path": "tools/review-live.mjs",
@@ -492,15 +508,19 @@
       "bytes": 5379
     },
     {
+      "path": "tools/review-seating.mjs",
+      "sha256": "04140da1aacc970f2a0d9b997c96b71f23b47f1c844f789f52cd6a34d973318a",
+      "bytes": 10193
+    },
+    {
       "path": "tools/review.mjs",
-      "sha256": "336ae12816abba1bf3fc5736c0f994ff4a660bd776156eb8dfe9f7270b94d42c",
-      "bytes": 32291
+      "sha256": "7c4a2f4011dc116361355990eeec8aa66c235905c15ec6a91f46dab3567d0507",
+      "bytes": 32192
     },
     {
       "path": "tools/serve.mjs",
       "sha256": "ac8fda734993875565d36b130dc4278f32f88972777115f70d758990e5bb2e28",
       "bytes": 1578
     }
-  ],
-  "finalBrowserReport": "icon-browser.json"
+  ]
 }

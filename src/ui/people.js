@@ -9,7 +9,7 @@ const path=(d,fill,extra='')=>'<path d="'+d+'" fill="'+fill+'" '+extra+'/>';
 const line=(d,stroke,width=1)=>path(d,'none','stroke="'+stroke+'" stroke-width="'+width+'"');
 const limb=(name,x,y,art)=>'<g class="limb '+name+'" style="transform-origin:'+x+'px '+y+'px">'+art+'</g>';
 
-export function personArt(person,{seated=false,back=false,drag=false,reception=false,seatRotation=null}={}){
+export function personArt(person,{seated=false,back=false,drag=false,reception=false,seatRotation=null,headOnly=false,yaw=0}={}){
  const identity=person?.identity??person??{},p=identity.portrait??{},name=identity.name??person?.profile?.name??person?.name??'Гость';
  const seed=[...name].reduce((n,c)=>(n*31+c.charCodeAt(0))>>>0,7),skin=color(p.skin,'#e3b79e'),skinDark=tint(skin,-24),skinLight=tint(skin,13),hair=color(p.hairColor,'#57433a'),hairDark=tint(hair,-15),hairLight=tint(hair,21),coat=color(p.coat,['#627f84','#9c705c','#728368','#82718b'][seed%4]),coatDark=tint(coat,-23),coatLight=tint(coat,17),pants=color(p.trousers,'#3c4e58'),shoe=color(p.shoes,'#303b42'),accent=color(p.accent,'#d8cab2'),eyes=color(p.iris,'#5a6c66');
  const head=seated?-77:-104,shoulder=seated?-58:-85,hip=seated?-22:-49,build=p.bodyShape??['lean','regular','soft','broad','compact'][seed%5],wide=build==='broad'?18:build==='lean'?14:16,waist=build==='soft'?14:build==='lean'?10:12,age=identity.age??person?.age??30,style=p.hair??['short','bob','curly','tied'][seed%4],outfit=p.outfit??['shirt','hoodie','cardigan','sweater'][seed%4],admin=identity.role==='administrator';
@@ -49,6 +49,7 @@ export function personArt(person,{seated=false,back=false,drag=false,reception=f
  let face=path('M-'+faceWidth+'-5Q-'+(faceWidth+1)+'-12 0-12Q'+(faceWidth+1)+'-12 '+faceWidth+'-5L'+faceWidth+' 3Q'+(faceWidth-1)+' 8 '+jaw+' 10L2 13Q0 14-2 13L-'+jaw+' 10Q-'+faceWidth+' 7-'+faceWidth+' 3Z',back?hair:skin,'stroke="'+(back?hairDark:skinDark)+'" stroke-width=".5"');
  face+='<ellipse cx="-'+(faceWidth+.25)+'" cy="2" rx="1.8" ry="3" fill="'+skinDark+'"/><ellipse cx="'+(faceWidth+.25)+'" cy="2" rx="1.8" ry="3" fill="'+skin+'"/>';
  if(!back){
+  const baseFace=face;face='';
   face+=path('M2-11Q'+(faceWidth+1)+'-11 '+faceWidth+'-4V4Q8 10 2 13L6 7 7-3Z',skinDark,'opacity=".5"')+path('M-7-7Q-1-11 4-7L3-4Q-2-6-6-3Z',skinLight,'opacity=".5"')+line('M-7-3.8Q-4-5.3-1.5-3.8M2.5-3.8Q5-5 7.7-3.2',hair,.85);
   for(const x of [-4.2,4.7])face+=path('M'+(x-2)+' '+eyeY+'Q'+x+' '+(eyeY-2)+' '+(x+2)+' '+eyeY+'Q'+x+' '+(eyeY+1.8)+' '+(x-2)+' '+eyeY+'Z','#f8eee1')+'<ellipse cx="'+(x+.35)+'" cy="'+eyeY+'" rx=".95" ry="1.25" fill="'+eyes+'"/><circle cx="'+(x+.5)+'" cy="'+(eyeY-.25)+'" r=".55" fill="#283739"/>'+line('M'+(x-2)+' '+eyeY+'Q'+x+' '+(eyeY-2)+' '+(x+2)+' '+eyeY,ink,.7);
   face+=line('M.8 0L-.3 4.6 2.3 4.8',tint(skin,-44),.65)+path('M-5 7.5Q0 '+(happy?11:9)+' 5 7.5L2 10H-1Z',tint(skin,-40))+line('M-3.8 7.7Q0 '+(happy?9.6:8.8)+' 4 7.7',tint(skin,-61),.55);
@@ -57,6 +58,7 @@ export function personArt(person,{seated=false,back=false,drag=false,reception=f
   if(age>=48)face+=line('M-8 3l1.5 1M7.5 3l1 1M-6 6l-1 3M6 6l1 3M-5-7h8',skinDark,.55);
   if(p.freckles)for(const x of [-7,-5,5,7])face+='<circle cx="'+x+'" cy="4.5" r=".48" fill="'+tint(skin,-47)+'"/>';
   if(p.glasses)face+='<g stroke="'+ink+'" stroke-width=".75" fill="#cfdfda" fill-opacity=".08"><rect x="-9" y="-2.5" width="8" height="6" rx="2"/><rect x="1" y="-2.5" width="8" height="6" rx="2"/>'+line('M-1-1h2M-9-1l-2-.5M9-1l2-.5',ink,.75)+'</g>';
+  face=baseFace+'<g transform="translate('+(yaw*2.8)+' 0) scale('+(yaw ? .8 : 1)+' 1)">'+face+'</g>';
  }
  let hairFront='';
  if(back)hairFront=path('M-11-3Q-14-14-2-16Q11-17 12-5L10 9Q0 16-10 9Z',hair)+path('M1-13Q10-11 9 5L7 9Q5 3 5-5Z',hairDark)+line('M-8-9Q-3-14 3-12',hairLight,.8);
@@ -67,6 +69,7 @@ export function personArt(person,{seated=false,back=false,drag=false,reception=f
  else hairFront=path('M-11 3L-12-6Q-13-13-5-15Q3-18 10-13L12-7 10 4 8 5 7-6Q2-4-1-8Q-5-3-9-3L-8 5Z',hair)+path('M2-15Q10-16 12-7L10 4 8 5 7-6 3-9Z',hairDark)+line('M-9-8Q-5-13 1-13',hairLight,1);
  if(style==='braid')hairFront+=path('M8 10q7 3 1 7 7 3 0 7 6 4-1 6L4 24q5-4 0-7 5-3 1-7Z',hair)+line('M7 12l3 4-4 4 4 4',hairDark,.8);
  if(age>=50&&style!=='shaved')hairFront+=line('M-9-3l-.5 5M9-3l.5 5',tint(hair,44),1.4);
+ if(headOnly)return '<g class="person-head-art">'+(hairBehind?'<g transform="translate(0 '+(-head)+')">'+hairBehind+'</g>':'')+face+hairFront+'</g>';
  return '<g class="person '+(seated?'is-seated ':'')+(drag?'is-held ':'')+(admin?'administrator-figure':'')+'" stroke-linecap="round" stroke-linejoin="round"><ellipse cy=".7" rx="17" ry="4" fill="#263b3c" opacity=".13"/>'+(back?'':hairBehind)+limb('leg-left',-6,hip,leftLeg+shoesLeft)+limb('leg-right',6,hip,rightLeg+shoesRight)+arms+body+neck+(back?hairBehind:'')+'<g class="person-head" transform="translate(0 '+head+')">'+face+hairFront+'</g></g>';
 }
 
