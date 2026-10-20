@@ -1,0 +1,28 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    "Eight dense-table previews finish below 250 ms each without fragment growth",
+    "Five people use curved torsos and rounded arms at both gaming tables; four chair directions use a separate relaxed pose"
+  ],
+  "errors": [],
+  "screenshots": [
+    "sculpted-people-and-tables.png"
+  ],
+  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage",
+  "url": "http://127.0.0.1:51351/",
+  "previewTimingMs": {
+    "samples": [
+      11.699999988079071,
+      14.400000035762787,
+      9.699999988079071,
+      16.19999998807907,
+      15.199999988079071,
+      13.800000011920929,
+      8.599999964237213,
+      14.900000035762787
+    ],
+    "maximum": 16.19999998807907,
+    "total": 104.5
+  }
+}

@@ -16,7 +16,7 @@ export function surfacePose(object,layout){
  let x=object.x+.5,y=object.y+.5;const angle=object.rotation*90;
  if(object.kind==='mat'){x=object.x+1;y=object.y+1;}
  if(object.kind==='screen'){if(object.rotation===0)y=object.y+.2;else if(object.rotation===1)x=object.x+.8;else if(object.rotation===2)y=object.y+.8;else x=object.x+.2;}
- const dimensions={...spec,...(object.kind==='mat'?{width:1.88,depth:1.88}:{})};if(table){const size=tableSize(table),width=object.rotation%2?dimensions.depth:dimensions.width,depth=object.rotation%2?dimensions.width:dimensions.depth;x=Math.max(table.x+.065+width/2,Math.min(table.x+size.width-.065-width/2,x));y=Math.max(table.y+.065+depth/2,Math.min(table.y+size.depth-.065-depth/2,y));}
+ const dimensions={...spec,...(object.kind==='mat'?{width:1.88,depth:1.88}:{})};if(table){const inset=object.kind==='mat'?.035:.085,size=tableSize(table),width=object.rotation%2?dimensions.depth:dimensions.width,depth=object.rotation%2?dimensions.width:dimensions.depth;x=Math.max(table.x+inset+width/2,Math.min(table.x+size.width-inset-width/2,x));y=Math.max(table.y+inset+depth/2,Math.min(table.y+size.depth-inset-depth/2,y));}
  return {...dimensions,x,y,angle,table};
 }
 export function surfacePolygon(pose,padding=0){return [[-pose.width/2-padding,-pose.depth/2-padding],[pose.width/2+padding,-pose.depth/2-padding],[pose.width/2+padding,pose.depth/2+padding],[-pose.width/2-padding,pose.depth/2+padding]].map(([x,y])=>{const p=rotate(x,y,pose.angle);return {x:p.x+pose.x,y:p.y+pose.y};});}
@@ -25,9 +25,13 @@ export function polygonsOverlap(a,b,gap=0){
 }
 export function polygonContains(outer,inner){return inner.every(p=>outer.every((a,i)=>{const b=outer[(i+1)%outer.length];return (b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x)>=-1e-7;}));}
 export function surfaceBaseHeight(object,layout){const pose=surfacePose(object,layout);if(!pose||object.kind==='mat')return TABLETOP_HEIGHT+.08;return TABLETOP_HEIGHT+.08+(layout.objects.some(o=>o.kind==='mat'&&o.id!==object.id&&parentTable(o,layout)?.id===pose.table?.id&&polygonContains(surfacePolygon(surfacePose(o,layout)),surfacePolygon(pose))) ? .35 : 0);}
+export function tableSurfacePolygon(table){
+ const size=tableSize(table),r=.12,w=size.width/2-.035,d=size.depth/2-.035,ring=[];
+ for(const [cx,cy,start]of [[w-r,d-r,0],[-w+r,d-r,90],[-w+r,-d+r,180],[w-r,-d+r,270]])for(let i=0;i<=3;i++){const a=(start+i*30)*Math.PI/180;ring.push({x:table.x+size.width/2+cx+r*Math.cos(a),y:table.y+size.depth/2+cy+r*Math.sin(a)});}return ring;
+}
 export function surfacePlacementIssue(object,layout){
  const pose=surfacePose(object,layout),table=pose?.table;if(!table)return 'Поставьте настольный предмет на игровой стол.';
- const size=tableSize(table),polygon=surfacePolygon(pose),top=[{x:table.x+.035,y:table.y+.035},{x:table.x+size.width-.035,y:table.y+.035},{x:table.x+size.width-.035,y:table.y+size.depth-.035},{x:table.x+.035,y:table.y+size.depth-.035}];
+ const polygon=surfacePolygon(pose),top=tableSurfacePolygon(table);
  if(!polygonContains(top,polygon))return 'Предмет выходит за край столешницы. Передвиньте его или поверните.';
  for(const other of layout.objects){if(other.id===object.id||BUILD_CATALOG[other.kind]?.layer!=='tabletop'||parentTable(other,layout)?.id!==table.id)continue;const otherPolygon=surfacePolygon(surfacePose(other,layout));if(!polygonsOverlap(polygon,otherPolygon))continue;
   if(object.kind==='mat'&&other.kind!=='mat'){if(!polygonContains(polygon,otherPolygon))return 'Край коврика проходит под предметом. Передвиньте коврик или предмет.';continue;}

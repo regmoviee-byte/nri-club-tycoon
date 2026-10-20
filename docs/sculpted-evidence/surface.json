@@ -1,0 +1,31 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    "Two separate dice sets occupy exact free positions within the same former grid cell on a mat",
+    "Physical overlap and table overhang are rejected without spending money",
+    "Lamp, miniatures and dice stand on the mat; screen stands independently on the wooden surface and rotates in 15-degree steps",
+    "A saved tabletop object moves freely through the normal inspector and durable purchase preview",
+    "Direct pointer drag moves a tabletop item continuously, keeps its angle and leaves the camera fixed",
+    "Floor furniture moves by dragging; a poster is placed on the actual raised wall and dragged to the adjacent wall segment",
+    "A hanging lamp is bought on its own ceiling layer and moved directly without shifting the camera",
+    "All five people sit at a table with separate legs and a thin top, with free tabletop items rendered in the same scene",
+    "All fractional positions, rotations, parent table and paid objects survive reload",
+    "All 37 catalog models are rendered in all four rotations with nonempty finite geometry and individually fitted bounds for visual audit",
+    "Five long hairstyles are inspected seated in four directions and standing from both sides; actual neck pixels remain skin-colored below the chin in both front-facing seat orientations"
+  ],
+  "errors": [],
+  "screenshots": [
+    "free-table-construction.png",
+    "five-at-open-leg-table.png",
+    "after-reload.png",
+    "catalog-1.png",
+    "catalog-2.png",
+    "catalog-3.png",
+    "catalog-4.png",
+    "catalog-5.png",
+    "hair-and-shoulders.png"
+  ],
+  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage",
+  "url": "http://127.0.0.1:53583/"
+}
