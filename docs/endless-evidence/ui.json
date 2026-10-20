@@ -1,0 +1,46 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    "New club opens directly in endless play; development displays optional milestones without a victory or continuation gate",
+    "An old winning save imports through normal controls and reloads with the entire club intact and no victory gate",
+    "Six complete operational rooms show the next optional milestone of ten, while the club stays active",
+    "The player draws and buys room seven, hires its master and buys its game through native controls; seven operational rooms persist and new visitors still arrive",
+    "Whole-club camera fits a 142-cell-wide purchased map below the former minimum zoom"
+  ],
+  "errors": [],
+  "screenshots": [
+    "endless-first-club.png",
+    "endless-six-working-rooms.png",
+    "endless-seventh-room.png",
+    "endless-wide-map.png",
+    "endless-mobile.png"
+  ],
+  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage",
+  "timings": [
+    {
+      "message": "New club opens directly in endless play; development displays optional milestones without a victory or continuation gate",
+      "elapsedMs": 1342
+    },
+    {
+      "message": "An old winning save imports through normal controls and reloads with the entire club intact and no victory gate",
+      "elapsedMs": 1927
+    },
+    {
+      "message": "Six complete operational rooms show the next optional milestone of ten, while the club stays active",
+      "elapsedMs": 5030
+    },
+    {
+      "message": "The player draws and buys room seven, hires its master and buys its game through native controls; seven operational rooms persist and new visitors still arrive",
+      "elapsedMs": 17647
+    },
+    {
+      "message": "Whole-club camera fits a 142-cell-wide purchased map below the former minimum zoom",
+      "elapsedMs": 23144
+    }
+  ],
+  "url": "http://127.0.0.1:59018/",
+  "fixture": "Clearly labelled one-million-ruble technical construction budget; six rooms, rest places, games and hires use paid APIs. This is not earned progression.",
+  "overviewZoom": 0.15981481481481483,
+  "elapsedMs": 25210
+}

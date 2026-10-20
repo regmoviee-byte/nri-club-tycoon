@@ -1,7 +1,7 @@
 import {BUILD_CATALOG} from '../data/build-catalog.js';
 import {objectCells,objectApproaches,bounds,tileKey} from '../model/layout.js';
 import {ownedCells} from '../model/campaign-layout.js';
-import {staffSeatForMaster} from '../model/staff-room.js';
+import {staffRoomStatus} from '../model/staff-room.js';
 import {guestWaitingStatus} from '../model/guest-waiting.js';
 import {receptionStatus} from '../model/reception-area.js';
 import {personArt,ADMINISTRATOR,escapeHTML as esc} from './people.js';
@@ -112,12 +112,16 @@ export function createWorld(host,callbacks={}){
  const transform=()=>{cameraNode.setAttribute('transform','translate('+camera.x+' '+camera.y+') scale('+camera.zoom+')');callbacks.onCamera?.(camera);};
  const local=e=>{const r=svg.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};};
  const world=e=>{const p=local(e);return unproject((p.x-camera.x)/camera.zoom,(p.y-camera.y)/camera.zoom);};
- const zoomAt=(factor,p)=>{const z=Math.max(.35,Math.min(3,camera.zoom*factor)),ratio=z/camera.zoom;camera.x=p.x-(p.x-camera.x)*ratio;camera.y=p.y-(p.y-camera.y)*ratio;camera.zoom=z;transform();};
- function fit(){if(!club||!width||!height)return;const b=bounds(club.layout),corners=diamond(b.x,b.y,b.w,b.h),minX=Math.min(...corners.map(p=>p.x)),maxX=Math.max(...corners.map(p=>p.x)),minY=Math.min(...corners.map(p=>p.y))-110,maxY=Math.max(...corners.map(p=>p.y))+15;camera.zoom=Math.max(.35,Math.min(1.65,(width-100)/(maxX-minX),(height-95)/(maxY-minY)));camera.x=width/2-(minX+maxX)/2*camera.zoom;camera.y=height/2-(minY+maxY)/2*camera.zoom;transform();}
+ const zoomAt=(factor,p)=>{const z=Math.max(Math.min(.35,overviewZoom()),Math.min(3,camera.zoom*factor)),ratio=z/camera.zoom;camera.x=p.x-(p.x-camera.x)*ratio;camera.y=p.y-(p.y-camera.y)*ratio;camera.zoom=z;transform();};
+ function overviewBounds(){const b=bounds(club.layout),corners=diamond(b.x,b.y,b.w,b.h);return{minX:Math.min(...corners.map(p=>p.x)),maxX:Math.max(...corners.map(p=>p.x)),minY:Math.min(...corners.map(p=>p.y))-110,maxY:Math.max(...corners.map(p=>p.y))+15};}
+ function overviewZoom(){if(!club||!width||!height)return .35;const b=overviewBounds();return Math.max(Number.EPSILON,Math.min(1.65,(width-100)/(b.maxX-b.minX),(height-95)/(b.maxY-b.minY)));}
+ function fit(){if(!club||!width||!height)return;const b=overviewBounds();camera.zoom=overviewZoom();camera.x=width/2-(b.minX+b.maxX)/2*camera.zoom;camera.y=height/2-(b.minY+b.maxY)/2*camera.zoom;transform();}
  const resize=new ResizeObserver(entries=>{const r=entries[0].contentRect,first=!width;camera.x+=(r.width-width)/2;camera.y+=(r.height-height)/2;width=r.width;height=r.height;svg.setAttribute('viewBox','0 0 '+width+' '+height);if(first||narrow!==(innerWidth<=640)){narrow=innerWidth<=640;fit();}else transform();});resize.observe(host);
  function render(next,state={}){
   club=next;view=state;cancelAnimationFrame(animation);if(lastSeed!==club.seed){positions.clear();motions.clear();lastSeed=club.seed;}const actors=[];const layout=club.layout,b=bounds(layout),owned=ownedCells(layout),floors=new Map(layout.floors.map(f=>[tileKey(f.x,f.y),f.finish])),zones=new Map(layout.rooms.flatMap(r=>r.cells.map(c=>[tileKey(c.x,c.y),r])));let floor='',entities=[];
   const margin=state.tool==='land'?5:2,waitingStatus=guestWaitingStatus(club);
+  const restingByObject=new Map(),mastersById=new Map(club.staff.map(m=>[m.id,m]));
+  for(const {masterId,seat} of staffRoomStatus(club).assignments){const person=mastersById.get(masterId);if(!seat||!person||club.rooms.some(r=>r.status==='running'&&r.masterId===masterId))continue;const people=restingByObject.get(seat.objectId)??[];people.push({person,seat});restingByObject.set(seat.objectId,people);}
   for(let y=b.minY-margin;y<b.maxY+margin;y++)for(let x=b.minX-margin;x<b.maxX+margin;x++){
    const key=tileKey(x,y),isOwned=owned.has(key),zone=zones.get(key),color=!isOwned?'#9baaa2':floors.has(key)?zone?.purpose==='staff'?'#b9bbb0':'#c5ad84':'#b2bab2';
    floor+=polygon(diamond(x,y),color,isOwned?'#9d9e8c':'#a0afa7','data-cell="'+x+','+y+'" class="'+(isOwned?'owned-cell':'outside-cell')+'"');
@@ -139,7 +143,7 @@ export function createWorld(host,callbacks={}){
    const room=club.rooms.find(r=>r.id===object.roomId),guest=object.role==='guest'?club.guests.find(g=>g.roomId===object.roomId&&g.seat===object.seat):null;
    const master=object.role==='master'&&room?.status==='running'?club.staff.find(m=>m.id===room.masterId):null;
    const people=[];if(guest)people.push({person:guest,master:false,x:object.x+.5,y:object.y+.5});if(master)people.push({person:master,master:true,x:object.x+.5,y:object.y+.5});
-   for(const m of club.staff){const seat=staffSeatForMaster(club,m.id);if(!club.rooms.some(r=>r.status==='running'&&r.masterId===m.id)&&seat?.objectId===object.id)people.push({person:m,master:true,x:seat.x+.5,y:seat.y+.5});}
+   for(const {person:m,seat} of restingByObject.get(object.id)??[])people.push({person:m,master:true,x:seat.x+.5,y:seat.y+.5});
    for(const assignment of waitingStatus.assignments.filter(a=>a.seat?.objectId===object.id&&a.guestId!==state.selectedGuest)){const g=club.guests.find(g=>g.id===assignment.guestId);if(g)people.push({person:g,master:false,x:assignment.seat.x+.5,y:assignment.seat.y+.5});}
    if(people.length)art=furnitureArt(object,layout,{selected:state.objectId===object.id,occupied:true});
    for(const actor of people){const back=seatFrame(object.rotation).backNear;

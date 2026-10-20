@@ -2,13 +2,14 @@ import {GAME_SHOP,ECONOMY,gameProduct,availableMasterCandidates,commerceItems,PR
 import {SESSIONS} from '../data/club.js';
 import {SYSTEMS} from '../data/systems.js';
 import {campaignProgress,readyRooms,masterTrainingOffer,configureRoom} from './campaign.js';
-import {staffRoomStatus,staffSeatForMaster,staffCanRest} from './staff-room.js';
+import {staffRoomStatus} from './staff-room.js';
 import {zoneCleaning} from './operations.js';
 import {hourlyCosts,obligations,reserveRequired,reserveEstimate,sessionForecast} from './finances.js';
 import {masterPreferences,sessionDurationRange} from './preferences.js';
 import {kitStatus,roomPreparation} from './kit-lifecycle.js';
 import {libraryStorageStatus} from './layout-club.js';
 import {SERVICE_STAFF} from './service-staff.js';
+import {developmentStatus} from './development.js';
 
 const normalizeStaff=master=>{
  const fatigue=master.fatigue??0;
@@ -17,14 +18,15 @@ const normalizeStaff=master=>{
  return {...master,fatigueValue:fatigue,systems:master.known,wage:master.hourlyWage,hireCost:master.fee,fatigue:fatigue<=4?'Отдохнул перед игрой':fatigue<=8?'Устал после игр; пауза поможет':'Сильно устал; стоит передать стол коллеге',teachingWillingness:p.wantsTeaching?'Готов объяснять правила':'Предпочитает подготовленных игроков',expectations:p.teachingCapacity?`Может одновременно вводить в игру ${p.teachingCapacity} новичков`:'Рассчитывает на знакомую с правилами компанию',trainingOptions};
 };
 export function campaignMarket(club){
+ const rest=staffRoomStatus(club),restSeats=new Map(rest.assignments.map(a=>[a.masterId,a.seat])),working=new Set(club.rooms.filter(r=>r.status==='running').flatMap(r=>[r.masterId,r.run?.room?.master?.id]));
  const candidates=availableMasterCandidates(club).map(m=>({...normalizeStaff(m),candidateId:m.id,returning:(club.personnelArchive??[]).some(person=>person.id===m.id)}));
  return {
- staffRoom:staffRoomStatus(club),
+ staffRoom:rest,
  libraryStorage:libraryStorageStatus(club),
  serviceStaff:{hired:!!club.serviceStaff?.length,active:club.serviceStaff?.some(s=>s.onShift)??false,hireCost:SERVICE_STAFF.fee,hourlyWage:club.serviceStaff?.[0]?.hourlyWage??SERVICE_STAFF.hourlyWage},
  games:GAME_SHOP.map(g=>({...g,systemId:g.id,description:SYSTEMS[g.id]?.about,price:club.library.copies.some(k=>k.systemId===g.id)?Math.round(g.price*.6):g.price})),
  ownedGames:club.library.copies.map(k=>({...k,name:gameProduct(k.systemId).name,state:kitStatus(club,k.id),assignedRoomIds:club.rooms.filter(r=>r.kitId===k.id).map(r=>r.id)})),
- staff:club.staff.map(m=>({...normalizeStaff(m),restSeat:staffSeatForMaster(club,m.id),canRest:staffCanRest(club,m.id),dismissal:{busy:club.rooms.some(r=>r.status==='running'&&r.masterId===m.id),losesTraining:Boolean(m.training),trainingCost:m.training?.cost??null,warning:m.training?'Обучение будет прервано без возврата оплаты. Полученные ранее навыки сохранятся.':'Плата за приглашение не возвращается. Долги клуба сохраняются.'},training:m.training?{...m.training,label:m.training.systemId==='teaching'?'Объяснение правил':m.training.systemId==='turns'?'Работа с группой':SYSTEMS[m.training.systemId]?.name,remainingHours:Math.max(0,m.training.endsAt-club.clock)}:null})),candidates,
+ staff:club.staff.map(m=>({...normalizeStaff(m),restSeat:restSeats.get(m.id)??null,canRest:Boolean(!m.training&&restSeats.get(m.id)&&!working.has(m.id)),dismissal:{busy:club.rooms.some(r=>r.status==='running'&&r.masterId===m.id),losesTraining:Boolean(m.training),trainingCost:m.training?.cost??null,warning:m.training?'Обучение будет прервано без возврата оплаты. Полученные ранее навыки сохранятся.':'Плата за приглашение не возвращается. Долги клуба сохраняются.'},training:m.training?{...m.training,label:m.training.systemId==='teaching'?'Объяснение правил':m.training.systemId==='turns'?'Работа с группой':SYSTEMS[m.training.systemId]?.name,remainingHours:Math.max(0,m.training.endsAt-club.clock)}:null})),candidates,
  adventures:SESSIONS.filter(s=>club.library.copies.some(k=>k.systemId===s.systemId)).map(s=>({...structuredClone(s),adventureId:s.id,systemId:s.systemId,title:s.title,description:s.premise,durationRange:sessionDurationRange(s),price:s.minutes<=180?300:s.minutes<=240?500:700,owned:club.library.adventures.includes(s.id)})),
  equipment:commerceItems(club.layout).map(item=>{const product=PRODUCTS[item.type],original=club.layout.objects.find(o=>o.id===item.id);return {...item,kind:original.kind,name:product.name,hourlyCost:product.hourly??0,service:product.service,unitCost:product.unitCost??0,salePrice:product.salePrice??0,locked:club.rooms.some(r=>r.status==='running'&&r.layout.items.includes(item.id))};}),
  };
@@ -32,8 +34,8 @@ export function campaignMarket(club){
 export function campaignStatus(club){
  const costs=hourlyCosts(club),progress=campaignProgress(club),plan=club.campaign.recoveryPlan,estimate=reserveEstimate(club);
  return {balance:club.finance.cash,cash:Math.max(0,club.finance.cash),debt:Math.max(0,-club.finance.cash),obligations:obligations(club),reserve:estimate.total,reserveDetails:{total:estimate.total,through:estimate.through,hours:estimate.hours,wages:estimate.wages,operating:estimate.operating,upperBound:true},hourlyCosts:Object.values(costs).reduce((sum,cost)=>sum+cost,0),guestPricePerHour:ECONOMY.guestHour,
- state:club.campaign.status==='restructure'?'recovery':club.campaign.status==='bankrupt'?'bankrupt':club.campaign.status==='debt'?'debt':club.campaign.won&&!club.campaign.continued?'goal':'active',
- goal:{...club.campaign.goal,directions:club.campaign.goal.systems??club.campaign.goal.genres,current:{...progress,directions:progress.systems},directionLabel:'Одновременно доступные системы',continued:club.campaign.continued},
+ state:club.campaign.status==='restructure'?'recovery':club.campaign.status==='bankrupt'?'bankrupt':club.campaign.status==='debt'?'debt':'active',
+ development:developmentStatus(club,progress),
  recoveryPlan:plan?{...plan,id:plan.id??'recovery',balanceAfter:plan.balanceAfter??plan.cashAfter??plan.cash,items:plan.items??plan.actions??[]}:null,ledger:club.finance.ledger};
 }
 export function roomAssignment(club,id){

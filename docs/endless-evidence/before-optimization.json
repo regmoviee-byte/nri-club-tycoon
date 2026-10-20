@@ -1,0 +1,20 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    "New club opens directly in endless play; development displays optional milestones without a victory or continuation gate",
+    "An old winning save imports through normal controls and reloads with the entire club intact and no victory gate",
+    "Six complete operational rooms show the next optional milestone of ten, while the club stays active",
+    "The player draws and buys room seven, hires its master and buys its game through native controls; seven operational rooms persist and new visitors still arrive"
+  ],
+  "errors": [],
+  "screenshots": [
+    "endless-first-club.png",
+    "endless-six-working-rooms.png",
+    "endless-seventh-room.png",
+    "endless-mobile.png"
+  ],
+  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage",
+  "url": "http://127.0.0.1:57388/",
+  "fixture": "Clearly labelled one-million-ruble technical construction budget; six rooms, rest places, games and hires use paid APIs. This is not earned progression."
+}

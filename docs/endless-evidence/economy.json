@@ -1,0 +1,45 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    "Six initial guests and 4,050 rubles; silent isolated browser; no separate dialogs",
+    "A real 150-ruble dice purchase is freely placed on the table and debited once",
+    "One short interview records eight actual answers without money, time or automatic seating; the player fills all four seats",
+    "Integrated room plan lists heard conditions and unknowns; authored adventure sets duration; forecast labels full-payment revenue",
+    "V8/V3 signed session survives reload, settles once and shows continuous satisfaction, ticket percentage and discounts",
+    "Dismissal and reload cannot roll free replacement visitors or advance the clock",
+    "Explicit wait admits a finite wave within 30 minutes at the shown operating cost; it never seats guests or starts play",
+    "All ten panels stay integrated; the 25-ruble helper can actually clean a section in 15 minutes for 10 materials plus 6.25 wages, then leave shift",
+    "A real water dispenser purchase exposes working assign/release controls for the helper, without automatic guest decisions"
+  ],
+  "errors": [],
+  "screenshots": [
+    "economy-guest-intake.png",
+    "economy-table-plan.png",
+    "economy-payment-results.png",
+    "economy-arrivals.png",
+    "economy-service-controls.png",
+    "economy-mobile.png"
+  ],
+  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage",
+  "url": "http://127.0.0.1:61138/",
+  "settlement": {
+    "payments": 1600,
+    "tips": 80,
+    "fullPaid": 4,
+    "partialPaid": 0,
+    "refunds": 0,
+    "satisfaction": [
+      9.84,
+      9.87,
+      9.5,
+      9.93
+    ]
+  },
+  "wait": {
+    "minutes": 30,
+    "cost": 70,
+    "upperBound": 70,
+    "arrivals": 1
+  }
+}

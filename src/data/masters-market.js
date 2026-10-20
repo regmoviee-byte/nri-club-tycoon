@@ -1,8 +1,9 @@
 import {MASTERS} from './club.js';
 import {visualFor} from './visuals.js';
+import {nextMasterApplicant} from './master-applicants.js';
 
-// Stable people, not an endless series of renamed copies. The first seven
-// contracts deliberately retain their published IDs, prices and capabilities.
+// Existing people retain published IDs, prices and capabilities. Further
+// applicants enter after the initial shortlist has mostly been hired.
 const legacySystems=[['fate','mausritter'],['dnd5','trail','loop'],['vaesen','coriolis','fate'],['cthulhu7','loop'],['fate','vampire','trail'],['cyberpunk','mausritter'],['dnd5','cthulhu7','vaesen','vampire','cyberpunk']];
 const legacyTiers=['beginner','experienced','experienced','beginner','experienced','beginner','specialist'];
 const legacy=MASTERS.map((base,index)=>{
@@ -36,11 +37,15 @@ const authored=profiles.map((p,offset)=>{
 });
 const catalog=[...legacy,...authored].map(person=>({...person,fatigue:0,hoursWorked:0}));
 export const MASTER_MARKET_COUNT=catalog.length;
-export function masterCandidate(index){return Number.isInteger(index)&&index>=0&&index<catalog.length?structuredClone(catalog[index]):null;}
+export function masterCandidate(index){return !Number.isSafeInteger(index)||index<0||index>Number.MAX_SAFE_INTEGER-1000?null:index<catalog.length?structuredClone(catalog[index]):nextMasterApplicant(index,catalog);}
 export const marketCandidates=()=>structuredClone(catalog);
 export function availableMasterCandidates(club){
  const hired=new Set(club.staff.map(m=>m.id)),archived=new Map((club.personnelArchive??[]).map(m=>[m.id,m]));
  const people=catalog.map(m=>archived.get(m.id)??m);
  for(const person of archived.values())if(!catalog.some(m=>m.id===person.id))people.push(person);
+ const recruited=[...club.staff,...archived.values()].map(m=>/^hire-\d+$/.test(m.id)?Number(m.id.slice(5)):-1),frontier=Math.max(catalog.length-1,...recruited);
+ if(catalog.filter(m=>!hired.has(m.id)).length<6||frontier>=catalog.length){
+  for(let index=frontier+1;index<=frontier+8;index++){const person=masterCandidate(index);if(person)people.push(person);}
+ }
  return structuredClone(people.filter(m=>!hired.has(m.id)));
 }
