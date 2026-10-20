@@ -6,6 +6,7 @@ import {syncRooms as syncCampaignRooms,replenish as replenishCampaign,updateCamp
 import {operationsConstructionBlocker,ensureOperations} from './operations.js';
 import {retireStaffRoomLegacyCredit} from './staff-room.js';
 import {investmentQuote} from './finance-breakdown.js';
+import {parentTable,surfaceWorld} from './table-surface.js';
 
 export const CONSTRUCTION_DEMO_KEY='nri-club-tycoon:layout-demo:v1';
 const clone=value=>structuredClone(value);
@@ -19,6 +20,7 @@ export function normalizeEdit(club,input) {
   const edit=clone(input),layout=club.layout;
   function bindTabletop(object){
     if(BUILD_CATALOG[object.kind]?.layer!=='tabletop')return object;
+    if(object.surface){const table=parentTable(object,layout);if(table){const point=surfaceWorld(table,object.surface);object.x=Math.floor(point.x);object.y=Math.floor(point.y);if(table.roomId)object.roomId=table.roomId;}return object;}
     const table=layout.objects.find(o=>BUILD_CATALOG[o.kind]?.family==='table'&&objectCells(o).some(c=>c.x===object.x&&c.y===object.y));
     if(!table)return object;
     const cells=objectCells(table),minX=Math.min(...cells.map(c=>c.x)),maxX=Math.max(...cells.map(c=>c.x)),minY=Math.min(...cells.map(c=>c.y)),maxY=Math.max(...cells.map(c=>c.y));
@@ -51,7 +53,7 @@ export function normalizeEdit(club,input) {
   }
   if(edit.type==='move') {
     const previous=layout.objects.find(o=>o.id===edit.id);
-    if(BUILD_CATALOG[previous?.kind]?.layer==='tabletop'){const object=bindTabletop({...previous,...edit});edit.x=object.x;edit.y=object.y;}
+    if(BUILD_CATALOG[previous?.kind]?.layer==='tabletop'){const object=bindTabletop({...previous,...edit});edit.x=object.x;edit.y=object.y;if(object.surface)edit.surface=object.surface;if(object.roomId)edit.roomId=object.roomId;}
     if(BUILD_CATALOG[previous?.kind]?.family==='chair') {
       const object=bindChair({...previous,...edit},previous);
       for(const key of ['roomId','role','seat'])edit[key]=object[key]??null;

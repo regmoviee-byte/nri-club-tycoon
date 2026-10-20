@@ -1,11 +1,12 @@
 {
   "baseRepository": "https://github.com/regmoviee-byte/nri-club-tycoon",
-  "baseCommit": "b32270ecbe268079c9deaea7a46c6b9114758f20",
+  "baseCommit": "10afd0fb111a85d59271a4a1f9ff2049fac68b81",
   "date": "2026-10-20",
-  "scope": "Tabletop grid and raised previews; real five-person seating verification. Evidence files excluded to avoid self-reference.",
-  "modelChecks": 62,
+  "scope": "Continuous tabletop placement, real collision footprints, mat support layer, native dragging, 37 crafted catalog models and connected hair/neck layers. Evidence excluded to avoid self-reference.",
+  "modelChecks": 72,
   "browserCheckBlocks": 22,
-  "tableCheckBlocks": 6,
+  "seatingCheckBlocks": 8,
+  "freeSurfaceCheckBlocks": 11,
   "files": [
     {
       "path": ".gitignore",
@@ -33,6 +34,11 @@
       "bytes": 9020
     },
     {
+      "path": "docs/FREE-TABLETOP-UPDATE.md",
+      "sha256": "8ae778154177823c63686cb4634683c789f107dcfdc17cf883dd449045c878b3",
+      "bytes": 4702
+    },
+    {
       "path": "docs/GAME_DESIGN.md",
       "sha256": "aadb9835145023646c80f1effdc30d5a091ec5fd5c8487da405dc20cb980cc6a",
       "bytes": 18814
@@ -54,13 +60,13 @@
     },
     {
       "path": "docs/TABLE-GRID.md",
-      "sha256": "2a6e9872f6facf07e632226329ba51895262a582252f9c6c236eda0a93160047",
-      "bytes": 3138
+      "sha256": "314e8489f485712df7b79e94d49fcee5833fcd7f34eb9c8680ffbbdf2d6e6176",
+      "bytes": 3382
     },
     {
       "path": "index.html",
-      "sha256": "6d1d4ce74954462c1eca724f51c1194fc5f56d8f0ae7fe8151192369e7dfa186",
-      "bytes": 6360
+      "sha256": "8e2ae41f2d03647a56a8811892eb7aecd13d7208ce160f2700a7f9896644fe36",
+      "bytes": 6763
     },
     {
       "path": "package.json",
@@ -89,8 +95,8 @@
     },
     {
       "path": "src/data/build-catalog.js",
-      "sha256": "98587fa3b1588c0a9cc4918b5ea4278444a58afd987ccfc33f8ab51f1cfaac0a",
-      "bytes": 4939
+      "sha256": "6d1a9e5ce75e7f99e57670364cd0d4a26a35454e947d9055a7839e545523fe9b",
+      "bytes": 5087
     },
     {
       "path": "src/data/catalog.js",
@@ -184,8 +190,8 @@
     },
     {
       "path": "src/model/construction.js",
-      "sha256": "32bee9b644f62b8e4f69c2cffc60d8ff53481d4eb2d1dd1de9f7446a3f066a8c",
-      "bytes": 10478
+      "sha256": "507d3444e3a80d972e3dd045004e7e146e6149d4c13791bbbc3d6634b2706fe9",
+      "bytes": 10865
     },
     {
       "path": "src/model/drag-geometry.js",
@@ -239,8 +245,8 @@
     },
     {
       "path": "src/model/layout.js",
-      "sha256": "53c0e6c2dfd6a3eff1edec6b83bb8a6e1092429c026c437e02b57ce614cb0dda",
-      "bytes": 30939
+      "sha256": "b7c7ff4d1a518de8a4c1016314ad249c6e9885dd28e9a533cf9a29dd71f64b75",
+      "bytes": 32619
     },
     {
       "path": "src/model/lifecycle.js",
@@ -303,9 +309,19 @@
       "bytes": 2790
     },
     {
+      "path": "src/model/table-surface.js",
+      "sha256": "e35083ea0da10044bfd7db47c06a47c29cc6f6ca62fa49359e1add392738a0cc",
+      "bytes": 6542
+    },
+    {
       "path": "src/model/upgrades.js",
-      "sha256": "5f83359e8f449fcc41fc8ca7af5757c376ca0bcbfcc81bccc636f39e13fa9916",
-      "bytes": 6063
+      "sha256": "ddb7625cebdb7a2e85d202cd7fc124bb8ccddba05afe05c76399a14477e74bda",
+      "bytes": 6189
+    },
+    {
+      "path": "src/model/wall-placement.js",
+      "sha256": "598bcce1bc5d04ff7b5ee2294051d83a036d584e25b95ae24a29141001abf52b",
+      "bytes": 1185
     },
     {
       "path": "src/ui/app.js",
@@ -348,6 +364,11 @@
       "bytes": 10832
     },
     {
+      "path": "src/ui/furniture-art.js",
+      "sha256": "58de545b3c8ddad2c960ddb88e3e6701a85f452cf77922c98d60c2ecb43732d3",
+      "bytes": 14279
+    },
+    {
       "path": "src/ui/game.js",
       "sha256": "9b9b790b83deba1d7f6a00211618476f242121403e1c4a7b4fb8a368292dbc92",
       "bytes": 32888
@@ -369,8 +390,8 @@
     },
     {
       "path": "src/ui/isometric-solids.js",
-      "sha256": "0ce235c1b90433614bd9f259dfe04df455fdcd4072225f13c04c5aaabf343bf8",
-      "bytes": 3197
+      "sha256": "1f9f6503d1f434000c5d71120f1523740b65e656ba356423fbad59c96a93dff5",
+      "bytes": 3214
     },
     {
       "path": "src/ui/layout-isometric.css",
@@ -403,14 +424,19 @@
       "bytes": 4051
     },
     {
+      "path": "src/ui/model-art.js",
+      "sha256": "224cfc4eb8f0c070e5e8bfab1b3fed723a0163bfc199a7d9a3ea9585339d6413",
+      "bytes": 2712
+    },
+    {
       "path": "src/ui/operations-ui.js",
       "sha256": "5ce52b8a60fd77615bf50630ee06c4603e99e735b744aeb4ad7146f4f8af24f1",
       "bytes": 18501
     },
     {
       "path": "src/ui/people.js",
-      "sha256": "c9cb530d71ab7f1cd26821607d08bcca792d2b692576d55df2567572d8c2a9da",
-      "bytes": 12888
+      "sha256": "fc4a945bc1ea0c11858eeb4566bfac5521ef743f88f23b288371b87762eb542b",
+      "bytes": 13311
     },
     {
       "path": "src/ui/portrait.js",
@@ -459,28 +485,33 @@
     },
     {
       "path": "src/ui/seat-solids.js",
-      "sha256": "df06ffe4d446fbb0e44725e9431bdcd86cb6f712852bd2f7aa7b6c93ee14e80c",
-      "bytes": 1096
+      "sha256": "67c8ddc1c53a6775252d816fcc77d46a948c7b82235ae8c4bbf7452900581827",
+      "bytes": 1665
     },
     {
       "path": "src/ui/seated-person.js",
-      "sha256": "8a5dcd6c4d3408d3f1fefdcd06aee79ba65c80358dd5505309b6fb51baa35921",
-      "bytes": 4466
+      "sha256": "0431847e5b8a171dab515e7cae85d66aa6a2855a508e532f4b9cc484c7cac2e3",
+      "bytes": 4773
     },
     {
       "path": "src/ui/studio.css",
-      "sha256": "922846aed86714aec530b56bd3010bda5470814f2699266846ee007c465572a7",
-      "bytes": 33677
+      "sha256": "7b7c82fd9ed1e490ed939d0ed664ee5962ec4834d7e545212b4c25bd92a32472",
+      "bytes": 34072
     },
     {
       "path": "src/ui/studio.js",
-      "sha256": "ed5aa1bb171d74ebc7603f1429f28e9d35e20735d53cfdfe6d448425e953ad99",
-      "bytes": 66775
+      "sha256": "7b16809aa3f614416c36a8071c7936cdc42e8fa3a3c051369a1f5feccd229331",
+      "bytes": 70871
+    },
+    {
+      "path": "src/ui/table-art.js",
+      "sha256": "393c0c5875564967bab06e1e055cce321d25a69b60a94a73b583855fe6a4ccfb",
+      "bytes": 6918
     },
     {
       "path": "src/ui/world.js",
-      "sha256": "c7a24eb3a0eb50c5c32eb5acfb55f40044c5f2ec8f1f97a64234d57672c3777c",
-      "bytes": 29220
+      "sha256": "a0cc5dda1bd2e54860130a446cf5acdc63be2eeead2d7b51ace228853c160ac0",
+      "bytes": 29165
     },
     {
       "path": "Start-Club.cmd",
@@ -513,14 +544,24 @@
       "bytes": 2589
     },
     {
+      "path": "tests/table-surface.test.mjs",
+      "sha256": "e0826698788a6f4e5b6d991e02736987339ad3a117b1eff2ce1121257969cbb2",
+      "bytes": 5627
+    },
+    {
       "path": "tools/model-review.mjs",
       "sha256": "1326473962ff7c45b3b9708f8fbfac9b6c2bf6d6e2e55a599a3aeb010a519862",
       "bytes": 1329
     },
     {
       "path": "tools/prepare-entry.mjs",
-      "sha256": "ff0c6bc3bc98c53c2f6c975dcde01ff20e95d217bcbe1c3a6e35ca5e177949f9",
+      "sha256": "9c29b37b9dcebbe9fb62bd6b25a3b494a877aeccd4312e8f77eb467066fb8f15",
       "bytes": 1089
+    },
+    {
+      "path": "tools/review-free-surface.mjs",
+      "sha256": "87cf780a8323eb1ee98515e267d3a683f59bd05c9e61b6ea5022b0669b0104af",
+      "bytes": 18564
     },
     {
       "path": "tools/review-live.mjs",
@@ -534,13 +575,13 @@
     },
     {
       "path": "tools/review-table.mjs",
-      "sha256": "15e671387109506746924504feaff9e1f185e266e8ae05306357d3cca5678dbf",
-      "bytes": 11945
+      "sha256": "f5a1fa4186cf17dd85f92820103f8e1c9e4316ac802dbb1b54561928eb3029e3",
+      "bytes": 126
     },
     {
       "path": "tools/review.mjs",
-      "sha256": "f4a946aeb157b6270f6416e42dd0f4cf8fa13bd69d749bbe93e7938fd8eee412",
-      "bytes": 32197
+      "sha256": "6f8b0f057c509b23c0217bdff199a4108236bae7c311cfb3d2ccbe304dfd772e",
+      "bytes": 32195
     },
     {
       "path": "tools/serve.mjs",

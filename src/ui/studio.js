@@ -18,6 +18,8 @@ import {sessionForecast} from '../model/finances.js';
 import {receptionStatus} from '../model/reception-area.js';
 import {visibleGuestHistory,visibleDemand} from '../model/guests-history.js';
 import {portrait,personArt,escapeHTML as esc} from './people.js';
+import {surfaceEditAt,surfacePose,normalizeAngle,parentTable} from '../model/table-surface.js';
+import {wallPlacementAt,wallMountHeight} from '../model/wall-placement.js';
 
 const root=document.querySelector('#game');
 const money=n=>Math.round(Number(n)||0).toLocaleString('ru-RU')+' ₽';
@@ -40,14 +42,14 @@ function layout(){
  handle.addEventListener('pointerup',()=>{resizeStart=null;});
  handle.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();setPanelWidth(root.querySelector('.side-panel').getBoundingClientRect().width+(e.key==='ArrowLeft'?-20:20));}});
  try{const width=Number(localStorage.getItem('nri-studio-panel'));if(width)setPanelWidth(width);}catch{}
- world=createWorld(root.querySelector('#world-host'),{onSelect:selectWorld,onInspect:inspectWorld,onHover:hover,onPaintStart:paintStart,onPaintMove:paintMove,onPaintEnd:paintEnd,onCancel:cancelBuild,onGuestDrag:dragPerson,onGuestDrop:dropGuest,onDragEnd:hideDrag});
+ world=createWorld(root.querySelector('#world-host'),{onSelect:selectWorld,onInspect:inspectWorld,onHover:hover,onPaintStart:paintStart,onPaintMove:paintMove,onPaintEnd:paintEnd,onCancel:cancelBuild,onGuestDrag:dragPerson,onObjectDrag:dragObject,onGuestDrop:dropGuest,onDragEnd:hideDrag});
 }
 function setPanelWidth(value){const width=Math.max(280,Math.min(580,innerWidth*.5,value));root.style.setProperty('--panel-width',width+'px');try{localStorage.setItem('nri-studio-panel',String(width));}catch{}}
 function note(message,error=false){ui.message=message;ui.error=error;const n=root.querySelector('#message');if(n){n.textContent=message;n.classList.toggle('is-error',error);} }
 function nav(tab){ui.tab=tab;ui.pending=null;if(tab!=='build'){ui.tool='select';ui.preview=null;ui.cells.clear();}render(true);}
 function stateView(){return {tool:ui.tab==='build'?ui.tool:null,kind:ui.kind,walls:ui.walls,objectId:ui.object,selectedGuest:ui.guest,cells:[...ui.cells.values()]};}
 function render(resetScroll=false){
- if(!club)return;root.setAttribute('aria-busy',String(busy));root.classList.toggle('busy',busy);root.classList.toggle('mode-build',ui.tab==='build');
+ if(!club)return;root.dataset.buildTool=ui.tab==='build'?ui.tool:'';root.setAttribute('aria-busy',String(busy));root.classList.toggle('busy',busy);root.classList.toggle('mode-build',ui.tab==='build');
  const status=campaignStatus(club),prestige=clubPrestige(club),rating=club.rating.count?(club.rating.sum/club.rating.count).toFixed(1):'—';
  root.querySelector('#resources').innerHTML=[['В КАССЕ',money(status.balance),'wallet'],['СВОБОДНО',money(status.balance-status.reserve),'free'],['РЕЙТИНГ',rating+' / 10','rating'],['ПРЕСТИЖ',prestige.value,'prestige']].map(([a,b,c])=>'<div class="resource '+c+'"><small>'+a+'</small><strong>'+b+'</strong></div>').join('');
  root.querySelectorAll('[data-action="nav"]').forEach(n=>n.classList.toggle('active',n.dataset.tab===ui.tab));
@@ -61,7 +63,7 @@ function render(resetScroll=false){
  root.querySelector('#time-status').innerHTML=active.length?'<b>'+active.length+' '+(active.length===1?'партия идёт':'партии идут')+'</b><span>Ближайшее окончание в '+clockText(Math.min(...active.map(r=>r.run.endsAt)))+'</span>':'<b>Время на паузе</b><span>Разговоры, рассадка и строительство не тратят часы.</span>';
  root.querySelector('[data-action="advance"]').disabled=busy||readOnly||!active.length;root.querySelector('[data-action="wait"]').disabled=busy||readOnly;
  root.querySelector('#save-state').textContent=readOnly?'Только просмотр':busy?'Сохраняю…':'Сохранено';
- root.querySelector('#map-help').textContent=ui.tab==='build'&&ui.tool!=='select'?'Пробел + перетаскивание — камера · R — поворот · Esc — отмена': 'Колесо — масштаб · потяните карту — камера · ПКМ — сведения · Home — весь клуб';
+ root.querySelector('#map-help').textContent=ui.tab==='build'&&BUILD_CATALOG[ui.kind]?.layer==='tabletop'&&ui.tool!=='select'?'Свободная установка · R / Shift+R — ±15° · Esc — отмена':ui.tab==='build'&&ui.tool==='select'?'Потяните предмет — перенос · Пробел + перетаскивание — камера · ПКМ — сведения':ui.tab==='build'&&ui.tool!=='select'?'Пробел + перетаскивание — камера · R — поворот · Esc — отмена': 'Колесо — масштаб · потяните карту — камера · ПКМ — сведения · Home — весь клуб';
  world.render(club,stateView());renderPreview();note(ui.message,ui.error);
 }
 function guestTime(g){if(g.schedule.leaveAt<=club.clock)return 'Пора уходить';return g.asked.includes('time')?'до '+clockText(g.schedule.leaveAt):'Время не уточнено';}
@@ -145,12 +147,12 @@ function buildingHTML(){
  (ui.tool==='land'?intro('Отмечайте клетки рядом с участком. 125 ₽ за клетку.'):ui.tool==='room'?'<label>Назначение<select id="room-purpose">'+options([['game','Игровая комната'],['staff','Отдых мастеров']],ui.purpose)+'</select></label><label class="check"><input type="checkbox" id="room-furnished" '+(ui.furnished?'checked':'')+'> С готовой мебелью</label>'+intro('Потяните от одного угла к другому. Вход появится у нижнего угла левой стены.'):['wall','door','window'].includes(ui.tool)?intro('Ведите вдоль границ клеток.'):ui.tool==='floor'?intro('Проведите кистью по клеткам пола.'):'')+
  (selected?'<div class="selected-object">'+objectHTML(selected)+'</div>':'')+
  '<div class="catalog-header"><div class="catalog-filters"><input id="catalog-search" type="search" placeholder="Найти предмет…" aria-label="Найти предмет" value="'+esc(ui.catalogSearch)+'"><select id="catalog-category" aria-label="Категория предметов">'+options(Object.entries(categories),ui.category)+'</select></div>'+
- (item?'<div class="selected-product"><span>'+itemThumbnail(item.kind)+'</span><div><b>'+esc(item.name)+'</b><small>'+item.width+'×'+item.height+' · '+({floor:'на пол',wall:'на стену',tabletop:'на стол',ceiling:'на потолок'}[item.layer])+' · '+money(item.price)+(item.hourlyCost?' · '+money(item.hourlyCost)+'/ч':'')+'</small><p>'+esc(effectText(item.kind))+'</p></div></div>':'<p class="catalog-tip">Выберите вещь → нажмите на карту → подтвердите покупку. R — поворот.</p>')+'</div><div class="catalog-grid" id="catalog-grid">'+catalogCards()+'</div>'+
+ (item?'<div class="selected-product"><span>'+itemThumbnail(item.kind)+'</span><div><b>'+esc(item.name)+'</b><small>'+(item.layer==='tabletop'?'':item.width+'×'+item.height+' · ')+({floor:'на пол',wall:'на стену',tabletop:'на стол',ceiling:'на потолок'}[item.layer])+' · '+money(item.price)+(item.layer==='tabletop'?' · свободная расстановка':'')+(item.hourlyCost?' · '+money(item.hourlyCost)+'/ч':'')+'</small><p>'+esc(effectText(item.kind))+'</p></div></div>':'<p class="catalog-tip">Выберите вещь → нажмите на карту → подтвердите покупку. R — поворот.</p>')+'</div><div class="catalog-grid" id="catalog-grid">'+catalogCards()+'</div>'+
  '<div class="build-bottom">'+button('↶ Отменить стройку','undo-build',!undo?'disabled':'')+button('Снять инструмент','cancel-build')+'</div>';
 }
 function objectHTML(o){
  const spec=BUILD_CATALOG[o.kind];
- return '<h3>'+esc(spec.name)+'</h3><p>'+esc(effectText(o.kind))+'</p>'+metric('Занимает',spec.width+'×'+spec.height+' клеток')+metric('Обслуживание',spec.hourlyCost?money(spec.hourlyCost)+'/ч':'Нет почасовой платы')+'<div class="button-row">'+button('Переместить','move-object','data-id="'+esc(o.id)+'"')+button('Повернуть R','rotate-object','data-id="'+esc(o.id)+'"')+button('Продать · '+money(Math.floor((o.price??spec.price)*.6)),'sell-object','data-id="'+esc(o.id)+'"','danger')+'</div>';
+ return '<h3>'+esc(spec.name)+'</h3><p>'+esc(effectText(o.kind))+'</p>'+metric(spec.layer==='tabletop'?'Установка':'Занимает',spec.layer==='tabletop'?'Свободно на столе':spec.width+'×'+spec.height+' клеток')+(spec.family==='table'?'<details class="table-items" open><summary>На столе</summary>'+club.layout.objects.filter(item=>BUILD_CATALOG[item.kind]?.layer==='tabletop'&&parentTable(item,club.layout)?.id===o.id).map(item=>'<div class="table-item-row"><span>'+esc(BUILD_CATALOG[item.kind].name)+'</span>'+button('Выбрать','inspect-object','data-id="'+esc(item.id)+'"')+'</div>').join('')+'</details>':'')+metric('Обслуживание',spec.hourlyCost?money(spec.hourlyCost)+'/ч':'Нет почасовой платы')+'<div class="button-row">'+button('Переместить','move-object','data-id="'+esc(o.id)+'"')+button(spec.layer==='tabletop'?'Повернуть 15°':'Повернуть R','rotate-object','data-id="'+esc(o.id)+'"')+button('Продать · '+money(Math.floor((o.price??spec.price)*.6)),'sell-object','data-id="'+esc(o.id)+'"','danger')+'</div>';
 }
 function teamHTML(){
  const data=campaignMarket(club),prestige=clubPrestige(club);
@@ -232,9 +234,16 @@ function dragPerson(id,x,y,moved){
 function hideDrag(){root.querySelector('#drag-person').hidden=true;}
 function dropGuest(id,seatId){hideDrag();const o=club.layout.objects.find(o=>o.id===seatId);if(o?.role==='guest')seatGuest(id,o.roomId,o.seat);else note('Перетащите гостя на конкретный игровой стул. Место сохранено.');}
 function clearSelection(){ui.cells.clear();ui.edges.clear();ui.preview=null;ui.hover=null;}
-function cancelBuild(){clearSelection();if(world)world.drawPreview([]);renderPreview();}
+let objectGesture=null;
+function cancelBuild(){objectGesture=null;clearSelection();if(world)world.drawPreview([]);renderPreview();}
+function dragObject(id,p,start,finished){
+ if(busy||readOnly)return;
+ if(!objectGesture||objectGesture.id!==id){const object=club.layout.objects.find(o=>o.id===id);if(!object)return;objectGesture={id,object:structuredClone(object),pose:surfacePose(object,club.layout)};clearSelection();ui.object=id;ui.kind=object.kind;ui.rotation=object.rotation;ui.surfaceAngle=objectGesture.pose?.angle??0;ui.tool='move';}
+ const {object,pose}=objectGesture,dx=p.x-start.x,dy=p.y-start.y;const wall=BUILD_CATALOG[object.kind]?.layer==='wall',wallCenter=[{x:object.x+.5,y:object.y},{x:object.x+1,y:object.y+.5},{x:object.x+.5,y:object.y+1},{x:object.x,y:object.y+.5}][object.rotation],lift=wallMountHeight(object.kind)/36;ui.hover=wall?itemEdit({x:wallCenter.x-lift+dx,y:wallCenter.y-lift+dy}):pose?{type:'move',id,...surfaceEditAt(club.layout,object.kind,{x:pose.x+dx,y:pose.y+dy},ui.surfaceAngle)}:{type:'move',id,x:Math.round(object.x+dx),y:Math.round(object.y+dy),rotation:ui.rotation};drawItemPreview(ui.hover);renderPreview(null,false);
+ if(finished){ui.preview=ui.hover;ui.hover=null;objectGesture=null;render();drawItemPreview(ui.preview);renderPreview();}
+}
 function currentPoint(p){const lift=BUILD_CATALOG[ui.kind]?.layer==='tabletop'?TABLETOP_HEIGHT/36:0;return {x:p.x+lift,y:p.y+lift};}
-function itemEdit(p){const q=currentPoint(p);return ui.tool==='move'?{type:'move',id:ui.object,x:Math.floor(q.x),y:Math.floor(q.y),rotation:ui.rotation}:{type:'place',object:{kind:ui.kind,x:Math.floor(q.x),y:Math.floor(q.y),rotation:ui.rotation}};}
+function itemEdit(p){const q=currentPoint(p);if(BUILD_CATALOG[ui.kind]?.layer==='wall'){const lift=wallMountHeight(ui.kind)/36,object={kind:ui.kind,...wallPlacementAt(club.layout,{x:p.x+lift,y:p.y+lift},ui.rotation)};return ui.tool==='move'?{type:'move',id:ui.object,...object}:{type:'place',object};}if(BUILD_CATALOG[ui.kind]?.layer==='tabletop'){const object=surfaceEditAt(club.layout,ui.kind,q,ui.surfaceAngle??0);return ui.tool==='move'?{type:'move',id:ui.object,...object}:{type:'place',object};}return ui.tool==='move'?{type:'move',id:ui.object,x:Math.floor(q.x),y:Math.floor(q.y),rotation:ui.rotation}:{type:'place',object:{kind:ui.kind,x:Math.floor(q.x),y:Math.floor(q.y),rotation:ui.rotation}};}
 function drawItemPreview(edit,quote=buildService.quote(edit)){const normalized=quote.edit??normalizeEdit(club,edit),object=normalized.object??{...club.layout.objects.find(o=>o.id===normalized.id),...normalized};world.drawPreview(objectCells(object),object,quote.ok);return quote;}
 function hover(p){if(ui.tab!=='build'||!['item','move'].includes(ui.tool)||ui.preview)return;ui.hover=itemEdit(p);const q=drawItemPreview(ui.hover);renderPreview(q,false);}
 function paintStart(p){
@@ -261,7 +270,7 @@ function paintEnd(p,start){if(busy||readOnly)return;try{ui.preview=makeEdit();if
 function renderPreview(quote=null,locked=Boolean(ui.preview)){
  const n=root.querySelector('#build-preview');if(ui.tab!=='build'||(!ui.preview&&!ui.hover&&!quote)){n.innerHTML='';n.hidden=true;return;}n.hidden=false;
  const q=quote??buildService.quote(ui.preview??ui.hover),net=(q.cost??0)-(q.refund??0),canPay=club.finance.cash>=net,valid=q.ok&&canPay;
- n.classList.toggle('invalid',!valid);n.innerHTML='<div><small>'+(locked?'СМЕТА ИЗМЕНЕНИЯ':'ПРЕДПРОСМОТР')+'</small><b>'+(q.ok?(net<0?'Возврат '+money(-net):money(net)):esc(q.reason))+'</b><span>'+(q.ok?(canPay?'В кассе останется '+money(club.finance.cash-net):'Не хватает '+money(net-club.finance.cash)):'Изменение не применено')+'</span></div><div class="button-row">'+(locked?button('Применить','apply-build',!valid||busy?'disabled':'','primary'):'')+button('Поворот R','rotate')+button('Отмена','cancel-build')+'</div>';
+ n.classList.toggle('invalid',!valid);n.innerHTML='<div><small>'+(locked?'СМЕТА ИЗМЕНЕНИЯ':'ПРЕДПРОСМОТР')+'</small><b>'+(q.ok?(net<0?'Возврат '+money(-net):money(net)):esc(q.reason))+'</b><span>'+(q.ok?(canPay?'В кассе останется '+money(club.finance.cash-net):'Не хватает '+money(net-club.finance.cash)):'Изменение не применено')+'</span></div><div class="button-row">'+(locked?button('Применить','apply-build',!valid||busy?'disabled':'','primary'):'')+button(BUILD_CATALOG[ui.kind]?.layer==='tabletop'?'R · '+(ui.surfaceAngle??0)+'°':'Поворот R','rotate')+button('Отмена','cancel-build')+'</div>';
 }
 async function applyBuild(){
  if(!ui.preview||busy||readOnly)return;const before=structuredClone(club),q=buildService.quote(ui.preview);if(!q.ok){note(q.reason,true);return;}
@@ -279,11 +288,13 @@ function download(){
  const data=saveDownload(club),url=URL.createObjectURL(new Blob([data.raw],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=data.filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);note('Полная кампания скачана.');
 }
 async function handle(action,d){
+ if(action==='inspect-object'){ui.object=d.id;ui.tool='select';clearSelection();render();return;}
  if(action==='nav'){nav(d.tab);return;}if(action==='guest'){ui.guest=d.id;ui.seatArmed=true;nav('guests');return;}if(action==='room'){ui.room=d.id;nav('rooms');return;}
  if(action==='fit'){world.fit();return;}if(action==='zoom-in'){world.zoom(1.2);return;}if(action==='zoom-out'){world.zoom(1/1.2);return;}if(action==='walls'){ui.walls=ui.walls==='cut'?'hidden':ui.walls==='hidden'?'full':'cut';render();return;}
  if(action==='library-tab'){ui.libraryTab=d.id;ui.librarySearch='';render(true);return;}if(action==='stories-for-system'){ui.libraryTab='adventures';ui.librarySearch=SYSTEMS[d.system]?.name??'';ui.tab='library';render(true);return;}if(action==='category'){ui.category=d.category;ui.catalogSearch='';render(true);return;}if(action==='team-tab'){ui.candidates=d.candidates==='true';render(true);return;}
- if(action==='tool'){clearSelection();ui.tool=d.tool;render();return;}if(action==='build-item'){clearSelection();ui.kind=d.kind;ui.tool='item';ui.rotation=0;render();return;}
+ if(action==='tool'){clearSelection();ui.tool=d.tool;render();return;}if(action==='build-item'){clearSelection();ui.kind=d.kind;ui.tool='item';ui.rotation=0;ui.surfaceAngle=0;render();return;}
  if(action==='cancel-build'){clearSelection();ui.tool='select';render();return;}
+ if(action==='rotate'&&BUILD_CATALOG[ui.kind]?.layer==='tabletop'){ui.surfaceAngle=normalizeAngle((ui.surfaceAngle??0)+(d.reverse?-15:15));const edit=ui.preview??ui.hover;if(edit){const object=edit.object??{...club.layout.objects.find(o=>o.id===edit.id),...edit},pose=surfacePose(object,club.layout),next=surfaceEditAt(club.layout,object.kind,pose,ui.surfaceAngle);if(edit.object)Object.assign(edit.object,next);else Object.assign(edit,next);drawItemPreview(edit);}renderPreview();return;}
  if(action==='rotate'){ui.rotation=(ui.rotation+1)%4;if(ui.preview&&(ui.preview.type==='place'||ui.preview.type==='move')){if(ui.preview.object)ui.preview.object.rotation=ui.rotation;else ui.preview.rotation=ui.rotation;drawItemPreview(ui.preview);}else if(ui.hover){if(ui.hover.object)ui.hover.object.rotation=ui.rotation;else ui.hover.rotation=ui.rotation;drawItemPreview(ui.hover);}renderPreview();return;}
  if(action==='apply-build'){await applyBuild();return;}
  if(action==='export'){download();return;}if(action==='more-ledger'){ui.ledgerLimit+=40;render();return;}
@@ -297,8 +308,8 @@ async function handle(action,d){
  if(action==='start-room'){requestStart(d.id);return;}
  if(action==='advance'){const r=await perform(advanceClub);if(r.ok)nav('finance');return;}
  if(action==='wait'){await command({type:'advanceIdle'},'Прошёл один игровой час.');return;}
- if(action==='move-object'){const o=club.layout.objects.find(o=>o.id===d.id);ui.object=o.id;ui.kind=o.kind;ui.rotation=o.rotation;ui.tool='move';clearSelection();render();return;}
- if(action==='rotate-object'){const o=club.layout.objects.find(o=>o.id===d.id);ui.preview={type:'move',id:o.id,x:o.x,y:o.y,rotation:(o.rotation+1)%4};renderPreview();return;}
+ if(action==='move-object'){const o=club.layout.objects.find(o=>o.id===d.id);ui.object=o.id;ui.kind=o.kind;ui.rotation=o.rotation;ui.surfaceAngle=surfacePose(o,club.layout)?.angle??0;ui.tool='move';clearSelection();render();return;}
+ if(action==='rotate-object'){const o=club.layout.objects.find(o=>o.id===d.id);if(BUILD_CATALOG[o.kind]?.layer==='tabletop'){ui.object=o.id;ui.kind=o.kind;ui.tool='move';ui.surfaceAngle=normalizeAngle((surfacePose(o,club.layout)?.angle??0)+15);ui.preview={type:'move',id:o.id,...surfaceEditAt(club.layout,o.kind,surfacePose(o,club.layout),ui.surfaceAngle)};drawItemPreview(ui.preview);renderPreview();return;}ui.preview={type:'move',id:o.id,x:o.x,y:o.y,rotation:(o.rotation+1)%4};renderPreview();return;}
  if(action==='sell-object'){ui.preview={type:'remove',id:d.id};renderPreview();return;}
  if(action==='undo-build'&&undo){const before=undo;await perform(draft=>{Object.keys(draft).forEach(k=>delete draft[k]);Object.assign(draft,structuredClone(before));return {ok:true};},{message:'Последнее строительство отменено.'});return;}
  if(action==='new-game'){ui.tab='settings';ui.pending={title:'Начать новую игру?',text:'Текущий клуб будет сохранён в местном архиве. Вы начнёте с одной оборудованной комнаты и первого мастера.',run:async()=>{const result=await perform(draft=>{Object.keys(draft).forEach(k=>delete draft[k]);Object.assign(draft,createCampaign(uid()));return {ok:true};},{archive:true,message:'Новый клуб открыт.'});if(result.ok){ui.guest=club.guests[0]?.id;ui.room=club.rooms[0]?.id;ui.object=null;ui.tab='club';render();world.fit();}}};render(true);return;}
@@ -339,7 +350,7 @@ root.addEventListener('change',async e=>{
   try{const next=await readSaveFile(e.target.files[0]);ui.pending={title:'Заменить клуб из файла?',text:'В загружаемой кампании '+next.rating.count+' отзывов, в кассе '+money(next.finance.cash)+'. Текущий клуб сохранится в местном архиве.',run:()=>perform(draft=>{Object.keys(draft).forEach(k=>delete draft[k]);Object.assign(draft,next);return {ok:true};},{archive:true,message:'Кампания восстановлена из файла.'})};}catch(error){note(error.message,true);}finally{busy=false;render(true);}
  }
 });
-window.addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||e.target.isContentEditable)return;if(e.code==='KeyR'&&ui.tab==='build'){e.preventDefault();handle('rotate',{});}if(e.code==='Escape'){ui.pending=null;clearSelection();ui.tool='select';hideDrag();render();}});
+window.addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||e.target.isContentEditable)return;if(e.code==='KeyR'&&ui.tab==='build'){e.preventDefault();handle('rotate',{reverse:e.shiftKey});}if(e.code==='Escape'){ui.pending=null;objectGesture=null;clearSelection();ui.tool='select';hideDrag();render();}});
 let externalDrag=null,ignoreClickUntil=0;
 root.addEventListener('pointerdown',e=>{const n=e.target.closest('[data-drag-guest]');if(n&&e.button===0){externalDrag={id:n.dataset.dragGuest,x:e.clientX,y:e.clientY,moved:false};n.setPointerCapture(e.pointerId);}});
 root.addEventListener('pointermove',e=>{if(!externalDrag)return;externalDrag.moved||=Math.hypot(e.clientX-externalDrag.x,e.clientY-externalDrag.y)>6;if(externalDrag.moved){e.preventDefault();dragPerson(externalDrag.id,e.clientX,e.clientY,true);}});

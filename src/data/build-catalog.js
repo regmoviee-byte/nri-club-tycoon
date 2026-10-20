@@ -10,8 +10,8 @@ export const BUILD_CATALOG = Object.freeze(Object.fromEntries([
   item('chair', 'Простой стул', 'furniture', 350, 1, 1, 'floor', {family: 'chair'}),
   item('chairSoft', 'Мягкий стул', 'furniture', 750, 1, 1, 'floor', {family: 'chair'}),
   item('chairArms', 'Стул с подлокотниками', 'furniture', 1100, 1, 1, 'floor', {family: 'chair'}),
-  item('light', 'Светильник', 'furniture', 300, 1, 1, 'ceiling', {family: 'light'}),
-  item('lightAdjustable', 'Регулируемый свет', 'furniture', 900, 1, 1, 'ceiling', {family: 'light', hourlyCost: 2}),
+  item('light', 'Подвесной светильник', 'furniture', 300, 1, 1, 'ceiling', {family: 'light'}),
+  item('lightAdjustable', 'Регулируемый подвесной свет', 'furniture', 900, 1, 1, 'ceiling', {family: 'light', hourlyCost: 2}),
   item('shelf', 'Книжная полка', 'furniture', 450, 1, 1, 'floor', {family: 'shelf', capacity: 6}),
   item('shelfLarge', 'Большая полка', 'furniture', 1000, 2, 1, 'floor', {family: 'shelf', capacity: 16}),
   item('sofa', 'Диван ожидания', 'waiting', 1400, 3, 1, 'floor', {family: 'waitingSeat', capacity: 3}),
@@ -39,6 +39,7 @@ export const BUILD_CATALOG = Object.freeze(Object.fromEntries([
   item('miniatures', 'Набор миниатюр', 'equipment', 1200, 1, 1, 'tabletop'),
   item('screen', 'Ширма мастера', 'equipment', 500, 1, 1, 'tabletop'),
   item('tablet', 'Планшет мастера', 'equipment', 3000, 1, 1, 'tabletop', {hourlyCost: 3}),
+  item('deskLamp', 'Настольная лампа', 'equipment', 450, 1, 1, 'tabletop', {family: 'light'}),
   item('soundproof', 'Звукоизоляция комнаты', 'equipment', 1800, 1, 1, 'wall', {hourlyCost: 5}),
 ].map(value => [value.kind, value])));
 

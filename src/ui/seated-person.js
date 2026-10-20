@@ -38,6 +38,9 @@ export function seatedPersonArt(person,{rotation=0,kind='chair',width=1,height=1
   for(const z of [27,23,20]){const b=P(.025,.116,z);torso+='<circle cx="'+b.x+'" cy="'+b.y+'" r=".5" fill="'+accent+'"/>';}
  }
  const neck=stroke([P(0,-.025,35.8),P(0,-.025,42.5)],skin,4.3),head=P(0,-.025,49.5);
- const headArt='<g class="seated-head" data-head-view="'+(frame.backNear?'back':'three-quarter')+'" transform="translate('+head.x+' '+head.y+') scale('+(frame.headMirror*.67)+' .67)">'+personArt(person,{seated:true,headOnly:true,back:frame.backNear,yaw:1})+'</g>';
- return '<g class="seated-miniature" data-seat-facing="'+frame.direction+'" stroke-linecap="round" stroke-linejoin="round">'+legs+arm(-nearSide)+torso+neck+arm(nearSide)+headArt+'</g>';
+ const headLayer=layer=>'<g class="'+(layer==='back'?'seated-hair-back':'seated-head')+'" data-head-view="'+(frame.backNear?'back':'three-quarter')+'" transform="translate('+head.x+' '+head.y+') scale('+(frame.headMirror*.67)+' .67)">'+personArt(person,{seated:true,headOnly:true,headLayer:layer,back:frame.backNear,yaw:1})+'</g>';
+ // Rear hair sits behind the collar when facing us and over the back when
+ // facing away. The neck and face keep their own connected silhouette.
+ const rear=headLayer('back');
+ return '<g class="seated-miniature" data-seat-facing="'+frame.direction+'" stroke-linecap="round" stroke-linejoin="round">'+legs+(!frame.backNear?rear:'')+arm(-nearSide)+torso+neck+(frame.backNear?rear:'')+arm(nearSide)+headLayer('front')+'</g>';
 }

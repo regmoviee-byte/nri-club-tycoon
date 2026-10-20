@@ -9,13 +9,14 @@ const path=(d,fill,extra='')=>'<path d="'+d+'" fill="'+fill+'" '+extra+'/>';
 const line=(d,stroke,width=1)=>path(d,'none','stroke="'+stroke+'" stroke-width="'+width+'"');
 const limb=(name,x,y,art)=>'<g class="limb '+name+'" style="transform-origin:'+x+'px '+y+'px">'+art+'</g>';
 
-export function personArt(person,{seated=false,back=false,drag=false,reception=false,seatRotation=null,headOnly=false,yaw=0}={}){
+export function personArt(person,{seated=false,back=false,drag=false,reception=false,seatRotation=null,headOnly=false,headLayer='all',yaw=0}={}){
  const identity=person?.identity??person??{},p=identity.portrait??{},name=identity.name??person?.profile?.name??person?.name??'Гость';
  const seed=[...name].reduce((n,c)=>(n*31+c.charCodeAt(0))>>>0,7),skin=color(p.skin,'#e3b79e'),skinDark=tint(skin,-24),skinLight=tint(skin,13),hair=color(p.hairColor,'#57433a'),hairDark=tint(hair,-15),hairLight=tint(hair,21),coat=color(p.coat,['#627f84','#9c705c','#728368','#82718b'][seed%4]),coatDark=tint(coat,-23),coatLight=tint(coat,17),pants=color(p.trousers,'#3c4e58'),shoe=color(p.shoes,'#303b42'),accent=color(p.accent,'#d8cab2'),eyes=color(p.iris,'#5a6c66');
  const head=seated?-77:-104,shoulder=seated?-58:-85,hip=seated?-22:-49,build=p.bodyShape??['lean','regular','soft','broad','compact'][seed%5],wide=build==='broad'?18:build==='lean'?14:16,waist=build==='soft'?14:build==='lean'?10:12,age=identity.age??person?.age??30,style=p.hair??['short','bob','curly','tied'][seed%4],outfit=p.outfit??['shirt','hoodie','cardigan','sweater'][seed%4],admin=identity.role==='administrator';
  const faceWidth=[9.2,9.8,10,8.8,9.5,10.4][(p.face??seed)%6],jaw=faceWidth-2,ink=tint(hair,-14),happy=['happy','delighted'].includes(p.expression),eyeY=p.eastAsian?-.5:0;
  let hairBehind='';
- if(['long','braid','ponytail'].includes(style))hairBehind=path('M-10 '+(head-7)+'Q-17 '+(head+5)+'-14 '+(shoulder+13)+'Q-6 '+(shoulder+20)+' 2 '+(shoulder+10)+'L11 '+(shoulder+12)+'Q16 '+(head+7)+' 10 '+(head-9)+'Z',hairDark)+path('M-10 '+head+'Q-13 '+(head+15)+'-10 '+(shoulder+10)+'L-7 '+(shoulder+12)+'Q-8 '+(head+10)+'-7 '+head+'Z',hair);
+ if(style==='long')hairBehind=path('M-10 '+(head-7)+'Q-16 '+(head+4)+'-14 '+(shoulder+6)+'Q-14 '+(shoulder+15)+'-9 '+(shoulder+13)+'L-6 '+(shoulder+8)+'Q0 '+(shoulder+14)+' 6 '+(shoulder+8)+'Q13 '+(shoulder+16)+' 14 '+(shoulder+6)+'Q16 '+(head+5)+' 10 '+(head-9)+'Z',hairDark)+path('M-10 '+head+'Q-13 '+(head+15)+'-10 '+(shoulder+10)+'L-7 '+(shoulder+8)+'Q-8 '+(head+10)+'-7 '+head+'Z',hair)+line('M11 '+(head+4)+'Q13 '+(head+19)+' 10 '+(shoulder+8),hairLight,.65);
+ if(style==='braid')hairBehind=path('M-10 '+(head-5)+'Q-15 '+(head+4)+'-10 '+(head+17)+'Q0 '+(head+22)+' 11 '+(head+16)+'L11 '+(head-6)+'Z',hairDark);
  if(['tied','ponytail'].includes(style))hairBehind+='<ellipse cx="9" cy="'+(head-8)+'" rx="6" ry="7" fill="'+hairDark+'"/>'+(style==='ponytail'?path('M11 '+(head-8)+'Q24 '+head+' 17 '+(head+25)+'Q12 '+(head+19)+' 14 '+(head+7)+'Z',hair):'');
  if(style==='bob')hairBehind=path('M-11 '+(head-6)+'Q-17 '+(head+4)+'-13 '+(head+19)+'Q0 '+(head+25)+' 13 '+(head+17)+'L12 '+(head-6)+'Z',hairDark);
  let leftLeg=seated?path('M-11-24Q-12-21-15-17L-13-4-6-4-6-14 0-17 0-24Z',pants)+path('M-14-17L-10-16-8-4-13-4Z',tint(pants,-19)):path('M-12-51L1-50-1-27-4-4-12-4-11-27Z',pants)+path('M-12-49L-8-47-7-27-9-4-12-4-11-27Z',tint(pants,-17));
@@ -69,7 +70,10 @@ export function personArt(person,{seated=false,back=false,drag=false,reception=f
  else hairFront=path('M-11 3L-12-6Q-13-13-5-15Q3-18 10-13L12-7 10 4 8 5 7-6Q2-4-1-8Q-5-3-9-3L-8 5Z',hair)+path('M2-15Q10-16 12-7L10 4 8 5 7-6 3-9Z',hairDark)+line('M-9-8Q-5-13 1-13',hairLight,1);
  if(style==='braid')hairFront+=path('M8 10q7 3 1 7 7 3 0 7 6 4-1 6L4 24q5-4 0-7 5-3 1-7Z',hair)+line('M7 12l3 4-4 4 4 4',hairDark,.8);
  if(age>=50&&style!=='shaved')hairFront+=line('M-9-3l-.5 5M9-3l.5 5',tint(hair,44),1.4);
- if(headOnly)return '<g class="person-head-art">'+(hairBehind?'<g transform="translate(0 '+(-head)+')">'+hairBehind+'</g>':'')+face+hairFront+'</g>';
+ if(headOnly){
+  const rear=hairBehind?'<g class="person-hair-back" transform="translate(0 '+(-head)+')">'+hairBehind+'</g>':'';
+  return '<g class="person-head-art" data-head-layer="'+headLayer+'">'+(headLayer==='front'?'':rear)+(headLayer==='back'?'':face+hairFront)+'</g>';
+ }
  return '<g class="person '+(seated?'is-seated ':'')+(drag?'is-held ':'')+(admin?'administrator-figure':'')+'" stroke-linecap="round" stroke-linejoin="round"><ellipse cy=".7" rx="17" ry="4" fill="#263b3c" opacity=".13"/>'+(back?'':hairBehind)+limb('leg-left',-6,hip,leftLeg+shoesLeft)+limb('leg-right',6,hip,rightLeg+shoesRight)+arms+body+neck+(back?hairBehind:'')+'<g class="person-head" transform="translate(0 '+head+')">'+face+hairFront+'</g></g>';
 }
 

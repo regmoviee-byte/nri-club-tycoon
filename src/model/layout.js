@@ -2,6 +2,7 @@ import {
   BUILD_CATALOG, FLOOR_PRICES, WALL_PRICES, expansionPrice,
   FURNITURE_REFUND_RATE, CONSTRUCTION_REFUND_RATE,
 } from '../data/build-catalog.js';
+import {surfacePlacementIssue,validSurface,parentTable,surfacePose,surfaceWorld,surfaceLocal} from './table-surface.js';
 
 const LIMIT = 8192, MAX_PLOTS = 4096, MAX_CELLS = 12288;
 const own = (value, key) => typeof key === 'string' && Object.hasOwn(value, key);
@@ -42,6 +43,7 @@ export function bounds(layout) {
 export function objectCells(object) {
   const item = own(BUILD_CATALOG, object?.kind) ? BUILD_CATALOG[object.kind] : undefined;
   if (!item || !integer(object.x) || !integer(object.y) || ![0, 1, 2, 3].includes(object.rotation)) return [];
+  if(item.layer==='tabletop'&&object.surface)return [{x:object.x,y:object.y}];
   const [width, height] = object.rotation % 2 ? [item.height, item.width] : [item.width, item.height];
   return Array.from({length: width * height}, (_, index) => ({x: object.x + index % width, y: object.y + Math.floor(index / width)}));
 }
@@ -95,7 +97,8 @@ function approaches(object, nav) {
 export function objectApproaches(layout, objectOrId) {
   if (structuralError(layout)) return [];
   const object = typeof objectOrId === 'string' ? layout.objects.find(o => o.id === objectOrId) : objectOrId;
-  return object ? approaches(object, navigation(layout)) : [];
+  const target=object&&BUILD_CATALOG[object.kind]?.layer==='tabletop'?parentTable(object,layout):object;
+  return target ? approaches(target, navigation(layout)) : [];
 }
 
 export function roomBoundaryStatus(layout, roomId) {
@@ -170,9 +173,11 @@ function structuralError(layout) {
   const roomIds = new Set(layout.rooms.map(room => room.id)), layers = new Set(), seatIds = new Set();
   for (const object of layout.objects) {
     if (!record(object) || !unique(object.id) || !own(BUILD_CATALOG, object.kind) || !integer(object.x) || !integer(object.y) ||
-        ![0, 1, 2, 3].includes(object.rotation) || !allowedKeys(object, ['id', 'kind', 'x', 'y', 'rotation', 'roomId', 'seat', 'role', 'enabled', 'serviceEnabled', 'stock', 'autoRefill', 'price'])) return 'Некорректный предмет или повторяющийся идентификатор.';
+        ![0, 1, 2, 3].includes(object.rotation) || !allowedKeys(object, ['id', 'kind', 'x', 'y', 'rotation', 'roomId', 'seat', 'role', 'enabled', 'serviceEnabled', 'stock', 'autoRefill', 'price','surface'])) return 'Некорректный предмет или повторяющийся идентификатор.';
     if (object.enabled !== undefined && typeof object.enabled !== 'boolean' || object.serviceEnabled !== undefined && typeof object.serviceEnabled !== 'boolean' || object.autoRefill !== undefined && typeof object.autoRefill !== 'boolean' || object.stock !== undefined && (!Number.isSafeInteger(object.stock) || object.stock < 0 || object.stock > 1000000) || object.price !== undefined && (!Number.isSafeInteger(object.price) || object.price < 0 || object.price > 1000000000)) return 'Повреждены запас или стоимость предмета.';
     const item = BUILD_CATALOG[object.kind], cells = objectCells(object);
+    if(object.surface&&(item.layer!=='tabletop'||!validSurface(object.surface)))return 'Повреждена позиция настольного предмета.';
+    if(object.surface){const issue=surfacePlacementIssue(object,layout);if(issue)return issue;if(parentTable(object,layout)?.roomId!==object.roomId)return 'Настольный предмет назначен другой комнате.';}
     if (own(object, 'roomId') && !roomIds.has(object.roomId)) return 'Предмет назначен неизвестной комнате.';
     if (cells.some(cell => !occupiedPlots.has(keyOf(cell)) || (object.roomId && zones.get(keyOf(cell)) !== object.roomId))) return 'Предмет выходит за участок или свою комнату.';
     if (own(object, 'role') || own(object, 'seat')) {
@@ -189,7 +194,7 @@ function structuralError(layout) {
       const key = `wall:${edgeKey(edge)}`;
       if (layers.has(key)) return 'На этой стене уже закреплён предмет.';
       layers.add(key);
-    } else {
+    } else if(item.layer!=='tabletop'||!object.surface) {
       for (const cell of cells) {
         const key = `${object.kind === 'mat' ? 'tabletop-base' : item.layer}:${keyOf(cell)}`;
         if (layers.has(key)) return 'Предметы занимают одно и то же место.';
@@ -202,7 +207,7 @@ function structuralError(layout) {
         if (keys.has(keyOf(next)) && walls.has(edgeKey(edgeBetween(cell, next)))) return 'Стена проходит сквозь предмет.';
       }
     }
-    if (item.layer === 'tabletop' && !layout.objects.some(table => BUILD_CATALOG[table?.kind]?.family === 'table' &&
+    if (item.layer === 'tabletop' && !object.surface && !layout.objects.some(table => BUILD_CATALOG[table?.kind]?.family === 'table' &&
         cells.every(cell => objectCells(table).some(other => keyOf(other) === keyOf(cell))))) return `${item.name}: поставьте на игровой стол.`;
   }
   return undefined;
@@ -324,8 +329,9 @@ export function quoteEdit(layout, edit, {lockedRoomIds = []} = {}) {
     } else if (['move', 'remove', 'upgrade'].includes(change.type)) {
       const index = next.objects.findIndex(object => object.id === change.id), object = next.objects[index];
       if (!object) throw new Error('Предмет не найден.');
+      const attached=BUILD_CATALOG[object.kind].family==='table'?next.objects.filter(o=>BUILD_CATALOG[o.kind]?.layer==='tabletop'&&parentTable(o,next)?.id===object.id).map(o=>({object:o,pose:surfacePose(o,next),surface:o.surface??surfaceLocal(object,surfacePose(o,next),surfacePose(o,next).angle)})):[];
       protect(objectCells(object), objectEdges(object), [object.roomId]);
-      if (change.type === 'remove') { next.objects.splice(index, 1); refund += Math.floor((object.price ?? BUILD_CATALOG[object.kind].price) * FURNITURE_REFUND_RATE); }
+      if (change.type === 'remove') { if(attached.length)throw new Error('Сначала уберите настольные предметы. При переносе стола они перемещаются вместе с ним.');next.objects.splice(index, 1); refund += Math.floor((object.price ?? BUILD_CATALOG[object.kind].price) * FURNITURE_REFUND_RATE); }
       else if (change.type === 'upgrade') {
         const old = BUILD_CATALOG[object.kind], replacement = own(BUILD_CATALOG, change.kind) ? BUILD_CATALOG[change.kind] : undefined;
         if (!replacement || !old.family || old.family !== replacement.family || replacement.kind === old.kind) throw new Error('Выберите другой предмет того же назначения.');
@@ -336,6 +342,7 @@ export function quoteEdit(layout, edit, {lockedRoomIds = []} = {}) {
         cost += replacement.price; refund += Math.floor(paidPrice * FURNITURE_REFUND_RATE);
       } else {
         object.x = change.x; object.y = change.y; object.rotation = change.rotation ?? object.rotation;
+        if(own(change,'surface'))object.surface=structuredClone(change.surface);
         const roomId = containingRoom(next, object);
         if (roomId) object.roomId = roomId;
         else { delete object.roomId; delete object.role; delete object.seat; }
@@ -343,6 +350,7 @@ export function quoteEdit(layout, edit, {lockedRoomIds = []} = {}) {
           if (change[key] === null) delete object[key]; else object[key] = change[key];
         }
         protect(objectCells(object), objectEdges(object), [object.roomId]);
+        for(const child of attached){const o=child.object;if(o.kind==='mat'&&!o.surface){o.x=object.x;o.y=object.y;o.rotation=0;}else{o.surface=child.surface;const pose=surfaceWorld(object,o.surface);o.x=Math.floor(pose.x);o.y=Math.floor(pose.y);}if(object.roomId)o.roomId=object.roomId;else delete o.roomId;}
       }
     } else if (change.type === 'floor') {
       if (!Array.isArray(change.cells) || !change.cells.length || change.cells.length > MAX_CELLS ||
