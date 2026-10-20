@@ -1,11 +1,11 @@
 {
   "baseRepository": "https://github.com/regmoviee-byte/nri-club-tycoon",
-  "baseCommit": "b9934f53e087598529ef3955bac0b04878a5c4a5",
+  "baseCommit": "9a0a6e95d6c8a215a5164abe3da34a3f062b5684",
   "date": "2026-10-20",
-  "scope": "Source after chair-local seated figure correction. Evidence files excluded to avoid self-reference.",
-  "modelChecks": 60,
+  "scope": "Solid seat and leg geometry with view-depth occlusion. Evidence files excluded to avoid self-reference.",
+  "modelChecks": 62,
   "browserCheckBlocks": 22,
-  "seatingCheckBlocks": 7,
+  "seatingCheckBlocks": 8,
   "files": [
     {
       "path": ".gitignore",
@@ -49,13 +49,13 @@
     },
     {
       "path": "docs/SEATING-FIX.md",
-      "sha256": "3d3ab75510f81bce3c850de3e867cc0547cf4dd77e5234e5e333d3764bd2ce47",
-      "bytes": 3127
+      "sha256": "789fc29926c671a0b602127427c0fc319244afc7872e7747b736b9c21cb379fa",
+      "bytes": 3857
     },
     {
       "path": "index.html",
-      "sha256": "38d3f57d4ea922ef74c4b552c2784d49aba7958a4999407c8c05011b4babd8cb",
-      "bytes": 5980
+      "sha256": "190bf6160f39d93c3beb48de68230b4fa809f80f6c01edacdcaa0d2ccf34df21",
+      "bytes": 6656
     },
     {
       "path": "package.json",
@@ -363,6 +363,11 @@
       "bytes": 2587
     },
     {
+      "path": "src/ui/isometric-solids.js",
+      "sha256": "0ce235c1b90433614bd9f259dfe04df455fdcd4072225f13c04c5aaabf343bf8",
+      "bytes": 3197
+    },
+    {
       "path": "src/ui/layout-isometric.css",
       "sha256": "95d2d5fdb267f82d2832016386b96eeff2eeb926303f0d5ac026f522926672fb",
       "bytes": 17910
@@ -444,13 +449,18 @@
     },
     {
       "path": "src/ui/seat-frame.js",
-      "sha256": "a7a71819c1dc8dbc0648aee97dc03c32c77cc0773d54a6a1c04bdc91e71d2911",
-      "bytes": 690
+      "sha256": "033248910f0faf02785b9136863002d05d0fb1314a788b810b84abfbefc07fa7",
+      "bytes": 770
+    },
+    {
+      "path": "src/ui/seat-solids.js",
+      "sha256": "df06ffe4d446fbb0e44725e9431bdcd86cb6f712852bd2f7aa7b6c93ee14e80c",
+      "bytes": 1096
     },
     {
       "path": "src/ui/seated-person.js",
-      "sha256": "3f313400b01bf241d3bd297f12c5f81d83c838096fd5a6833d62f58cd0f8224f",
-      "bytes": 3526
+      "sha256": "8a5dcd6c4d3408d3f1fefdcd06aee79ba65c80358dd5505309b6fb51baa35921",
+      "bytes": 4466
     },
     {
       "path": "src/ui/studio.css",
@@ -464,8 +474,8 @@
     },
     {
       "path": "src/ui/world.js",
-      "sha256": "684732a78c6d86bb32429b126ce2b3e81e3b277477b6c5095f5bf002d39a1ac7",
-      "bytes": 28458
+      "sha256": "bc941f6487e52d0e87ab1b538f768f79a3abbf324c74377e0eb7d8b19fb9f8c3",
+      "bytes": 28529
     },
     {
       "path": "Start-Club.cmd",
@@ -493,14 +503,19 @@
       "bytes": 11134
     },
     {
+      "path": "tests/seating-occlusion.test.mjs",
+      "sha256": "9e2fba70edee62d081b3b513dad644bd7f9422d6906eac3b7de16ff71d37b1ce",
+      "bytes": 2589
+    },
+    {
       "path": "tools/model-review.mjs",
       "sha256": "1326473962ff7c45b3b9708f8fbfac9b6c2bf6d6e2e55a599a3aeb010a519862",
       "bytes": 1329
     },
     {
       "path": "tools/prepare-entry.mjs",
-      "sha256": "5f6178b6a32f5b0c6326e1338f301c400bcf252bd0ff798aa80b18a2dfde2604",
-      "bytes": 1079
+      "sha256": "7321f30fc2b436ef5205bbec7c5242fa9ef9ad73cfa022783c9c08797401fce6",
+      "bytes": 1093
     },
     {
       "path": "tools/review-live.mjs",
@@ -509,13 +524,13 @@
     },
     {
       "path": "tools/review-seating.mjs",
-      "sha256": "04140da1aacc970f2a0d9b997c96b71f23b47f1c844f789f52cd6a34d973318a",
-      "bytes": 10193
+      "sha256": "30a57aba8a28de2f3462696509eb3c3611d59c7e5c45d81222824fee6ec02bd3",
+      "bytes": 12414
     },
     {
       "path": "tools/review.mjs",
-      "sha256": "7c4a2f4011dc116361355990eeec8aa66c235905c15ec6a91f46dab3567d0507",
-      "bytes": 32192
+      "sha256": "f4a946aeb157b6270f6416e42dd0f4cf8fa13bd69d749bbe93e7938fd8eee412",
+      "bytes": 32197
     },
     {
       "path": "tools/serve.mjs",

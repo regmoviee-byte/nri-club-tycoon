@@ -1,18 +1,29 @@
 import {seatFrame,SEAT_HEIGHT} from './seat-frame.js';
 import {personArt} from './people.js';
+import {prismFaces,solidArt} from './isometric-solids.js';
+import {chairBaseFaces} from './seat-solids.js';
 const paint=(value,fallback)=>/^#[\da-f]{6}$/i.test(value??'')?value:fallback;
 const shade=(hex,n)=>'#'+[1,3,5].map(i=>Math.max(0,Math.min(255,parseInt(hex.slice(i,i+2),16)+n)).toString(16).padStart(2,'0')).join('');
 const points=ps=>ps.map(p=>p.x+','+p.y).join(' ');
 const polygon=(ps,fill)=>'<polygon points="'+points(ps)+'" fill="'+fill+'"/>';
 const stroke=(ps,color,width)=>'<polyline points="'+points(ps)+'" fill="none" stroke="'+color+'" stroke-width="'+width+'" stroke-linecap="round" stroke-linejoin="round"/>';
 
-export function seatedPersonArt(person,{rotation=0}={}){
+export function seatedLegFaces(rotation=0,pants='#40515c',shoes='#303b42'){
+ const frame=seatFrame(rotation),faces=[];
+ const prism=(coords,colors,part)=>faces.push(...prismFaces(coords.map(v=>frame.world(...v)),colors,part));
+ for(const side of [-1,1]){
+  const u=side*.115,name=side<0?'left':'right',legColors=[shade(pants,-20),shade(pants,-12),pants,shade(pants,-8),shade(pants,-18),shade(pants,8)];
+  // Both ends of the thigh remain above the seat. The calf starts beyond
+  // the seat's front edge, so its bend cannot pass through the solid seat.
+  prism([[u-.065,-.045,SEAT_HEIGHT+.3],[u+.065,-.045,SEAT_HEIGHT+.3],[u+.065,.405,SEAT_HEIGHT+.3],[u-.065,.405,SEAT_HEIGHT+.3],[u-.065,-.045,SEAT_HEIGHT+6.3],[u+.065,-.045,SEAT_HEIGHT+6.3],[u+.065,.405,SEAT_HEIGHT+5.8],[u-.065,.405,SEAT_HEIGHT+5.8]],legColors,'thigh-'+name);
+  prism([[u-.055,.37,1.6],[u+.055,.37,1.6],[u+.055,.49,1.6],[u-.055,.49,1.6],[u-.055,.345,16.1],[u+.055,.345,16.1],[u+.055,.465,16.1],[u-.055,.465,16.1]],legColors,'calf-'+name);
+  prism([[u-.065,.39,.3],[u+.065,.39,.3],[u+.065,.61,.3],[u-.065,.61,.3],[u-.065,.39,2.5],[u+.065,.39,2.5],[u+.065,.61,2.5],[u-.065,.61,2.5]],[shoes,shade(shoes,-9),shoes,shoes,shade(shoes,-7),shade(shoes,11)],'shoe-'+name);
+ }return faces;
+}
+
+export function seatedPersonArt(person,{rotation=0,kind='chair',width=1,height=1,offsetX=0,offsetY=0}={}){
  const identity=person?.identity??person??{},look=identity.portrait??{},frame=seatFrame(rotation),P=frame.point,coat=paint(look.coat,'#6c7e80'),pants=paint(look.trousers,'#40515c'),shoes=paint(look.shoes,'#303b42'),skin=paint(look.skin,'#e3b79e'),accent=paint(look.accent,'#d8cab2');
- const rightNear=frame.right[0]+frame.right[1]>0,nearSide=rightNear?1:-1,leg=side=>{
-  const u=side*.115,hip=P(u,-.045,SEAT_HEIGHT+3.2),knee=P(u,.405,SEAT_HEIGHT+1),ankle=P(u,.43,2.1),front=side===nearSide;
-  const top=[P(u-.065,.39,2.1),P(u+.065,.39,2.1),P(u+.065,.61,2.1),P(u-.065,.61,2.1)],bottom=[P(u-.065,.39,.3),P(u+.065,.39,.3),P(u+.065,.61,.3),P(u-.065,.61,.3)];
-  return '<g class="seated-leg" data-leg="'+(side<0?'left':'right')+'">'+stroke([hip,knee],front?pants:shade(pants,-13),6.1)+stroke([knee,ankle],front?shade(pants,3):shade(pants,-16),5.1)+polygon([top[1],top[2],bottom[2],bottom[1]],shade(shoes,-7))+polygon([top[2],top[3],bottom[3],bottom[2]],shoes)+polygon(top,shade(shoes,11))+'</g>';
- };
+ const rightNear=frame.right[0]+frame.right[1]>0,nearSide=rightNear?1:-1,chair=chairBaseFaces(width,height,kind,rotation).map(f=>({...f,points:f.points.map(p=>({...p,x:p.x+offsetX,y:p.y+offsetY}))})),legs='<g class="seated-legs" data-chair-occlusion="solid-depth">'+solidArt(seatedLegFaces(rotation,pants,shoes),chair)+'</g>';
  const arm=side=>{
   const shoulder=P(side*.215,-.015,36),elbow=P(side*.265,.15,26),wrist=P(side*.185,.29,24.5),hand=P(side*.145,.34,24.5);
   return '<g class="seated-arm">'+stroke([shoulder,elbow,wrist],side===nearSide?coat:shade(coat,-18),5.6)+stroke([wrist,hand],skin,3.1)+'</g>';
@@ -28,5 +39,5 @@ export function seatedPersonArt(person,{rotation=0}={}){
  }
  const neck=stroke([P(0,-.025,35.8),P(0,-.025,42.5)],skin,4.3),head=P(0,-.025,49.5);
  const headArt='<g class="seated-head" data-head-view="'+(frame.backNear?'back':'three-quarter')+'" transform="translate('+head.x+' '+head.y+') scale('+(frame.headMirror*.67)+' .67)">'+personArt(person,{seated:true,headOnly:true,back:frame.backNear,yaw:1})+'</g>';
- return '<g class="seated-miniature" data-seat-facing="'+frame.direction+'" stroke-linecap="round" stroke-linejoin="round"><ellipse cy="1" rx="13" ry="5" fill="#243b38" opacity=".12"/>'+leg(-nearSide)+leg(nearSide)+arm(-nearSide)+torso+neck+arm(nearSide)+headArt+'</g>';
+ return '<g class="seated-miniature" data-seat-facing="'+frame.direction+'" stroke-linecap="round" stroke-linejoin="round">'+legs+arm(-nearSide)+torso+neck+arm(nearSide)+headArt+'</g>';
 }

@@ -1,10 +1,11 @@
 {
   "finished": true,
   "passed": true,
-  "url": "http://127.0.0.1:57570/",
+  "url": "http://127.0.0.1:55206/",
   "checks": [
     "Actual resting master uses the staff chair position, direction and back view",
     "Changing UI panels never restores the old flat front-facing pose",
+    "Actual scene pixel probes keep the chair support opaque in front of the boot while retaining visible legs",
     "Cropped evidence comes from the live staff room, with default and hidden walls",
     "After the walking animation, the master sits in the game chair using that chair direction",
     "After the session and return walk, the resting master retains the correct west-facing back pose",
@@ -13,11 +14,60 @@
   ],
   "errors": [],
   "screenshots": [
+    "rest-room-context.png",
     "rest-room-default-walls.png",
     "rest-room-chair-detail.png",
     "game-master-chair.png",
     "returned-master-default-walls.png",
     "chair-directions.png"
   ],
-  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage"
+  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage",
+  "supportPixelEvidence": {
+    "samples": [
+      {
+        "chair": [
+          99,
+          81,
+          64,
+          255
+        ],
+        "occupied": [
+          99,
+          81,
+          64,
+          255
+        ]
+      },
+      {
+        "chair": [
+          99,
+          81,
+          64,
+          255
+        ],
+        "occupied": [
+          99,
+          81,
+          64,
+          255
+        ]
+      },
+      {
+        "chair": [
+          99,
+          81,
+          64,
+          255
+        ],
+        "occupied": [
+          99,
+          81,
+          64,
+          255
+        ]
+      }
+    ],
+    "blue": 10599,
+    "parts": 24
+  }
 }

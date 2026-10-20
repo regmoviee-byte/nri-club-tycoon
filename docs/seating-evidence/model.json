@@ -61,7 +61,9 @@
     "Prestige is physical, capped at two per item kind, and gates expensive hires",
     "Gear has explicit bounded effects and cannot override time or topic violations",
     "Two sessions complete without the rejected 15-minute preparation phase; old contracts keep their rating version",
-    "Projection is invertible and a route from reception reaches each seat only through passable tiles and doors"
+    "Projection is invertible and a route from reception reaches each seat only through passable tiles and doors",
+    "Thighs stay above the seat and both calves start beyond its front edge",
+    "Chair solids hide only the leg surfaces behind them in all four rotations"
   ],
   "failures": [],
   "audio": "Pure model checks; -noaudio; ReviewAudioSilence"

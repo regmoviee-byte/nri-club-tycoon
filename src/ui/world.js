@@ -7,6 +7,8 @@ import {receptionStatus} from '../model/reception-area.js';
 import {personArt,ADMINISTRATOR,escapeHTML as esc} from './people.js';
 import {seatFrame,SEAT_HEIGHT,project,unproject} from './seat-frame.js';
 import {seatedPersonArt} from './seated-person.js';
+import {solidArt} from './isometric-solids.js';
+import {chairBaseFaces} from './seat-solids.js';
 export {project,unproject,seatedPersonArt};
 
 
@@ -20,12 +22,10 @@ function box(x,y,w,h,height,top,side='#ac8b65'){
 }
 function chairParts(o){
  const cells=objectCells(o),w=Math.max(...cells.map(c=>c.x))-o.x+1,h=Math.max(...cells.map(c=>c.y))-o.y+1,cushioned=/Soft|Arms|Sofa|sofa/.test(o.kind),color=cushioned?'#66808a':'#c2a16e';
- const corners=diamond(o.x+.18,o.y+.18,w-.36,h-.36,SEAT_HEIGHT),ground=diamond(o.x+.18,o.y+.18,w-.36,h-.36,0);
- let base='';for(let i=0;i<4;i++)base+='<path d="M'+ground[i].x+' '+ground[i].y+'L'+corners[i].x+' '+corners[i].y+'" stroke="#705c4a" stroke-width="2.6"/>';
- base+=polygon(corners,color,'#5e665c');
+ const corners=diamond(o.x+.18,o.y+.18,w-.36,h-.36,SEAT_HEIGHT);
+ const center=project(o.x+w/2,o.y+h/2);let base='<g class="chair-base" transform="translate('+center.x+' '+center.y+')">'+solidArt(chairBaseFaces(w,h,o.kind,o.rotation))+'</g>';
  const index=seatFrame(o.rotation).backEdge,edges=[corners[index],corners[(index+1)%4]],top=[{x:edges[0].x,y:edges[0].y-20},{x:edges[1].x,y:edges[1].y-20}];
  const back=polygon([edges[0],top[0],top[1],edges[1]],color,'#5f6057')+'<path d="M'+top[0].x+' '+top[0].y+'L'+top[1].x+' '+top[1].y+'" stroke="'+(cushioned?'#91a39e':'#ddbd88')+'" stroke-width="2"/>';
- if(o.kind==='chairArms')for(const i of [(o.rotation+3)%4,(o.rotation+1)%4]){const a=corners[i],b=corners[(i+1)%4];base+='<path d="M'+a.x+' '+a.y+'v-7L'+b.x+' '+(b.y-7)+'V'+b.y+'" fill="none" stroke="#566b70" stroke-width="3"/>';}
  if(w*h>1)for(let i=1;i<Math.max(w,h);i++){const q=project(o.x+(w>h?i:.5),o.y+(h>w?i:.5),14);base+='<path d="M'+(q.x-7)+' '+q.y+'l14 7" stroke="#91a69d" stroke-width="1.2"/>';}
  return {base,back,front:seatFrame(o.rotation).backNear};
 }
@@ -138,8 +138,8 @@ export function createWorld(host,callbacks={}){
    for(const m of club.staff){const seat=staffSeatForMaster(club,m.id);if(!club.rooms.some(r=>r.status==='running'&&r.masterId===m.id)&&seat?.objectId===object.id)people.push({person:m,master:true,x:seat.x+.5,y:seat.y+.5});}
    if(people.length)art=furnitureArt(object,layout,{selected:state.objectId===object.id,occupied:true});
    for(const actor of people){const back=seatFrame(object.rotation).backNear;
-    Object.assign(actor,{key:(actor.master?'m:':'g:')+actor.person.id,seated:true,back,scale:1,walkScale:.62,z:0,seatRotation:object.rotation,target:object});actors.push(actor);const p=project(actor.x,actor.y,actor.z??0);
-    art+='<g data-actor="'+esc(actor.key)+'" data-seat-object="'+esc(object.id)+'" class="map-person '+(room?.status==='running'?'playing':'')+'" '+(actor.master?'data-master-id="':'data-guest-id="')+esc(actor.person.id)+'" transform="translate('+p.x+' '+p.y+') scale(1)"><title>'+esc(actor.person.profile?.name??actor.person.name)+'</title>'+seatedPersonArt(actor.person,{rotation:actor.seatRotation})+'</g>';
+    Object.assign(actor,{key:(actor.master?'m:':'g:')+actor.person.id,seated:true,back,scale:1,walkScale:.62,z:0,seatRotation:object.rotation,seatOptions:{rotation:object.rotation,kind:object.kind,width:Math.max(...cells.map(c=>c.x))-object.x+1,height:Math.max(...cells.map(c=>c.y))-object.y+1,offsetX:object.x+(Math.max(...cells.map(c=>c.x))-object.x+1)/2-actor.x,offsetY:object.y+(Math.max(...cells.map(c=>c.y))-object.y+1)/2-actor.y},target:object});actors.push(actor);const p=project(actor.x,actor.y,actor.z??0);
+    art+='<g data-actor="'+esc(actor.key)+'" data-seat-object="'+esc(object.id)+'" class="map-person '+(room?.status==='running'?'playing':'')+'" '+(actor.master?'data-master-id="':'data-guest-id="')+esc(actor.person.id)+'" transform="translate('+p.x+' '+p.y+') scale(1)"><title>'+esc(actor.person.profile?.name??actor.person.name)+'</title>'+seatedPersonArt(actor.person,actor.seatOptions)+'</g>';
    }
    if(people.length)art+=seatForeground(object);
    if(spec.family==='chair'&&object.role==='guest'&&!guest&&room?.status!=='running'){const p=project(object.x+.5,object.y+.5,19);art+='<g data-seat="'+esc(object.id)+'" class="empty-seat"><circle cx="'+p.x+'" cy="'+p.y+'" r="7" fill="#f4e9cc" stroke="#a28c64"/><path d="M'+(p.x-3)+' '+p.y+'h6M'+p.x+' '+(p.y-3)+'v6" stroke="#9a805c"/></g>';}
@@ -172,7 +172,7 @@ export function createWorld(host,callbacks={}){
   for(const key of positions.keys())if(!keys.has(key)){positions.delete(key);motions.delete(key);}
   function frame(time){for(const [key,motion]of motions){const node=scene.querySelector('[data-actor="'+CSS.escape(key)+'"]');if(!node){motions.delete(key);continue;}
     const t=Math.max(0,Math.min(1,(time-motion.start)/motion.duration)),actor=motion.actor;
-    if(t>=1){const p=project(actor.x,actor.y,actor.z??0);node.innerHTML=actor.seated&&actor.seatRotation!==undefined?seatedPersonArt(actor.person,{rotation:actor.seatRotation}):personArt(actor.person,{seated:actor.seated,back:actor.back});node.setAttribute('transform','translate('+p.x+' '+p.y+') scale('+actor.scale+')');node.classList.remove('is-walking');delete node.dataset.walking;motions.delete(key);continue;}
+    if(t>=1){const p=project(actor.x,actor.y,actor.z??0);node.innerHTML=actor.seated&&actor.seatRotation!==undefined?seatedPersonArt(actor.person,actor.seatOptions):personArt(actor.person,{seated:actor.seated,back:actor.back});node.setAttribute('transform','translate('+p.x+' '+p.y+') scale('+actor.scale+')');node.classList.remove('is-walking');delete node.dataset.walking;motions.delete(key);continue;}
     if(!node.dataset.walking){node.innerHTML=personArt(actor.person,{drag:true});node.dataset.walking='true';node.classList.add('is-walking');}
     const n=t*(motion.path.length-1),a=motion.path[Math.floor(n)],b=motion.path[Math.min(motion.path.length-1,Math.floor(n)+1)],k=n-Math.floor(n),p=project(a.x+(b.x-a.x)*k,a.y+(b.y-a.y)*k);
     node.setAttribute('transform','translate('+p.x+' '+(p.y-Math.sin(t*Math.PI*14)*.8)+') scale('+(actor.walkScale??actor.scale)+')');
