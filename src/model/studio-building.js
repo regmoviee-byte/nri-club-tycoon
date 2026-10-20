@@ -1,4 +1,5 @@
-import {tileKey} from './layout.js';
+import {tileKey,edgeKey,objectCells,reachableTiles} from './layout.js';
+import {BUILD_CATALOG} from '../data/build-catalog.js';
 export function rectangle(a,b){
  const minX=Math.floor(Math.min(a.x,b.x)),maxX=Math.floor(Math.max(a.x,b.x)),minY=Math.floor(Math.min(a.y,b.y)),maxY=Math.floor(Math.max(a.y,b.y));
  if((maxX-minX+1)*(maxY-minY+1)>200)return [];
@@ -30,4 +31,42 @@ export function roomEdit(layout,cells,{purpose='game',furnished=false}={}){
   objects.forEach((o,i)=>edits.push({type:'place',object:{rotation:0,...o,id:id+'-item-'+i,roomId:id}}));
  }
  return {type:'batch',edits};
+}
+
+function perimeter(cells){
+ const keys=new Set(cells.map(c=>tileKey(c.x,c.y))),edges=new Map();
+ for(const c of cells)for(const [dx,dy,edge]of [[0,-1,{axis:'h',x:c.x,y:c.y}],[0,1,{axis:'h',x:c.x,y:c.y+1}],[-1,0,{axis:'v',x:c.x,y:c.y}],[1,0,{axis:'v',x:c.x+1,y:c.y}]])if(!keys.has(tileKey(c.x+dx,c.y+dy)))edges.set(edgeKey(edge),{edge,outside:{x:c.x+dx,y:c.y+dy}});
+ return edges;
+}
+const otherBoundaries=(layout,id)=>new Set(layout.rooms.filter(r=>r.id!==id).flatMap(r=>[...perimeter(r.cells).keys()]));
+
+// All geometry and money still pass through the normal atomic quote/commit.
+// Resizing never moves or sells a player's furniture without their choice.
+export function replanRoomEdit(layout,id,cells,{name,purpose,finish=null}={}){
+ const room=layout.rooms.find(r=>r.id===id);if(!room)throw new Error('Комната не найдена.');
+ if(!Array.isArray(cells)||!cells.length||cells.some(c=>!Number.isSafeInteger(c?.x)||!Number.isSafeInteger(c?.y)))throw new Error('Нарисуйте новые границы комнаты.');
+ const keys=new Set(cells.map(c=>tileKey(c.x,c.y)));
+ const outside=layout.objects.filter(o=>o.roomId===id&&objectCells(o).some(c=>!keys.has(tileKey(c.x,c.y))));
+ if(outside.length)throw new Error('Сначала перенесите внутрь новых границ: '+outside.map(o=>BUILD_CATALOG[o.kind].name).slice(0,4).join(', ')+(outside.length>4?' и другие предметы.':'.'));
+ const before=perimeter(room.cells),after=perimeter(cells),shared=otherBoundaries(layout,id),walls=new Map(layout.walls.map(w=>[edgeKey(w),w]));
+ const edits=[{type:'room',id,number:room.number,name:name??room.name,purpose:purpose??room.purpose??'game',cells}];
+ for(const [key]of before){const wall=walls.get(key);if(wall&&!after.has(key)&&!shared.has(key))edits.push({type:'removeWall',id:wall.id});}
+ const hasDoor=[...after.keys()].some(key=>['door','wideDoor'].includes(walls.get(key)?.kind));
+ const owned=new Set(layout.plots.flatMap(p=>Array.from({length:p.w*p.h},(_,i)=>tileKey(p.x+i%p.w,p.y+Math.floor(i/p.w))))),reachable=reachableTiles(layout);
+ const choices=[...after].filter(([key,v])=>!shared.has(key)&&owned.has(tileKey(v.outside.x,v.outside.y))).sort((a,b)=>Number(reachable.has(tileKey(b[1].outside.x,b[1].outside.y)))-Number(reachable.has(tileKey(a[1].outside.x,a[1].outside.y)))||Math.abs(a[1].outside.x-layout.entry.x)+Math.abs(a[1].outside.y-layout.entry.y)-Math.abs(b[1].outside.x-layout.entry.x)-Math.abs(b[1].outside.y-layout.entry.y)||a[0].localeCompare(b[0]));
+ const door=hasDoor?null:choices[0]?.[0];
+ for(const [key,{edge}]of after)if(!walls.has(key)||key===door)edits.push({type:'wall',edge,kind:key===door?'door':'wall'});
+ if(finish!==null)edits.push({type:'floor',cells,finish});
+ return {type:'batch',edits};
+}
+
+// Selling contents is an explicit option; shared boundaries are never removed.
+export function demolishRoomEdit(layout,id,{sellContents=false,removeFinishes=false,removeBoundary=false}={}){
+ const room=layout.rooms.find(r=>r.id===id);if(!room)throw new Error('Комната не найдена.');
+ const edits=[],objects=layout.objects.filter(o=>o.roomId===id);
+ if(objects.length&&!sellContents)throw new Error('Сначала перенесите мебель или выберите продажу содержимого комнаты.');
+ if(sellContents)for(const o of objects.sort((a,b)=>Number(BUILD_CATALOG[b.kind]?.layer==='tabletop')-Number(BUILD_CATALOG[a.kind]?.layer==='tabletop')))edits.push({type:'remove',id:o.id});
+ if(removeBoundary){const boundary=perimeter(room.cells),shared=otherBoundaries(layout,id);for(const wall of layout.walls)if(boundary.has(edgeKey(wall))&&!shared.has(edgeKey(wall)))edits.push({type:'removeWall',id:wall.id});}
+ if(removeFinishes)edits.push({type:'floor',cells:room.cells,finish:null});
+ edits.push({type:'removeRoom',id});return {type:'batch',edits};
 }

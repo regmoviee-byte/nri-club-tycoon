@@ -1,0 +1,51 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    {
+      "text": "Space activates real buttons and disclosure controls without moving the camera; action focus survives rendering"
+    },
+    {
+      "text": "Choosing each of the four chairs in construction leaves every guest in place"
+    },
+    {
+      "text": "A manually chosen three-player company runs for its adventure duration; its result survives further time and reloading"
+    },
+    {
+      "text": "Native construction creates, renames, resizes, changes flooring and demolishes a room through priced previews"
+    },
+    {
+      "text": "Three paid decor purchases honestly preview +6, +1.5 and zero additional prestige",
+      "prestigeDeltas": [
+        6,
+        1.5,
+        0
+      ]
+    },
+    {
+      "text": "Cleaning delegation saves explicit zones and budget; the school charges its displayed launch cost and can be switched off"
+    },
+    {
+      "text": "Room search and focus work on seven rooms; mobile keeps map controls and integrated panels without horizontal overflow"
+    },
+    {
+      "text": "Twenty physically equipped paid-fixture rooms render, remain searchable, focus at working zoom and survive reloading, including a mobile overview"
+    }
+  ],
+  "errors": [],
+  "screenshots": [
+    "three-player-session.png",
+    "session-journal.png",
+    "replanned-room-and-tile.png",
+    "purchase-marginal-effect.png",
+    "beginner-school-direction.png",
+    "selected-room-close-up.png",
+    "mobile-compact-intake.png",
+    "twenty-room-overview.png",
+    "twenty-room-mobile-overview.png"
+  ],
+  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence; isolated storage; sandbox enabled",
+  "url": "http://127.0.0.1:61848/",
+  "fixture": "One-million-ruble technical construction grant, not earned progression; ordinary paid building and native UI actions",
+  "elapsedMs": 126217
+}

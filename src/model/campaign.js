@@ -11,13 +11,16 @@ import {starterLayout,inspectRooms,ownedCells,footprint,physical,edgeKey,adjacen
 import {makePreferences,makeLegacyPreferences,sessionProgram,sessionDurationRange,sessionHours,masterPreferences} from './preferences.js';
 import {CAMPAIGN_RATING_VERSION,rateCampaignGuest} from './campaign-rating.js';
 import {updateDevelopment} from './development.js';
+import {ensureSessionJournal,recordSessionJournal,validateSessionJournal} from './session-journal.js';
+import {groupLimits} from './group-size.js';
+import {BEGINNER_DIRECTION,ensureClubDirection,validateClubDirection} from './club-direction.js';
 import {recordMoney,restock,reserveRequired,obligations,hourlyCosts,serviceInterval,chargeInterval,settleRun,sessionForecast} from './finances.js';
 import {findRecoveryPlan,applyRecoveryPlan,canProveInsolvent} from './solvency.js';
 import {hireServiceStaff,setServiceShift,validateServiceStaff} from './service-staff.js';
 import {layoutForRooms,validateOccupiedLayout,libraryStorageStatus} from './layout-club.js';
 import {build as buildPhysical} from './campaign-construction.js';
 import {staffRoomStatus,staffSeatForMaster,staffCanRest,canHireStaff,validateStaffCapacity,retireStaffRoomLegacyCredit} from './staff-room.js';
-import {ensureOperations,validateOperations,executeOperationsAction,zoneCleaning,equipmentRunning} from './operations.js';
+import {ensureOperations,validateOperations,executeOperationsAction,zoneCleaning,equipmentRunning,processCleaningPolicy} from './operations.js';
 import {advanceEventClock} from './event-clock.js';
 import {adoptGuestWaiting,syncGuestWaiting,trackGuestWaiting,guestWaitingSummary,validateGuestWaiting} from './guest-waiting.js';
 import {ensureKits,validateKits,kitStatus,kitSalvage,roomPreparation,prepareAfterRun,kitDeadlines,repairKit} from './kit-lifecycle.js';
@@ -31,7 +34,7 @@ export const openRooms=club=>club.rooms.filter(r=>r.operational&&r.status==='sea
 export const totalGuestSeats=club=>club.rooms.filter(r=>r.operational||r.status==='running').length*4;
 export const targetGuestCount=club=>Math.ceil(totalGuestSeats(club)*1.5);
 export const waitingGuests=club=>club.guests.filter(g=>!g.roomId);
-export const readyRooms=club=>openRooms(club).filter(r=>!zoneCleaning(club,r.id)&&roomPreparation(club,r.id).ready&&kitStatus(club,r.kitId).ok&&roomOccupants(club,r.id).length===4);
+export const readyRooms=club=>openRooms(club).filter(r=>{const limits=groupLimits(r),count=roomOccupants(club,r.id).length;return !zoneCleaning(club,r.id)&&roomPreparation(club,r.id).ready&&kitStatus(club,r.kitId).ok&&count>=limits.minimum&&count<=limits.maximum;});
 export const clubReady=club=>runningRooms(club).length>0;
 const money=club=>club.finance.cash;
 const fail=reason=>({ok:false,reason});
@@ -48,7 +51,7 @@ export function syncRooms(club){
   if(room)room.tableId=region.tableId;
   if(!room)room={id:region.id,tableId:region.tableId,number:club.layout.rooms.find(z=>z.id===region.id)?.number??club.nextRoomNumber++,capacity:4,turn:0,status:'closed',run:null,enabled:true,masterId:null,kitId:null,adventureId:null,hours:2};
   room.layout=region;room.chairIds=region.chairIds;room.masterChairId=region.masterChairId;room.layoutErrors=[...region.errors];
-  if(room.status==='running'){room.operational=true;next.push(room);continue;}
+  if(room.status==='running'){room.operational=true;room.minimumGuests=groupLimits(room).minimum;room.maximumGuests=groupLimits(room).maximum;next.push(room);continue;}
   if(!getKit(club,room.kitId))room.kitId=null;if(!getMaster(club,room.masterId))room.masterId=null;
   if(region.valid&&room.enabled){
    if(!room.masterId){const master=club.staff.find(m=>!m.training&&resourceFree({...club,rooms:[...club.rooms,...next]},'masterId',m.id,room.id));if(master)room.masterId=master.id;}
@@ -63,6 +66,7 @@ export function syncRooms(club){
   room.hours=adventure?sessionHours(adventure):2;
   room.session=adventure?structuredClone(adventure):null;
   room.program=adventure?sessionProgram(adventure):null;
+  room.minimumGuests=groupLimits(room).minimum;room.maximumGuests=groupLimits(room).maximum;
   room.operational=room.enabled&&room.layoutErrors.length===0;room.status=room.operational?'seating':'closed';room.reviewAt=club.clock;
   if(!room.operational)for(const g of roomOccupants(club,room.id)){g.roomId=null;g.seat=null;}
   next.push(room);
@@ -72,8 +76,8 @@ export function syncRooms(club){
 }
 export function makeGuest(club,{opening=false}={}){
  const arrival=club.arrivals++,systems=new Set(club.library.copies.map(k=>k.systemId)),genres=new Set(SESSIONS.filter(s=>systems.has(s.systemId)&&club.library.adventures.includes(s.id)).flatMap(s=>s.genres));
- let profile,index=0;const advertised=opening&&arrival<4;
- do{profile=generateVisitor(club.seed+'|campaign-arrivals|'+arrival,index++);}while(index<200&&(profile.format.id==='solo'||advertised&&!genres.has(profile.genres[0].id)));
+ let profile,index=0;const advertised=opening&&arrival<4,school=!opening&&club.clubDirection?.id==='beginners'&&hash(club.seed+'|school-visit|'+arrival)%100<BEGINNER_DIRECTION.newcomerShare*100;
+ do{profile=generateVisitor(club.seed+'|campaign-arrivals|'+arrival,index++);}while(index<200&&(profile.format.id==='solo'||advertised&&!genres.has(profile.genres[0].id)||school&&profile.experience.id!=='new'));
  const offset=hash(club.seed+'|cast')%IDENTITIES.length,target=targetGuestCount(club),older=club.guests.filter(g=>g.identity.age>40).length,middle=club.guests.filter(g=>g.identity.age>40&&g.identity.age<60).length,senior=club.guests.filter(g=>g.identity.age>=60).length;let identity;
  const ageAllowed=i=>i.age<=40||older<Math.max(1,Math.floor(target*.2))&&(i.age<60?middle<Math.max(1,Math.floor(target/10)):senior<Math.max(1,Math.floor(target/30)));
  const returned=returningGuest(club,arrival,{opening,identityAllowed:ageAllowed});if(returned)return registerGuestVisit(club,returned);
@@ -85,6 +89,7 @@ export function makeGuest(club,{opening=false}={}){
  const categories=['game','master','company','duration'].toSorted((a,b)=>hash(guest.id+'|weight|'+b)-hash(guest.id+'|weight|'+a));guest.weights=Object.fromEntries(categories.map((k,i)=>[k,4-i]));
  const names={game:'сама история',master:'как мастер ведёт игру',company:'люди за столом',duration:'чтобы хватило времени'};guest.ratingPriority=`Главное для меня — ${names[categories[0]]}. Ещё важно: ${names[categories[1]]}.`;
  guest.preferences=makePreferences(club.seed,guest);guest.avoidGenres=guest.preferences.avoidGenres??[];
+ if(school){for(const system of systems)guest.preferences.knowledge[system]=0;guest.schoolVisitor=true;}
  if(opening&&arrival<4){guest.preferences.rulesPolicy='announced';guest.preferences.learning='table';guest.preferences.knowledge.fate=arrival;guest.preferences.tone='mixed';guest.preferences.stakes='safe';if(arrival===3)guest.preferences.giveHelp='asked';}
  return registerGuestVisit(club,guest);
 }
@@ -116,7 +121,7 @@ export function replenish(club,{removeExpired=false,opening=false,arrivals=false
 export function createCampaign(seed){
  const club={version:7,seed:String(seed),clock:12,phase:'placing',drag:null,rooms:[],guests:[],selectedId:null,arrivals:0,step:0,nextRoomNumber:1,layout:starterLayout(),library:{copies:[{id:'kit-1',systemId:'fate',price:900}],adventures:['dark'],nextId:2},staff:[masterCandidate(0)],personnelArchive:[],staffRoomLegacyIds:[],serviceStaff:[],finance:{cash:ECONOMY.initialBudget,ledger:[],nextId:1,settledRuns:[],serviceIds:[]},activity:{},rating:{sum:0,count:0},reviewIds:[],departures:[],lastReport:null,campaign:{mode:'endless',status:'playing',openingHelp:true},construction:{version:1,transactions:[]},campaignActions:[]};
  club.waitingArea={version:1,adoptedAt:club.clock,stats:{}};
- recordMoney(club,-ECONOMY.openingSpent,'opening','Игровая комната, отдых мастеров, игра и первый мастер');ensureKits(club);ensureOperations(club);ensureGuestRegistry(club);syncRooms(club);ensureGuestFlow(club,{newCampaign:true});replenish(club,{opening:true});updateDevelopment(club,campaignProgress(club));return club;
+ recordMoney(club,-ECONOMY.openingSpent,'opening','Игровая комната, отдых мастеров, игра и первый мастер');ensureKits(club);ensureOperations(club);ensureGuestRegistry(club);ensureSessionJournal(club);ensureClubDirection(club);syncRooms(club);ensureGuestFlow(club,{newCampaign:true});replenish(club,{opening:true});updateDevelopment(club,campaignProgress(club));return club;
 }
 export const build=(club,action,args={})=>buildPhysical(club,action,args);
 export function buyGame(club,systemId){
@@ -163,7 +168,7 @@ export function trainMaster(club,id,systemId){
  if(master.training||club.rooms.some(r=>r.masterId===id&&r.status==='running'))return fail('Мастер сейчас недоступен для обучения.');
  if(!club.staff.some(m=>m.id!==id&&!m.training&&club.library.copies.some(k=>m.known.includes(k.systemId))))return fail('Сначала нужен другой мастер, который сможет вести одну из купленных игр.');
  const {cost,hours}=offer;if(money(club)<cost)return fail('На обучение не хватает денег.');
- master.training={systemId,startedAt:club.clock,endsAt:club.clock+hours,cost};recordMoney(club,-cost,'training',master.name+(group?' учится работать с группой':' учится вести '+gameProduct(systemId).name));for(const r of club.rooms)if(r.masterId===id)r.masterId=null;syncRooms(club);return{ok:true,cost,hours};
+ master.training={systemId,startedAt:club.clock,endsAt:club.clock+hours,cost};recordMoney(club,-cost,'training',master.name+(group?' учится работать с группой':' учится вести '+gameProduct(systemId).name));syncRooms(club);return{ok:true,cost,hours};
 }
 export function configureRoom(club,id,{kitId,masterId,adventureId,hours,enabled}={}){
  const room=roomById(club,id);if(!room||room.status==='running')return fail('Настройки занятой комнаты сохранятся до конца игры.');
@@ -189,11 +194,11 @@ export function startRoom(club,id,{acceptRisk=false}={}){
  syncRooms(club);const room=roomById(club,id);if(!room)return fail('Комната не найдена.');
  const preparation=roomPreparation(club,id),kit=kitStatus(club,room.kitId);
  if(!preparation.ready)return fail(preparation.reason);if(!kit.ok)return fail(kit.reason);
- if(!readyRooms(club).includes(room))return fail('Для игры нужна готовая комната, мастер и четыре гостя.');
+ if(!readyRooms(club).includes(room))return fail(`Для игры нужна готовая комната, мастер и ${groupLimits(room).minimum}–${groupLimits(room).maximum} гостя.`);
  const guests=roomOccupants(club,id).map(g=>({...structuredClone(g),waiting:guestWaitingSummary(club,g)})),runId=`${club.seed}|${id}|${room.turn}|${club.clock}`;
  const equipment=equipRoom(club,room.layout),hours=room.hours??2,snapshot=structuredClone({...room,run:null,equipment,environment:{hot:hours>=5&&room.layout.cells.length<=28,noisyAppliances:commerceItems(club.layout).some(i=>i.enabled&&equipmentRunning(club,i)&&PRODUCTS[i.type].noisy&&room.layout.cells.some(k=>{const [x,y]=k.split(',').map(Number);return Math.abs(i.x-x)+Math.abs(i.y-y)<=2;}))}});
  const forecast=sessionForecast(club,id);
- const run={id:runId,ratingVersion:CAMPAIGN_RATING_VERSION,startedAt:club.clock,endsAt:club.clock+hours,room:snapshot,guests,contract:{pricingVersion:3,paymentCurve:3,hourlyRate:ECONOMY.guestHour,guestPrice:hours*ECONOMY.guestHour,wageTotal:hours*room.master.hourlyWage,forecast,tipRolls:Object.fromEntries(guests.map(g=>[g.id,hash(club.seed+'|tips|'+runId+'|'+g.id)/4294967296]))}};
+ const run={id:runId,ratingVersion:CAMPAIGN_RATING_VERSION,startedAt:club.clock,endsAt:club.clock+hours,room:snapshot,guests,contract:{pricingVersion:3,paymentCurve:3,guestCount:guests.length,hourlyRate:ECONOMY.guestHour,guestPrice:hours*ECONOMY.guestHour,wageTotal:hours*room.master.hourlyWage,forecast,tipRolls:Object.fromEntries(guests.map(g=>[g.id,hash(club.seed+'|tips|'+runId+'|'+g.id)/4294967296]))}};
  const trial=structuredClone(club);trial.rooms.find(r=>r.id===id).status='running';trial.rooms.find(r=>r.id===id).run=run;const reserve=reserveRequired(trial);
  if(!acceptRisk&&money(club)<reserve)return{ok:false,needsRiskConfirmation:true,reserve,cash:money(club),reason:`Если никто не заплатит, текущие партии и клуб потребуют до ${reserve} ₽. В кассе ${Math.round(money(club))} ₽.`};
  room.status='running';room.run=freeze(run);club.activity[runId]={noiseHours:0,services:[]};club.campaign.openingHelp=false;syncGuestWaiting(club);
@@ -231,17 +236,17 @@ function advanceCampaignTo(club,target){
   settleSessions(time){
    const gone=new Set();
    for(const room of runningRooms(club).filter(r=>Math.abs(r.run.endsAt-time)<1e-8)){
-    const run={...room.run,observed:club.activity[room.run.id]??{}},reviews=run.guests.map(g=>[3,4,5,6,7,8].includes(run.ratingVersion)?rateCampaignGuest(run,g):rateLegacyGuest(run,g));
+    const run={...room.run,observed:club.activity[room.run.id]??{}},reviews=run.guests.map(g=>[3,4,5,6,7,8,9].includes(run.ratingVersion)?rateCampaignGuest(run,g):rateLegacyGuest(run,g));
     const settlement=settleRun(club,run,reviews);if(!settlement)throw new Error('Эта игра уже рассчитана.');
     recordGuestOutcome(club,run,settlement.reviews);prepareAfterRun(club,run,room);
     for(const review of settlement.reviews)if(!club.reviewIds.includes(review.reviewId)){club.reviewIds.push(review.reviewId);club.rating.sum+=review.score;club.rating.count++;}
-    completed.push({sessionId:run.id,roomId:room.id,number:room.number,title:run.room.session.title,game:run.room.session.game,master:run.room.master.name,startedAt:run.startedAt,endsAt:run.endsAt,...settlement});departures.push({roomId:room.id,sessionId:run.id,guests:run.guests});
+    const completedEntry={sessionId:run.id,roomId:room.id,number:room.number,title:run.room.session.title,game:run.room.session.game,master:run.room.master.name,startedAt:run.startedAt,endsAt:run.endsAt,...settlement};completed.push(completedEntry);recordSessionJournal(club,completedEntry);departures.push({roomId:room.id,sessionId:run.id,guests:run.guests});
     for(const guest of run.guests)gone.add(guest.id);
     room.turn++;room.status='seating';room.run=null;delete club.activity[run.id];completedAtTimestamp=true;
    }
    club.guests=club.guests.filter(g=>!gone.has(g.id));
   },
-  afterTimestamp(){syncRooms(club);replenish(club,{removeExpired:true,arrivals:true,completed:completedAtTimestamp});completedAtTimestamp=false;updateCampaign(club);},
+  afterTimestamp(){syncRooms(club);replenish(club,{removeExpired:true,arrivals:true,completed:completedAtTimestamp});completedAtTimestamp=false;processCleaningPolicy(club);updateCampaign(club);},
  });
  club.step++;club.departures=departures;club.drag=null;
  const entries=club.finance.ledger.slice(ledgerStart),incoming=Math.round(entries.reduce((sum,e)=>sum+Math.max(0,e.amount),0)*100)/100,outgoing=Math.round(entries.reduce((sum,e)=>sum+Math.max(0,-e.amount),0)*100)/100;
@@ -279,8 +284,8 @@ export function decodeClub(raw){
  if(!Number.isInteger(club.step)||club.step<0||!Number.isInteger(club.arrivals)||club.arrivals<0||new Set(club.rooms.map(r=>r.id)).size!==club.rooms.length||club.rooms.some(r=>r.capacity!==4||!Number.isInteger(r.turn)||r.turn<0||!Number.isInteger(r.hours)||r.hours<2||r.hours>6))throw new Error('Повреждены события клуба.');
  const ids=new Set(),seats=new Set();
  for(const g of club.guests){if(ids.has(g.id)||!g.identity?.portrait||!g.profile||!Array.isArray(g.dialogue)||!Array.isArray(g.asked)||!Number.isFinite(g.schedule?.leaveAt)||!g.preferences)throw new Error('Повреждён гость.');ids.add(g.id);if(g.roomId){const room=roomById(club,g.roomId),key=g.roomId+':'+g.seat;if(!room||!Number.isInteger(g.seat)||g.seat<0||g.seat>3||seats.has(key))throw new Error('Повреждена рассадка.');seats.add(key);}g.dialogueVersion??=1;g.dialogue.forEach(a=>{if(!QUESTIONS.some(q=>q.id===a.questionId))throw new Error('Повреждён разговор.');a.reply??=answerText(g,a.questionId,a.variant);});if(g.lastAnswer)g.lastAnswer=g.dialogue.find(a=>a.questionId===g.lastAnswer.questionId&&a.variant===g.lastAnswer.variant)??null;}
- for(const r of club.rooms)if(r.status==='running'){const run=r.run;if(!run||![1,2,3,4,5,6,7,8].includes(run.ratingVersion??1)||run.endsAt<=club.clock||run.guests.length!==4||new Set(run.guests.map(g=>g.id)).size!==4||run.endsAt!==run.startedAt+run.room.session.minutes/60||run.guests.some(g=>!roomOccupants(club,r.id).some(p=>p.id===g.id))||!Number.isFinite(run.contract?.guestPrice)||run.contract.guestPrice<0||run.contract.wageTotal<0||!Number.isFinite(run.contract?.wageTotal)||run.contract.pricingVersion===3&&run.contract.paymentCurve!==3||run.ratingVersion>=3&&run.guests.some(g=>!Number.isFinite(run.contract.tipRolls?.[g.id])||run.contract.tipRolls[g.id]<0||run.contract.tipRolls[g.id]>=1))throw new Error('Повреждена начатая игра.');freeze(run);}
- validateGuestWaiting(club);adoptGuestWaiting(club);ensureGuestRegistry(club);validateGuestRegistry(club);
+ for(const r of club.rooms)if(r.status==='running'){const run=r.run,limits=groupLimits(r),count=run?.guests?.length;if(!run||![1,2,3,4,5,6,7,8,9].includes(run.ratingVersion??1)||run.endsAt<=club.clock||!Number.isInteger(count)||count<limits.minimum||count>limits.maximum||run.ratingVersion>=9&&run.contract?.guestCount!==count||new Set(run.guests.map(g=>g.id)).size!==count||run.endsAt!==run.startedAt+run.room.session.minutes/60||run.guests.some(g=>!roomOccupants(club,r.id).some(p=>p.id===g.id))||!Number.isFinite(run.contract?.guestPrice)||run.contract.guestPrice<0||run.contract.wageTotal<0||!Number.isFinite(run.contract?.wageTotal)||run.contract.pricingVersion===3&&run.contract.paymentCurve!==3||run.ratingVersion>=3&&run.guests.some(g=>!Number.isFinite(run.contract.tipRolls?.[g.id])||run.contract.tipRolls[g.id]>=1||run.contract.tipRolls[g.id]<0))throw new Error('Повреждена начатая игра.');freeze(run);}
+ validateGuestWaiting(club);adoptGuestWaiting(club);ensureGuestRegistry(club);validateGuestRegistry(club);validateSessionJournal(club);validateClubDirection(club);
  club.construction??={version:1,transactions:[]};club.campaignActions??=[];
  club.drag=null;club.phase='placing';syncRooms(club);validateGuestFlow(club);ensureGuestFlow(club);replenish(club,{removeExpired:false});freeze(club.lastReport);updateDevelopment(club,campaignProgress(club));return club;
 }
@@ -343,6 +348,13 @@ export function executeCampaignAction(club,action){
  const draft=structuredClone(club);let result;
  switch(action.type){
  case 'hireServiceStaff':result=hireServiceStaff(draft);break;
+ case 'setClubDirection':{
+  const direction=action.direction;if(!['general','beginners'].includes(direction))return fail('Выберите открытый клуб или школу новичков.');
+  const current=ensureClubDirection(draft);if(current.id===direction){result={ok:true,unchanged:true};break;}
+  const cost=direction==='beginners'?BEGINNER_DIRECTION.activationCost:0;
+  if(draft.finance.cash-reserveRequired(draft)<cost)return fail(`Для запуска направления нужны ${cost} ₽ сверх принятых обязательств.`);
+  if(cost)recordMoney(draft,-cost,'direction','Объявление школы новичков');draft.clubDirection={version:1,id:direction,chosenAt:draft.clock};result={ok:true,cost,direction};break;
+ }
  case 'setServiceShift':result=setServiceShift(draft,action.active);break;
  case 'purchaseGame':result=buyGame(draft,action.systemId);break;
  case 'sellGame':result=sellGame(draft,action.kitId,{acceptUnassign:action.acceptUnassign===true});break;

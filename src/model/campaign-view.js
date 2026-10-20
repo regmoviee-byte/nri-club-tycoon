@@ -3,13 +3,15 @@ import {SESSIONS} from '../data/club.js';
 import {SYSTEMS} from '../data/systems.js';
 import {campaignProgress,readyRooms,masterTrainingOffer,configureRoom} from './campaign.js';
 import {staffRoomStatus} from './staff-room.js';
-import {zoneCleaning} from './operations.js';
+import {zoneCleaning,cleaningPolicyStatus} from './operations.js';
 import {hourlyCosts,obligations,reserveRequired,reserveEstimate,sessionForecast} from './finances.js';
 import {masterPreferences,sessionDurationRange} from './preferences.js';
 import {kitStatus,roomPreparation} from './kit-lifecycle.js';
 import {libraryStorageStatus} from './layout-club.js';
 import {SERVICE_STAFF} from './service-staff.js';
 import {developmentStatus} from './development.js';
+import {plannedGuestCount} from './group-size.js';
+import {clubDirectionStatus} from './club-direction.js';
 
 const normalizeStaff=master=>{
  const fatigue=master.fatigue??0;
@@ -21,6 +23,9 @@ export function campaignMarket(club){
  const rest=staffRoomStatus(club),restSeats=new Map(rest.assignments.map(a=>[a.masterId,a.seat])),working=new Set(club.rooms.filter(r=>r.status==='running').flatMap(r=>[r.masterId,r.run?.room?.master?.id]));
  const candidates=availableMasterCandidates(club).map(m=>({...normalizeStaff(m),candidateId:m.id,returning:(club.personnelArchive??[]).some(person=>person.id===m.id)}));
  return {
+ clubDirection:clubDirectionStatus(club),
+ cleaningPolicy:cleaningPolicyStatus(club),
+ sessionJournal:club.sessionJournal?.entries??[],
  staffRoom:rest,
  libraryStorage:libraryStorageStatus(club),
  serviceStaff:{hired:!!club.serviceStaff?.length,active:club.serviceStaff?.some(s=>s.onShift)??false,hireCost:SERVICE_STAFF.fee,hourlyWage:club.serviceStaff?.[0]?.hourlyWage??SERVICE_STAFF.hourlyWage},
@@ -61,6 +66,6 @@ export function startQuote(club,id,settings={}){
  if(candidate.status!=='running'&&!kit.ok)return{ok:false,reason:kit.reason};
  const ready=readyRooms(draft).some(r=>r.id===id);
  const hours=candidate.hours,forecast=sessionForecast(draft,id);
- if(candidate.status!=='running'){candidate.status='running';candidate.run={endsAt:club.clock+hours,guests:Array.from({length:4},()=>({})),contract:{wageTotal:hours*candidate.master.hourlyWage}};}
+ if(candidate.status!=='running'){const count=plannedGuestCount(draft,candidate);candidate.status='running';candidate.run={endsAt:club.clock+hours,guests:Array.from({length:count},()=>({})),contract:{wageTotal:hours*candidate.master.hourlyWage}};}
  const reserve=reserveRequired(draft);return {ok:true,reserve,cash:club.finance.cash,risky:club.finance.cash<reserve,projectedExpense:reserve-reserveRequired(club),...forecast,wages:forecast.masterCost,hours,adventureId:candidate.adventureId,ready};
 }

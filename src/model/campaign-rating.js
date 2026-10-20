@@ -1,9 +1,10 @@
 import {makeLegacyPreferences,sessionProgram,masterPreferences,guestVoice} from './preferences.js';
 import {disclosedWeights} from './rating.js';
 import {gameProduct,PRODUCTS} from '../data/commerce.js';
-import {roomUpgradeBenefit,roomUpgradeBenefitV8,serviceUpgradeBenefitV8} from './upgrades.js';
+import {roomUpgradeBenefit,roomUpgradeBenefitV8,roomUpgradeBenefitV9,serviceUpgradeBenefitV8} from './upgrades.js';
+import {itemContext,contextualLearningAllowance} from './item-context.js';
 import {QUALITY_BALANCE as Q} from '../data/balance.js';
-export const CAMPAIGN_RATING_VERSION=8;
+export const CAMPAIGN_RATING_VERSION=9;
 const keys=['game','master','company','duration'];
 const clamp=n=>Math.max(0,Math.min(1,n));
 const fact=(fit,text,question,code)=>({fit:clamp(fit),text,question,code});
@@ -102,6 +103,7 @@ function acceptedHelper(a,b,system){
  return a.id!==b.id&&p.giveHelp!=='none'&&p.knowledge[system]>=2&&p.respectsNo&&q.receiveHelp!=='none'&&q.knowledge[system]<2;
 }
 export function tableWorkload(run){
+ if((run.ratingVersion??CAMPAIGN_RATING_VERSION)>=9)return tableWorkloadV9(run);
  if((run.ratingVersion??CAMPAIGN_RATING_VERSION)>=8)return tableWorkloadV8(run);
  if((run.ratingVersion??CAMPAIGN_RATING_VERSION)<4)return tableWorkloadV3(run);
  const system=run.room.session.systemId,complexity=gameProduct(system)?.complexity??1,master=restedMaster(run.room.master),guests=run.guests.map(g=>baseGuest(run,g));
@@ -201,6 +203,7 @@ export function rateCampaignGuest(run,guest){
   return {...review,score,ratingVersion:7,equipmentBenefit:true,upgradeBenefit:benefit,comfort:{...review.comfort,helped:[...review.comfort.helped,...benefit.effects.map(e=>e.text)]}};
  }
  if(version===8)return rateCampaignGuestV8(run,guest);
+ if(version===9)return rateCampaignGuestV9(run,guest);
  throw new Error('Неизвестная версия оценки кампании.');
 }
 
@@ -210,7 +213,9 @@ export function learningMaterialAllowance(items,{learning,combat=0}={}){
  const written=tablet?Q.tabletMaterials:board&&['ahead','table'].includes(learning)?Q.boardMaterials:0,visual=has('miniatures')&&learning==='describe'&&combat>=.8?Q.miniatureMaterials:0;
  return Math.max(written,visual);
 }
-export function tableWorkloadV8(run){
+export function tableWorkloadV8(run){return modernTableWorkload(run,false);}
+export function tableWorkloadV9(run){return modernTableWorkload(run,true);}
+function modernTableWorkload(run,contextual){
  const system=run.room.session.systemId,complexity=learningComplexityMultiplier(system),master=restedMaster(run.room.master),guests=run.guests.map(g=>baseGuest(run,g));
  const demandById=Object.fromEntries(guests.map(g=>[g.id,g.preferences.knowledge[system]>=2?0:complexity*{ahead:.35,table:.8,describe:1.2}[g.preferences.learning]*(g.preferences.knowledge[system]===1?.75:1)]));
  const demand=Object.values(demandById).reduce((n,v)=>n+v,0),masterCapacity=master.wantsTeaching?master.teachingCapacity*master.teachingSkill:0;
@@ -222,7 +227,8 @@ export function tableWorkloadV8(run){
   const available=Math.max(0,helper.preferences.teachingSkill??.5),unserved=targets.reduce((n,g)=>n+demandById[g.id]-assigned[g.id],0);
   for(const target of targets){const share=unserved?Math.min(demandById[target.id]-assigned[target.id],available*(demandById[target.id]-assigned[target.id])/unserved):0;assigned[target.id]+=share;peerCapacity+=share;}
  }
- const materialsById=Object.fromEntries(guests.map(g=>{const allowance=learningMaterialAllowance(run.room.equipment,{learning:g.preferences.learning,combat:g.preferences.scenes.combat});return[g.id,Math.min(allowance,Math.max(0,demandById[g.id]-assigned[g.id]))];}));
+ const context=contextual?itemContext(run.room.session,run.room.program):null;
+ const materialsById=Object.fromEntries(guests.map(g=>{const allowance=contextual?contextualLearningAllowance(run.room.equipment,{learning:g.preferences.learning,context}):learningMaterialAllowance(run.room.equipment,{learning:g.preferences.learning,combat:g.preferences.scenes.combat});return[g.id,Math.min(allowance,Math.max(0,demandById[g.id]-assigned[g.id]))];}));
  const servedById=Object.fromEntries(guests.map(g=>[g.id,demandById[g.id]?clamp((assigned[g.id]+materialsById[g.id])/demandById[g.id]):1]));
  const supported=guests.reduce((n,g)=>n+Math.min(demandById[g.id],assigned[g.id]+materialsById[g.id]),0),capacity=masterCapacity+peerCapacity;
  return{demand,capacity,served:demand?clamp(supported/demand):1,servedById,demandById,materialsById,teachingMinutes:Math.round(demand*8/Math.max(.4,capacity)),volunteers:volunteers.map(g=>g.id),fatigue:master.fatigue,complexityMultiplier:complexity};
@@ -250,8 +256,10 @@ function roomComfortV8(run,guest){
 }
 
 // New-session arithmetic only. Accepted V3–V7 reviews above remain unchanged.
-export function rateCampaignGuestV8(run,original){
- const guest=baseGuest(run,original),session=run.room.session,master=restedMaster(run.room.master),p=guest.preferences,legacy=rateCampaignGuestV5({...run,ratingVersion:7},guest),evidence=legacy.evidence,work=tableWorkloadV8(run);
+export function rateCampaignGuestV8(run,original){return rateModernGuest(run,original,8);}
+export function rateCampaignGuestV9(run,original){return rateModernGuest(run,original,9);}
+function rateModernGuest(run,original,version){
+ const guest=baseGuest(run,original),session=run.room.session,master=restedMaster(run.room.master),p=guest.preferences,legacy=rateCampaignGuestV5({...run,ratingVersion:7},guest),evidence=legacy.evidence,work=version>=9?tableWorkloadV9(run):tableWorkloadV8(run);
  const teaching=evidence.master.find(f=>f.code==='teaching'),needs=p.knowledge[session.systemId]<2,served=needs?work.servedById[guest.id]:1;
  if(teaching){teaching.fit=served;teaching.text=served>=.9?'Объяснений и времени на первый ход хватило.':p.learning==='describe'?'На первый ход с подсказками требовалось больше времени мастера.':'Нескольким игрокам требовались объяснения; времени мастера на всех не хватило.';}
  const hours=run.endsAt-run.startedAt,[low,high]=guest.schedule.preferred,distance=Math.max(low-hours,hours-high,0);
@@ -259,7 +267,7 @@ export function rateCampaignGuestV8(run,original){
  const mean=items=>items.reduce((n,f)=>n+f.fit,0)/items.length;
  const components={...legacy.components,master:.4*weakest(evidence.master).fit+.6*mean(evidence.master),company:.45*weakest(evidence.company).fit+.55*mean(evidence.company),duration:evidence.duration.length===1?evidence.duration[0].fit:.85*evidence.duration[0].fit+.15*evidence.duration[1].fit};
  const shortfall=Math.sqrt(keys.reduce((n,k)=>n+legacy.weights[k]*(1-components[k])**2,0)/10),comfort=roomComfortV8(run,guest),genre=evidence.game.find(f=>f.code==='genre')?.fit??0;
- const eligible=!legacy.violations.length&&genre>=.55&&!comfort.dirty,equipment=eligible?roomUpgradeBenefitV8(run,guest):{bonus:0,effects:[]},service=eligible?serviceUpgradeBenefitV8(run,guest):{bonus:0,effects:[]};
+ const eligible=!legacy.violations.length&&genre>=.55&&!comfort.dirty,equipment=eligible?(version>=9?roomUpgradeBenefitV9(run,guest):roomUpgradeBenefitV8(run,guest)):{bonus:0,effects:[]},service=eligible?serviceUpgradeBenefitV8(run,guest):{bonus:0,effects:[]};
  const teachingPenalty=needs&&work.demandById[guest.id]>0?Math.min(Q.teachingPenaltyCap,Q.teachingPenaltyStrength*Math.max(0,Q.teachingTarget-served)):0;
  const bonus=Math.min(Q.totalBonusCap,equipment.bonus+service.bonus),raw=10-9*shortfall-comfort.penalty-teachingPenalty+bonus;
  let satisfactionValue=Math.max(1,Math.min(10,raw));if(genre<.2)satisfactionValue=Math.min(satisfactionValue,6);if(legacy.violations.length)satisfactionValue=Math.min(satisfactionValue,4);
@@ -271,5 +279,5 @@ export function rateCampaignGuestV8(run,original){
  const category=keys.toSorted((a,b)=>legacy.weights[b]*(1-components[b])**2-legacy.weights[a]*(1-components[a])**2)[0],reason=weakest(evidence[category]);
  const learningText=p.learning==='describe'?'Мне требовалась помощь с кубиками на первом ходу, а мастер не успевал помочь всем.':'Для новой системы мне требовались объяснения, а времени мастера на все вопросы не хватило.';
  const text=legacy.violations[0]??(teachingPenalty>.35?learningText:reason.fit<.95?reason.text:comfort.notes[0]??'История, мастер и компания подошли. Было приятно играть.');
- return{...legacy,score:Math.round(satisfactionValue),satisfactionValue,satisfaction:satisfactionValue,baseSatisfaction:Math.round(Math.max(1,Math.min(10,10-9*shortfall-comfort.penalty-teachingPenalty))*100)/100,teachingPenalty,components,evidence,comfort,text:cleanText(text),violations:legacy.violations.map(cleanText),ratingVersion:8,equipmentBenefit:eligible&&comfort.helped.length>0,upgradeBenefit:{bonus,equipmentBonus:equipment.bonus,serviceBonus:service.bonus,effects,cap:Q.totalBonusCap},events:[...Object.values(evidence).flat().filter(f=>f.fit<.95||f.code==='teaching'),...comfort.penalties.map(p=>fact(0,p.text,'comfort',p.code)),...(teachingPenalty>0?[fact(served,learningText,'learning','unmet-teaching')]:[])],workload:work};
+ return{...legacy,score:Math.round(satisfactionValue),satisfactionValue,satisfaction:satisfactionValue,baseSatisfaction:Math.round(Math.max(1,Math.min(10,10-9*shortfall-comfort.penalty-teachingPenalty))*100)/100,teachingPenalty,components,evidence,comfort,text:cleanText(text),violations:legacy.violations.map(cleanText),ratingVersion:version,equipmentBenefit:eligible&&comfort.helped.length>0,upgradeBenefit:{bonus,equipmentBonus:equipment.bonus,serviceBonus:service.bonus,effects,cap:Q.totalBonusCap},events:[...Object.values(evidence).flat().filter(f=>f.fit<.95||f.code==='teaching'),...comfort.penalties.map(p=>fact(0,p.text,'comfort',p.code)),...(teachingPenalty>0?[fact(served,learningText,'learning','unmet-teaching')]:[])],workload:work};
 }

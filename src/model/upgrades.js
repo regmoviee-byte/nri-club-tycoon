@@ -1,6 +1,7 @@
 import {BUILD_CATALOG} from '../data/build-catalog.js';
 import {QUALITY_BALANCE as Q} from '../data/balance.js';
 import {objectApproaches} from './layout.js';
+import {itemContext} from './item-context.js';
 
 // Effects are shared by the shop, inspector, hiring and new session contracts.
 // Cosmetic purchases have a real, capped prestige effect instead of fake tips.
@@ -74,13 +75,16 @@ export function roomUpgradeBenefit(run,guest){
 // V7 above is immutable accepted-contract arithmetic. New sessions use V8.
 const aliases={wideTable:'tableComfort',softChair:'chairSoft',armchair:'chairArms',dimmer:'lightAdjustable',board:'whiteboard',tea:'kettle',aircon:'conditioner'};
 const itemKind=item=>item.kind??aliases[item.type]??item.type;
-export function roomUpgradeBenefitV8(run,guest){
+export function roomUpgradeBenefitV8(run,guest){return modernRoomBenefit(run,guest,false);}
+export function roomUpgradeBenefitV9(run,guest){return modernRoomBenefit(run,guest,true);}
+function modernRoomBenefit(run,guest,contextual){
  const items=(run.room.equipment??[]).filter(i=>i.enabled!==false),has=kind=>items.some(i=>itemKind(i)===kind),p=guest.preferences,hours=run.endsAt-run.startedAt,effects=[];
  const add=(kind,value,text)=>effects.push({kind,value,text,group:'equipment'});
  if(has('tableComfort'))add('tableComfort',Q.tableComfort,'За просторным столом хватало места для материалов.');
  if(has('dice')&&(p?.knowledge?.[run.room.session.systemId]??2)<2)add('dice',Q.dice,'Дополнительные кубики помогли освоить первый ход.');
- if(has('mat')){if((p?.scenes?.combat??0)>=.8)add('mat',Q.mat,'Коврик помогал видеть положение участников боя.');else if((p?.scenes?.exploration??0)>=.8)add('mat',Q.mapExploration,'Карта на коврике помогала следить за исследованием местности.');}
- if((p?.scenes?.combat??0)>=.8&&has('miniatures'))add('miniatures',Q.miniatures,'Миниатюры делали тактические сцены наглядными.');
+ const context=contextual?itemContext(run.room.session,run.room.program):{combat:1,exploration:1};
+ if(has('mat')){if((p?.scenes?.combat??0)>=.8&&context.combat>0)add('mat',Q.mat*context.combat,'Коврик помогал видеть положение участников боя.');else if((p?.scenes?.exploration??0)>=.8&&context.exploration>0)add('mat',Q.mapExploration*context.exploration,'Карта на коврике помогала следить за исследованием местности.');}
+ if((p?.scenes?.combat??0)>=.8&&has('miniatures')&&context.combat>0)add('miniatures',Q.miniatures*context.combat,'Миниатюры делали тактические сцены наглядными.');
  if(has('screen')&&p?.tone==='serious')add('screen',Q.screen,'Ширма помогала сохранить интригу серьёзной истории.');
  const chair=items.find(i=>i.id===run.room.chairIds?.[guest.seat]);
  if(itemKind(chair??{})==='chairArms'&&p?.comfort?.longSeat&&hours>=4)add('chairArms',Q.armchair,'Подлокотники помогли удобно устроиться на долгую игру.');

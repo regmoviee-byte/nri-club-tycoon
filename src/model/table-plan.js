@@ -1,7 +1,10 @@
 import {gameProduct} from '../data/commerce.js';
 import {masterPreferences,sessionProgram} from './preferences.js';
 import {askQuestion} from './club.js';
-import {CAMPAIGN_RATING_VERSION,learningComplexityMultiplier,learningMaterialAllowance} from './campaign-rating.js';
+import {CAMPAIGN_RATING_VERSION,learningComplexityMultiplier,learningMaterialAllowance,tableWorkloadV9} from './campaign-rating.js';
+import {itemContext,contextualLearningAllowance} from './item-context.js';
+import {planningGuest} from './guest-knowledge.js';
+import {groupLimits} from './group-size.js';
 
 const basic=[['time','время'],['stories','интересы'],['boundaries','границы'],['avoidGenres','отказ от жанров'],['commitment','формат встречи'],['knowledge','знание системы'],['learning','способ обучения']];
 const note=(code,text,tone='good')=>({code,text,tone});
@@ -17,8 +20,9 @@ export function quickInterview(club,guestId){
  if(!guest)return{ok:false,reason:'Гость не найден.'};
  if(club.phase!=='placing'||club.rooms.some(room=>room.id===guest.roomId&&room.status==='running'))return{ok:false,reason:'Гость уже играет. Поговорить можно перед следующей партией.'};
  const asked=[],answers=[];
+ const known=new Set(planningGuest(club,guest).asked);
  for(const id of QUICK_INTERVIEW_QUESTIONS){
-  if(heard(guest,id))continue;
+  if(known.has(id))continue;
   const answer=askQuestion(club,guestId,id);
   if(!answer)return{ok:false,reason:'Не удалось закончить знакомство.',asked,answers};
   asked.push(id);answers.push(answer);
@@ -33,7 +37,7 @@ export function tablePlan(club,roomId){
  const source=club.rooms.find(room=>room.id===roomId);
  if(!source)return{count:0,capacity:4,rows:[],summary:[note('room-missing','Комната не найдена.','warning')],unknownCount:0};
  const running=source.status==='running'&&source.run,room=running?source.run.room:source;
- const guests=(running?source.run.guests:club.guests.filter(guest=>guest.roomId===roomId)).toSorted((a,b)=>(a.seat??0)-(b.seat??0));
+ const guests=(running?source.run.guests:club.guests.filter(guest=>guest.roomId===roomId).map(guest=>planningGuest(club,guest))).toSorted((a,b)=>(a.seat??0)-(b.seat??0));
  const session=room.session,master=room.master?masterPreferences(room.master):null;
  const hours=session?.minutes/60??source.hours??2,end=running?source.run.endsAt:club.clock+hours;
  const program=session?room.program??sessionProgram(session):null,summary=[],rows=[];
@@ -43,7 +47,9 @@ export function tablePlan(club,roomId){
  const tablet=has('tablet'),board=has('whiteboard')||has('board');
  let unknownCount=0,storyKnown=0,storyMatched=0,teachingKnown=0,teachingDemand=0,materialSupport=0;
  const learners=[],helpers=[],learningNeeds=[];
- if(guests.length<4)summary.push(note('seats',`За столом ${guests.length} из 4 гостей. Выберите ещё ${4-guests.length}.`,'warning'));
+ const limits=groupLimits(source);
+ if(guests.length<limits.minimum)summary.push(note('seats',`За столом ${guests.length} из ${limits.maximum} гостей. Для этой истории нужны ещё ${limits.minimum-guests.length}.`,'warning'));
+ else if(guests.length<limits.maximum)summary.push(note('seats',`Можно начать с ${guests.length} гостями или выбрать ещё ${limits.maximum-guests.length}. Зарплата мастера и содержание комнаты не уменьшаются.`));
  if(!master)summary.push(note('master-missing','Назначьте мастера: без него нельзя проверить поддержку группы.','warning'));
  if(!session)summary.push(note('story-missing','Выберите приключение: от него зависят время и содержание игры.','warning'));
  for(const guest of guests){
@@ -86,14 +92,16 @@ export function tablePlan(club,roomId){
     const complexity=version>=8?learningComplexityMultiplier(session.systemId):gameProduct(session.systemId)?.complexity??1;
     const demand=complexity*{ahead:.35,table:.8,describe:1.2}[p.learning]*(knowledge===1?.75:1);
     teachingDemand+=demand;learners.push(guest);
-    const allowance=version>=8?learningMaterialAllowance(equipment,{learning:p.learning,combat:program?.scenes?.combat??0}):(tablet||board)&&p.learning!=='describe' ? .25 : 0;
+    const allowance=version>=9?contextualLearningAllowance(equipment,{learning:p.learning,context:itemContext(session,program)}):version>=8?learningMaterialAllowance(equipment,{learning:p.learning,combat:p.scenes?.combat??0}):(tablet||board)&&p.learning!=='describe' ? .25 : 0;
     materialSupport+=Math.min(allowance,demand);
     learningNeeds.push({demand,allowance});
     notes.push(note('learning',knowledge===1?'Знает основы; на первых ходах нужна поддержка.':'Нужны объяснения правил этой системы.'));
    }else notes.push(note('knowledge','Правила системы уже знает.'));
   }else if(heard(guest,'experience')&&profile.experience.id==='new')notes.push(note('experience','Первая НРИ: уточните знание этой системы и способ обучения.','unknown'));
   if(session&&p&&heard(guest,'knowledge')&&heard(guest,'helpOthers')&&p.knowledge[session.systemId]>=2&&p.giveHelp!=='none')helpers.push(guest);
-  rows.push({guestId:guest.id,name:name(guest),tone:notes.some(n=>n.tone==='warning')?'warning':notes.some(n=>n.tone==='unknown')?'unknown':'good',notes});
+  const memory=guest.planningMemory??[];
+  if(memory.length)notes.push(note('memory',`Учтены ответы из прошлого разговора (${memory.length}); сегодняшний срок, границы, отказ от жанров и знание системы уточняются заново.`));
+  rows.push({guestId:guest.id,name:name(guest),tone:notes.some(n=>n.tone==='warning')?'warning':notes.some(n=>n.tone==='unknown')?'unknown':'good',notes,memory});
  }
  // A pair concern is shown only when the relevant answers of both people
  // were heard. Public facilitation skills may mitigate it without revealing
@@ -116,7 +124,14 @@ export function tablePlan(club,roomId){
  if(storyKnown)summary.push(note('story-fit',`Основной интерес совпадает с историей у ${storyMatched} из ${storyKnown} опрошенных.`,storyMatched===storyKnown?'good':'warning'));
  if(master&&learners.length){
   const fatigue=Math.max(0,Math.min(12,Number(master.fatigue)||0)),capacity=master.wantsTeaching?master.teachingCapacity*master.teachingSkill*(1-Math.max(0,fatigue-4)*.0225):0;
-  const supported=learningNeeds.reduce((sum,need)=>{const allocated=Math.min(need.demand,capacity*need.demand/teachingDemand);return sum+allocated+Math.min(need.allowance,need.demand-allocated);},0);
+  let supported=learningNeeds.reduce((sum,need)=>{const allocated=Math.min(need.demand,capacity*need.demand/teachingDemand);return sum+allocated+Math.min(need.allowance,need.demand-allocated);},0);
+  if(version>=9){
+   const system=session.systemId,knownGuests=guests.map(guest=>{const g=structuredClone(guest);g.preferences??={};
+    if(!heard(guest,'knowledge')||!heard(guest,'learning'))g.preferences.knowledge={...g.preferences.knowledge,[system]:2};
+    if(!heard(guest,'helpOthers')||!heard(guest,'knowledge')){g.preferences.giveHelp='none';g.preferences.teachingSkill=0;g.preferences.respectsNo=true;}
+    if(!heard(guest,'habits'))g.preferences.receiveHelp='none';return g;});
+   const work=tableWorkloadV9({ratingVersion:9,room:{...room,master,equipment},guests:knownGuests});supported=work.served*work.demand;
+  }
   const coverage=Math.min(1,supported/teachingDemand),overload=coverage<.9;
   const estimate=overload?`Для известных потребностей хватает примерно ${Math.round(coverage*10)*10}% поддержки мастера и материалов. Распределите новичков или подготовьте помощь.`:materialSupport>0?'Мастер и материалы обычно справляются с такой уточнённой нагрузкой.':'Мастер обычно справляется с такой уточнённой нагрузкой.';
   summary.push(note('teaching',`${learners.length} ${learners.length===1?'гостю нужны':'гостям нужны'} объяснения. `+estimate+(teachingKnown<guests.length?' У остальных способ обучения ещё не уточнён.':''),overload?'warning':teachingKnown<guests.length?'unknown':'good'));
@@ -124,5 +139,5 @@ export function tablePlan(club,roomId){
  }
  if(unknownCount)summary.push(note('unknown',`У ${unknownCount} из ${guests.length} гостей ещё не уточнены важные условия. Прогноз опирается только на разговоры.`,'unknown'));
  if(!summary.length)summary.push(note('ready','По услышанным условиям явных рисков не видно. Окончательный результат зависит от состава и условий игры.'));
- return{count:guests.length,capacity:4,rows,summary,unknownCount};
+ return{count:guests.length,capacity:limits.maximum,minimumGuests:limits.minimum,rows,summary,unknownCount};
 }

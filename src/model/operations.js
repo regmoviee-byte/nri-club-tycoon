@@ -1,6 +1,6 @@
 import {productFor} from '../data/commerce.js';
 import {OPERATIONS_BALANCE as B,STOCK_PRODUCTS,minute} from '../data/operations-catalog.js';
-import {recordMoney} from './finances.js';
+import {recordMoney,reserveRequired} from './finances.js';
 import {ensureInventory,validateInventory,storageCold,batchUsable,availableServiceBatches,syncStockMirrors,orderStock,cancelStockOrder,isolateBatch,writeOffBatch,moveBatch,inventoryStorageBlocker} from './inventory.js';
 import {physicalServiceAccess} from './staff-room.js';
 import {assignServiceStaff} from './service-staff.js';
@@ -128,6 +128,31 @@ export function cleanZone(club,zoneId,{helper=false}={}){
  const task={id:idFor(club,'task'),type:'clean',zoneId,cost,sections,helperId:helper?person.id:null,startsAt,dueAt:startsAt+duration,state:startsAt>club.clock?'queued':'active'};
  recordMoney(club,-cost,'cleaning',helper?'Материалы уборки; работа помощника оплачивается только в смене':'Внешняя уборка зоны',{id:'task-'+task.id});club.operations.tasks.push(task);return{ok:true,cost,task,estimate:cleaningTaskEstimate(club,task)};
 }
+const defaultCleaningPolicy=()=>({version:1,enabled:false,zoneIds:[],cleanlinessBelow:50,maxSpend:200,windowHours:8,orders:[]});
+export function cleaningPolicyStatus(club){
+ const policy=club.operations?.cleaningPolicy??defaultCleaningPolicy(),spent=Math.round(policy.orders.filter(row=>row.at>club.clock-policy.windowHours).reduce((sum,row)=>sum+row.reserved,0)*100)/100;
+ const person=club.serviceStaff?.find(p=>p.onShift),busy=person&&club.operations?.tasks.some(t=>t.helperId===person.id&&['active','queued'].includes(t.state));
+ return {...policy,orders:undefined,spent,remaining:Math.max(0,policy.maxSpend-spent),reason:!policy.enabled?'Поручение выключено.':!person?'Нужен помощник на явно начатой смене.':busy?'Помощник выполняет порученную работу.':spent>=policy.maxSpend?'Лимит поручений израсходован.':'Проверяет выбранные свободные зоны при продвижении времени.',budgetNote:'Лимит резервирует материалы и зарплату самой уборки. Обычный простой смены оплачивается отдельно.'};
+}
+export function setCleaningPolicy(club,settings){
+ ensureOperations(club);const old=club.operations.cleaningPolicy??defaultCleaningPolicy(),policy={...old,...settings,version:1,orders:old.orders};
+ if(typeof policy.enabled!=='boolean'||!Array.isArray(policy.zoneIds)||new Set(policy.zoneIds).size!==policy.zoneIds.length||policy.zoneIds.some(id=>!club.operations.zones[id])||!Number.isFinite(policy.cleanlinessBelow)||policy.cleanlinessBelow<20||policy.cleanlinessBelow>80||!Number.isFinite(policy.maxSpend)||policy.maxSpend<0||policy.maxSpend>2000||!Number.isFinite(policy.windowHours)||policy.windowHours<1||policy.windowHours>24)return fail('Укажите зоны, чистоту 20–80%, лимит 0–2 000 ₽ и период 1–24 ч.');
+ if(policy.enabled&&!policy.zoneIds.length)return fail('Выберите хотя бы одну зону для поручения.');
+ club.operations.cleaningPolicy=policy;processCleaningPolicy(club);return{ok:true,policy:cleaningPolicyStatus(club)};
+}
+export function processCleaningPolicy(club){
+ const policy=club.operations?.cleaningPolicy;if(!policy?.enabled||club.finance.cash<0||club.campaign.status==='bankrupt')return false;
+ const person=club.serviceStaff?.find(p=>p.onShift);if(!person||club.operations.tasks.some(t=>t.helperId===person.id&&['active','queued'].includes(t.state)))return false;
+ const zones=policy.zoneIds.filter(id=>club.operations.zones[id]?.cleanliness<policy.cleanlinessBelow&&!zoneCleaning(club,id)&&!club.rooms.some(r=>r.id===id&&r.status==='running')&&!club.guests.some(g=>(g.roomId??'common')===id&&g.schedule.leaveAt>club.clock)).sort((a,b)=>club.operations.zones[a].cleanliness-club.operations.zones[b].cleanliness||a.localeCompare(b));
+ const available=cleaningPolicyStatus(club).remaining;
+ for(const zoneId of zones){
+  const sections=Math.ceil(zoneCells(club,zoneId)/B.cleanCells),cost=sections*B.cleanMaterials,duration=sections*B.cleanHelperHours,reserved=Math.round((cost+duration*person.hourlyWage)*100)/100;
+  if(!sections||reserved>available+1e-7||club.finance.cash-reserveRequired(club)<reserved)continue;
+  const result=cleanZone(club,zoneId,{helper:true});if(!result.ok)continue;
+  result.task.delegated=true;policy.orders.push({taskId:result.task.id,at:club.clock,reserved});policy.orders=policy.orders.filter(row=>row.at>club.clock-24);return true;
+ }
+ return false;
+}
 export function maintainEquipment(club,itemId){
  ensureOperations(club);const item=itemFor(club,itemId),equipment=at(club,itemId);if(!item||!equipment)return fail('Этот предмет не требует такого обслуживания.');
  if(equipment.condition>=100)return fail('Прибор полностью исправен.');if(club.operations.tasks.some(t=>t.itemId===itemId&&t.state==='active'))return fail('Обслуживание уже идёт.');
@@ -202,6 +227,7 @@ export function executeOperationsAction(club,action){
   case 'moveBatch':result=moveBatch(club,action.batchId,action.itemId);break;
   case 'setServiceOpen':result=setServiceOpen(club,action.itemId,action.open);break;
   case 'cleanZone':result=cleanZone(club,action.zoneId,{helper:action.helper});break;
+  case 'setCleaningPolicy':result=setCleaningPolicy(club,action.policy??{});break;
   case 'maintainEquipment':result=maintainEquipment(club,action.itemId);break;
   case 'assignServiceStaff':result=assignServiceStaff(club,action.itemId??null);break;
   case 'cancelOperationTask':result=cancelOperationTask(club,action.taskId);break;
@@ -223,6 +249,8 @@ export function validateOperations(club,{allowMigration=false}={}){
  for(const t of ops.tasks)if(!['clean','maintenance','repair'].includes(t.type)||!['active','queued','done','cancelled'].includes(t.state)||!Number.isFinite(t.startsAt)||!Number.isFinite(t.dueAt)||t.dueAt<=t.startsAt||!Number.isFinite(t.cost)||t.cost<0||!club.finance.ledger.some(e=>e.id==='task-'+t.id&&e.amount===-t.cost)||['active','queued'].includes(t.state)&&(t.itemId&&!itemFor(club,t.itemId)||t.zoneId&&!ops.zones[t.zoneId]))throw new Error('Повреждена оплаченная хозяйственная задача.');
  const workers=ops.tasks.filter(t=>t.helperId&&['active','queued'].includes(t.state)).map(t=>t.helperId);if(new Set(workers).size!==workers.length||workers.some(id=>!club.serviceStaff?.some(p=>p.id===id&&p.onShift)))throw new Error('Помощнику назначены несовместимые задачи.');
  for(const policy of Object.values(ops.servicePolicies))for(const key of ['target','threshold','maxOrder','budget','reserve'])if(policy[key]!==undefined&&(!Number.isSafeInteger(policy[key])||policy[key]<0||key==='budget'&&policy[key]>B.autoBudgetMax||key==='maxOrder'&&(policy[key]<1||policy[key]>10)||key==='target'&&(policy[key]<1||policy[key]>20)))throw new Error('Повреждены настройки автоматических закупок.');
+ const cleaning=ops.cleaningPolicy;
+ if(cleaning&&(cleaning.version!==1||typeof cleaning.enabled!=='boolean'||!Array.isArray(cleaning.zoneIds)||new Set(cleaning.zoneIds).size!==cleaning.zoneIds.length||cleaning.zoneIds.some(id=>typeof id!=='string')||!Number.isFinite(cleaning.cleanlinessBelow)||cleaning.cleanlinessBelow<20||cleaning.cleanlinessBelow>80||!Number.isFinite(cleaning.maxSpend)||cleaning.maxSpend<0||cleaning.maxSpend>2000||!Number.isFinite(cleaning.windowHours)||cleaning.windowHours<1||cleaning.windowHours>24||!Array.isArray(cleaning.orders)||cleaning.orders.some(row=>!Number.isFinite(row.at)||row.at>club.clock||!Number.isFinite(row.reserved)||row.reserved<0||!ops.tasks.some(t=>t.id===row.taskId&&t.delegated))))throw Error('Повреждено поручение уборки.');
  for(const i of ops.incidents)if(!club.inventory.batches.some(b=>b.id===i.batchId)||!['open','resolved','fined'].includes(i.state)||!Number.isFinite(i.deadline)||i.deadline<i.openedAt||i.state==='fined'&&!club.finance.ledger.some(e=>e.id==='fine-'+i.id&&e.amount===-i.fine))throw new Error('Повреждена история игровых проверок.');
  return club;
 }

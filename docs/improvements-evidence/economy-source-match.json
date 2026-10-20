@@ -1,0 +1,27 @@
+{
+  "finished": true,
+  "passed": true,
+  "kind": "Read-only SHA-256 comparison after completed silent model probes",
+  "reports": [
+    {
+      "report": "review/design-implementation/school-accepted.json",
+      "reportSha256": "5924c87bc241246b5e901914baa6f908437ddebd217731a0226c5d2039d92a58",
+      "finished": true,
+      "passed": true,
+      "sourceCount": 56,
+      "mismatches": [],
+      "probeSha256": "5e9e13403ec2297fda1b3ef879628cfcab7efa4440662f12dbab860038f588fe",
+      "probeMatches": true
+    },
+    {
+      "report": "review/design-implementation/growth-accepted.json",
+      "reportSha256": "01c70a05891475ec70218ca62579e1e8cb3a2b56397bcd851f23a5a500de7008",
+      "finished": true,
+      "passed": true,
+      "sourceCount": 56,
+      "mismatches": [],
+      "probeSha256": "5e9e13403ec2297fda1b3ef879628cfcab7efa4440662f12dbab860038f588fe",
+      "probeMatches": true
+    }
+  ]
+}

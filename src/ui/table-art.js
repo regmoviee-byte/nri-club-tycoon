@@ -1,7 +1,9 @@
-import {surfacePose,parentTable,surfaceBaseHeight,TABLETOP_HEIGHT} from '../model/table-surface.js';
+import {surfacePose,parentTable,surfaceBaseHeight,TABLETOP_HEIGHT,surfacePolygon,polygonsOverlap,polygonContains} from '../model/table-surface.js';
 import {block,cylinder,flat,disk,tapered,lineOnTop,transformFaces,shade,softBlock,roundedSlab,lathe} from './model-art.js';
 import {visibleSolidFaces,solidArt} from './isometric-solids.js';
 import {escapeHTML as esc} from './people.js';
+import {seatReachPolygons} from './table-actions.js';
+import {BUILD_CATALOG} from '../data/build-catalog.js';
 
 export function tableFaces(table){
  const comfort=table.kind==='tableComfort',wood=comfort?'#865b42':'#a8774e',top=comfort?'#bf9965':'#cda573',faces=[];
@@ -19,6 +21,7 @@ export function tableFaces(table){
   faces.push(...roundedSlab(1.64,1.64,27.025,.015,.10,'#527b6b','felt'));
   for(const x of [-.84,.84])for(const y of [-.84,.84]){faces.push(disk(x,y,27.04,.075,.075,'#a6804d','cupholder-rim',20),disk(x,y,27.048,.057,.057,'#3e5148','cupholder-well',20));}
   for(const y of [-.73,.73])faces.push(lineOnTop([-.65,y],[.65,y],.004,27.047,'#638c79','felt-stitch'));
+  for(let i=0;i<13;i++){const x=-.65+(i%5)*.27,y=-.61+Math.floor(i/5)*.51;faces.push(lineOnTop([x,y],[x+.025,y+.012],.003,27.05,i%2?'#5c8472':'#4a735f','felt-fibre'));}
  }else{
   faces.push(...roundedSlab(1.87,1.87,27.004,.012,.11,'#a77f51','hardwood-inlay'),...roundedSlab(1.845,1.845,27.018,.012,.10,'#cda573','joined-wood-panel'));
   for(const x of [-.46,0,.46])faces.push(lineOnTop([x,-.90],[x,.90],.003,27.039,'#bf9767','plank-joint'));
@@ -31,6 +34,7 @@ export function tableFaces(table){
 
 export function tabletopFaces(object,layout){
  const pose=surfacePose(object,layout);if(!pose)return [];const faces=[],part=object.kind,base=surfaceBaseHeight(object,layout),add=(...fs)=>faces.push(...fs);
+ if(object.kind!=='mat')add({...disk(.018,.018,-.025,pose.width*.43,pose.depth*.35,'#43523c28','surface-contact-shadow',20),nonOccluding:true});
  if(object.kind==='mat'){
   add(...softBlock(0,0,0,pose.width,pose.depth,.28,'#53766c',part));const a=pose.width/2-.04,b=pose.depth/2-.04;
   for(const y of [-b,b])add(lineOnTop([-a,y],[a,y],.011,.32,'#c0c5a0','mat-binding'));for(const x of [-a,a])add(lineOnTop([x,-b],[x,b],.011,.32,'#c0c5a0','mat-binding'));
@@ -59,15 +63,35 @@ export function tabletopFaces(object,layout){
    if(helmet)add(...cylinder(x,y,11.2,.042,.029,1.7,'#9aa8a1',8,'miniature-helmet'));else{add(...cylinder(x+.065,y-.015,1.1,.008,.008,12,'#b7ac8c',16,'miniature-staff'),...cylinder(x+.065,y-.015,13.1,.019,.010,.6,'#adb8ba',16,'staff-crystal'));}
   }
  }else if(object.kind==='deskLamp'){
+  if(object.enabled!==false){add({...disk(0,0,-.04,.30,.22,'#ffe4a626','lamp-light-pool',24),nonOccluding:true},{...disk(0,0,-.035,.22,.16,'#ffe8af20','lamp-light-pool',24),nonOccluding:true});}
   add(...cylinder(0,0,0,.145,.14,1.4,'#47675f',16,part),...cylinder(0,0,1.4,.025,.025,17,'#b99b68',8,part));
   add(...transformFaces(softBlock(0,0,17,.18,.045,1.3,'#b99b68',part),{x:.055}));
-  add(...lathe(.09,0,18.3,[[.22,0],[.223,.7],[.207,2],[.163,5],[.115,8],[.105,9.2]],'#e1c98d',part),disk(.09,0,18.25,.2,.2,'#f5e4ad','lamp-diffuser',16),...cylinder(.09,0,27.5,.055,.035,1.1,'#b59a66',10,part),disk(-.07,.05,1.45,.018,.018,'#d0b478','lamp-switch'));
+  add(...lathe(.09,0,18.3,[[.22,0],[.223,.7],[.207,2],[.163,5],[.115,8],[.105,9.2]],'#e1c98d',part),disk(.09,0,18.25,.2,.2,object.enabled===false?'#a79d7c':'#f5e4ad','lamp-diffuser',16),...cylinder(.09,0,27.5,.055,.035,1.1,'#b59a66',10,part),disk(-.07,.05,1.45,.018,.018,'#d0b478','lamp-switch'));
  }
  return transformFaces(faces,{x:pose.x,y:pose.y,z:base,angle:pose.angle});
 }
-export function tableSceneFaces(table,layout){const faces=tableFaces(table).map(f=>({...f,owner:table.id}));for(const object of layout.objects.filter(o=>parentTable(o,layout)?.id===table.id))faces.push(...tabletopFaces(object,layout).map(f=>({...f,owner:object.id})));return faces;}
-export function tableSceneGroups(table,layout,{selectedId=null,movingId=null}={}){
- const faces=tableSceneFaces(table,layout),visible=visibleSolidFaces(faces),groups=new Map();for(const f of visible){const id=f.owner;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(f);}
+// Pure visual dressing: no persisted objects, prices, footprints or bonuses.
+// It only uses free, central patches away from every seat's hand-reach lane.
+export function tableDressingFaces(table,layout,room){
+ if(room?.status!=='running')return [];
+ const hash=[...(room.adventureId??room.session?.adventureId??room.kitId??'story')].reduce((n,c)=>(n*31+c.charCodeAt(0))>>>0,0),props=layout.objects.filter(o=>BUILD_CATALOG[o.kind]?.layer==='tabletop'&&o.kind!=='mat'&&parentTable(o,layout)?.id===table.id),mats=layout.objects.filter(o=>o.kind==='mat'&&parentTable(o,layout)?.id===table.id),reaches=layout.objects.filter(o=>o.roomId===table.roomId&&(o.role==='guest'||o.role==='master')).flatMap(seatReachPolygons),faces=[];
+ const schemes=[['#a46c57','#7c9c86'],['#657e9b','#a39a6c'],['#7d688b','#6f9c96']],colors=schemes[hash%schemes.length];
+ for(const [i,x,y,w,d]of [[0,-.23,-.10,.37,.47],[1,.25,.20,.25,.32]]){
+  const pose={x:table.x+1+x,y:table.y+1+y,width:w,depth:d,angle:table.rotation*90},poly=surfacePolygon(pose,.04);
+  if(reaches.some(p=>polygonsOverlap(poly,p)))continue;
+  if(props.some(o=>polygonsOverlap(poly,surfacePolygon(surfacePose(o,layout),.06))))continue;
+  const mat=mats.find(o=>polygonsOverlap(poly,surfacePolygon(surfacePose(o,layout))));if(mat&&!polygonContains(surfacePolygon(surfacePose(mat,layout)),poly))continue;
+  const z=27.08+(mat?.35:0),art=[];
+  art.push(...softBlock(0,0,0,w,d,.16,'#e8d9b4','adventure-paper',.016));
+  if(i===0){for(const [a,b]of [[[0,-.18],[.12,-.07]],[[.12,-.07],[.04,.07]],[[.04,.07],[-.11,.14]],[[-.11,.14],[-.13,-.09]],[[-.13,-.09],[0,-.18]]])art.push(lineOnTop(a,b,.007,.18,colors[0],'adventure-map'));
+   for(const [u,v]of [[0,-.18],[.12,-.07],[.04,.07],[-.11,.14],[-.13,-.09]])art.push(disk(u,v,.19,.016,.016,colors[1],'map-location',12));
+  }else{for(const yy of [-.09,-.035,.02,.075])art.push(lineOnTop([-.085,yy],[.08,yy],.006,.18,'#99a086','character-notes'));art.push(lineOnTop([-.065,-.12],[.065,-.12],.015,.18,colors[0],'sheet-header'));}
+  faces.push(...transformFaces(art,{x:pose.x,y:pose.y,z,angle:pose.angle}));
+ }return faces;
+}
+export function tableSceneFaces(table,layout,room){const faces=tableFaces(table).map(f=>({...f,owner:table.id}));faces.push(...tableDressingFaces(table,layout,room).map(f=>({...f,owner:table.id})));for(const object of layout.objects.filter(o=>parentTable(o,layout)?.id===table.id))faces.push(...tabletopFaces(object,layout).map(f=>({...f,owner:object.id})));return faces;}
+export function tableSceneGroups(table,layout,{selectedId=null,movingId=null,room=null}={}){
+ const faces=tableSceneFaces(table,layout,room),visible=visibleSolidFaces(faces),groups=new Map();for(const f of visible){const id=f.owner;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(f);}
  return [...groups].map(([id,fs])=>{const object=id===table.id?table:layout.objects.find(o=>o.id===id),paths=new Map();for(const f of fs){const k=f.fill+f.part;if(!paths.has(k))paths.set(k,{fill:f.fill,part:f.part,d:[]});paths.get(k).d.push('M'+f.points.map(p=>p.x.toFixed(5)+','+p.y.toFixed(5)).join('L')+'Z');}const art=[...paths.values()].map(p=>'<path data-model-part="'+esc(p.part)+'" d="'+p.d.join('')+'" fill="'+p.fill+'" shape-rendering="geometricPrecision" stroke="'+p.fill+'" stroke-width=".18" stroke-linejoin="round"/>').join(''),pose=object===table?{x:table.x+1,y:table.y+1}:surfacePose(object,layout);return {id,depth:pose.x+pose.y,art:'<g data-object="'+esc(id)+'" class="world-object '+(id===selectedId?'selected':'')+'" opacity="'+(id===movingId?.25:1)+'">'+art+'</g>'};});
 }
 export function standaloneTabletopArt(object,layout,{ghost=false}={}){const own=tabletopFaces(object,layout),table=parentTable(object,layout),occluders=table?tableSceneFaces(table,{...layout,objects:layout.objects.filter(o=>o.id!==object.id)}):[];return '<g data-object="'+esc(object.id??'preview')+'" class="world-object" opacity="'+(ghost?.65:1)+'">'+solidArt(own,occluders)+'</g>';}

@@ -69,16 +69,16 @@ test('Arrival quote accounts for a visitor whose agreed departure is at the next
  const c=createCampaign('departure-quote');c.guests[0].schedule.leaveAt=c.clock+.5;
  assert.equal(guestFlowStatus(c).expectedArrivals,1);assert.equal(waitForGuests(c).ok,true);assert.equal(c.guests.length,6);assert.equal(c.arrivals,7);
 });
-test('A second genuinely purchased room increases future flow without granting visitors on configuration',()=>{
+test('A second genuinely purchased room increases capacity without manufacturing its own audience',()=>{
  const c=createCampaign('two-room-flow');c.finance.cash=30000; // Explicit technical construction fixture; not progression evidence.
  assert.equal(build(c,'plot',{plotId:c.layout.plots[0].id,side:'E'}).ok,true);
  assert.equal(build(c,'wall',{x:5,y:3,side:'E',type:'door'}).ok,true);
  assert.equal(build(c,'template',{x:7,y:0}).ok,true);
  assert.equal(buyGame(c,'fate').ok,true);assert.equal(hireMaster(c,'hire-7').ok,true);
- assert.equal(c.rooms.filter(r=>r.operational).length,2);assert.equal(c.arrivals,6);assert.equal(c.guests.length,6);assert.equal(guestFlowStatus(c).rate,6);assert.equal(guestFlowStatus(c).capacity,12);
- assert.equal(waitForGuests(c).ok,true);assert.equal(c.clock,12.5);assert.equal(c.guests.length,9);assert.equal(waitForGuests(c).ok,true);assert.equal(c.guests.length,12);
- assert.equal(configureRoom(c,c.rooms[1].id,{enabled:false}).ok,true);assert.equal(configureRoom(c,c.rooms[1].id,{enabled:true}).ok,true);assert.equal(c.arrivals,12);assert.equal(c.guests.length,12);
- const loaded=decodeClub(encodeClub(c));assert.equal(loaded.arrivals,12);assert.equal(loaded.guestFlow.issued,6);
+ assert.equal(c.rooms.filter(r=>r.operational).length,2);assert.equal(c.arrivals,6);assert.equal(c.guests.length,6);assert.equal(guestFlowStatus(c).rate,3);assert.equal(guestFlowStatus(c).capacity,12);
+ assert.equal(waitForGuests(c).ok,true);assert.equal(c.clock,12.5);assert.equal(c.guests.length,7);assert.equal(waitForGuests(c).ok,true);assert.equal(c.guests.length,9);
+ assert.equal(configureRoom(c,c.rooms[1].id,{enabled:false}).ok,true);assert.equal(configureRoom(c,c.rooms[1].id,{enabled:true}).ok,true);assert.equal(c.arrivals,9);assert.equal(c.guests.length,9);
+ const loaded=decodeClub(encodeClub(c));assert.equal(loaded.arrivals,9);assert.equal(loaded.guestFlow.issued,3);
 });
 test('Waiting during a running session stops on a future event and preserves its manual assignments',()=>{
  const c=createCampaign('wait-running'),room=c.rooms[0];c.guests.slice(0,4).forEach((g,seat)=>assignGuest(c,g.id,room.id,seat));assert.equal(startRoom(c,room.id).ok,true);

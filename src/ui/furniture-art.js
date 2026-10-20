@@ -110,5 +110,5 @@ function model(kind,rotation){
 export function detailedFurnitureArt(object){
  const spec=BUILD_CATALOG[object.kind];if(!spec)return null;
  const key=object.kind+':'+object.rotation;if(!cache.has(key)){const data=model(object.kind,object.rotation);if(!data.faces.length&&!data.decals)return null;cache.set(key,solidArt(data.faces)+data.decals);}
- const width=object.rotation%2?spec.height:spec.width,depth=object.rotation%2?spec.width:spec.height,p=project(object.x+width/2,object.y+depth/2);return '<g class="crafted-furniture" transform="translate('+p.x+' '+p.y+')">'+cache.get(key)+'</g>';
+ const width=object.rotation%2?spec.height:spec.width,depth=object.rotation%2?spec.width:spec.height,p=project(object.x+width/2,object.y+depth/2);let art=cache.get(key);if(object.enabled===false&&spec.family==='light')art=art.replaceAll('#f6e2a1','#9e9e82');return '<g class="crafted-furniture" data-powered="'+(object.enabled!==false)+'" transform="translate('+p.x+' '+p.y+')">'+art+'</g>';
 }

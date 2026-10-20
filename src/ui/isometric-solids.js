@@ -24,7 +24,7 @@ function projected(face){
 // This preserves a leg in front of a chair, while hiding it behind a support.
 export function visibleSolidFaces(faces,occluders=[]){
  const own=faces.map(projected).filter(Boolean),all=[...own,...occluders.map(projected).filter(Boolean)],result=[];
- for(const face of own){let parts=[face.p];for(const other of all){if(other===face||other.bounds.left>face.bounds.right||other.bounds.right<face.bounds.left||other.bounds.top>face.bounds.bottom||other.bounds.bottom<face.bounds.top)continue;
+ for(const face of own){let parts=[face.p];for(const other of all){if(other===face||other.nonOccluding||other.bounds.left>face.bounds.right||other.bounds.right<face.bounds.left||other.bounds.top>face.bounds.bottom||other.bounds.bottom<face.bounds.top)continue;
    const cover=clip(other.p,p=>other.depth(p)-face.depth(p)-1e-5);if(cover.length<3||Math.abs(area(cover))<EPS)continue;parts=parts.flatMap(p=>subtract(p,cover));if(!parts.length)break;
   }for(const points of parts)result.push({points,fill:face.fill,part:face.part,owner:face.owner});
  }return result;

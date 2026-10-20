@@ -3,6 +3,8 @@ import {experiences,motifs,boundaries} from '../data/catalog.js';
 import {SYSTEMS} from '../data/systems.js';
 import {SCENES} from '../data/preferences.js';
 import {DIALOGUE_VERSION} from './preferences.js';
+import {conversationFacts} from './guest-knowledge.js';
+import {BEGINNER_DIRECTION} from './club-direction.js';
 
 const copy=structuredClone;
 const own=(object,key)=>Object.hasOwn(object,key);
@@ -41,11 +43,14 @@ export function hasGuestIdentity(club,identityId){return Object.values(ensureGue
 // the reception empty: the caller creates a new person when this returns null.
 export function returningGuest(club,arrival,{opening=false,identityAllowed=()=>true}={}){
  const registry=ensureGuestRegistry(club);
- if(opening||draw(club.seed+'|returning|'+arrival)%100>=45)return null;
+ if(opening)return null;
+ const roll=draw(club.seed+'|returning|'+arrival)%100,school=club.clubDirection?.id==='beginners';
  const active=new Set(activeGuests(club).map(g=>g.personId)),identities=new Set(activeGuests(club).map(g=>g.identity.id));
  const eligible=Object.values(registry.persons).filter(p=>!active.has(p.id)&&!identities.has(p.identity.id)&&registry.visits[p.lastVisitId]?.status!=='present'&&p.availableAfter<=club.clock&&identityAllowed(p.identity));
  if(!eligible.length)return null;
- const person=eligible.toSorted((a,b)=>draw(club.seed+'|return-choice|'+arrival+'|'+a.id)-draw(club.seed+'|return-choice|'+arrival+'|'+b.id)||a.id.localeCompare(b.id))[0];
+ const learners=school?eligible.filter(p=>Object.keys(p.introductions??{}).length>0&&p.history?.at(-1)?.score>=6):[],chooseLearner=learners.length&&roll<BEGINNER_DIRECTION.returningLearnerChance*100;
+ if(!chooseLearner&&roll>=45)return null;
+ const person=(chooseLearner?learners:eligible).toSorted((a,b)=>draw(club.seed+'|return-choice|'+arrival+'|'+a.id)-draw(club.seed+'|return-choice|'+arrival+'|'+b.id)||a.id.localeCompare(b.id))[0];
  const id='visit:'+person.id+':'+arrival;if(own(registry.visits,id))return null;
  const budget=2+draw(club.seed+'|visit-time|'+id)%9;
  return{id,visitId:id,personId:person.id,profile:copy(person.profile),identity:copy(person.identity),preferences:copy(person.preferences),avoidGenres:copy(person.avoidGenres),habit:copy(person.habit),weights:copy(person.weights),ratingPriority:person.ratingPriority,dialogueVersion:DIALOGUE_VERSION,playedAtClub:person.played,startedAsNovice:person.initialExperience==='new',roomId:null,seat:null,asked:[],storyIndex:0,dialogue:[],lastAnswer:null,schedule:{arrivalAt:club.clock,leaveAt:club.clock+budget,preferred:copy(person.preferredDuration)}};
@@ -69,7 +74,8 @@ export function captureGuestConversation(club,guest,actualAnswer=null){
     const oldVisit=registry.visits[previous.visitId];
     if(oldVisit)(oldVisit.answers??={})[key]??=copy(previous);
    }
-   person.knownAnswers[key]={questionId:answer.questionId,variant:answer.variant,reply:answer.reply,visitId:guest.visitId,at:actualAnswer?.questionId===answer.questionId&&actualAnswer?.variant===answer.variant?club.clock:null};
+   const facts=conversationFacts(guest,answer.questionId);
+   person.knownAnswers[key]={questionId:answer.questionId,variant:answer.variant,reply:answer.reply,visitId:guest.visitId,at:actualAnswer?.questionId===answer.questionId&&actualAnswer?.variant===answer.variant?club.clock:null,...(facts?{facts}:{})};
   }
   (registry.visits[guest.visitId].answers??={})[key]??=copy(person.knownAnswers[key]);
   const at=person.knownAnswers[key].at,heard=(kind,value)=>request(registry,guest,kind,value,at);
@@ -106,7 +112,7 @@ export function recordGuestOutcome(club,run,reviews){
   const person=registry.persons[guest.personId],session=run.room.session,system=session.systemId;
   const reasons=[...new Set([review.text,...(review.violations??[]),...(review.events??[]).filter(e=>e.fit<.95).map(e=>e.text)])].slice(0,4);
   const memory={reviewId:review.reviewId,visitId:guest.visitId,at:run.endsAt,adventureId:session.id,title:session.title,systemId:system,masterId:run.room.master.id,masterName:run.room.master.name,score:review.score,text:review.text,reasons};
-  registry.outcomes[review.reviewId]={reviewId:review.reviewId,visitId:guest.visitId,personId:person.id,systemId:system,adventureId:session.id,score:review.score};
+  registry.outcomes[review.reviewId]={reviewId:review.reviewId,visitId:guest.visitId,personId:person.id,systemId:system,adventureId:session.id,score:review.score,...(review.financial?{financial:copy(review.financial),ratingVersion:run.ratingVersion??1}:{})};
   person.history.push(memory);person.history=person.history.slice(-8);person.played++;
   const program=person.programs[session.id]??={id:session.id,title:session.title,systemId:system,plays:0,totalScore:0,disappointments:0};
   program.plays++;program.totalScore+=review.score;program.lastScore=review.score;program.disappointments=review.score<6?program.disappointments+1:0;
@@ -114,7 +120,7 @@ export function recordGuestOutcome(club,run,reviews){
   const delay=review.score>=8?8:review.score>=6?16:32+Math.min(2,program.disappointments-1)*16;
   person.availableAfter=run.endsAt+delay;
   const served=review.workload?.servedById?.[guest.id]??review.workload?.served??0,current=person.preferences.knowledge[system]??0;
-  if(current<2&&review.score>=6&&served>=.9)person.preferences.knowledge[system]=current+1;
+  if(current<2&&review.score>=6&&served>=.9){person.preferences.knowledge[system]=current+1;if(current===0)(person.introductions??={})[system]??={at:run.endsAt,title:session.title};}
   if(person.initialExperience==='new')person.profile.experience=copy(experiences.find(e=>e.id==='some'));
   const visit=registry.visits[guest.visitId];visit.status='completed';visit.closedAt=run.endsAt;visit.reviewId=review.reviewId;
   recorded++;
@@ -142,7 +148,14 @@ export function visibleDemand(club){
  }
  const summarize=kind=>[...(groups.get(kind)?.values()??[])].sort((a,b)=>b.count-a.count||a.id.localeCompare(b.id));
  const genreName=id=>motifs.find(m=>m.id===id)?.label??id;
- const played=new Map();for(const item of Object.values(registry.outcomes)){const row=played.get(item.systemId)??{id:item.systemId,name:SYSTEMS[item.systemId]?.name??item.systemId,count:0,paid:0,declinedPayment:0};row.count++;if(item.score>=6)row.paid++;else row.declinedPayment++;played.set(item.systemId,row);}
+ const played=new Map();for(const item of Object.values(registry.outcomes)){
+  const row=played.get(item.systemId)??{id:item.systemId,name:SYSTEMS[item.systemId]?.name??item.systemId,count:0,paid:0,declinedPayment:0,revenue:0,ticketTotal:0,refunds:0,fullPaidCount:0,partialPaidCount:0,zeroPaidCount:0,unknownPayments:0};row.count++;
+  const f=item.financial;
+  if(!f||!Number.isFinite(f.price)||!Number.isFinite(f.payment)){row.unknownPayments++;}
+  else{row.revenue+=f.payment;row.ticketTotal+=f.price;row.refunds+=Math.max(0,f.price-f.payment);if(f.payment>0){row.paid++;if(f.payment+1e-7>=f.price)row.fullPaidCount++;else row.partialPaidCount++;}else{row.zeroPaidCount++;row.declinedPayment++;}}
+  played.set(item.systemId,row);
+ }
+ for(const row of played.values()){for(const key of ['revenue','ticketTotal','refunds'])row[key]=Math.round(row[key]*100)/100;row.collectionRate=row.ticketTotal?row.revenue/row.ticketTotal:null;}
  return{genres:summarize('genre').map(r=>({...r,name:genreName(r.id)})),knownSystems:summarize('knownSystem').map(r=>({...r,name:SYSTEMS[r.id]?.name??r.id})),avoidedGenres:summarize('avoidGenre').map(r=>({...r,name:genreName(r.id)})),boundaries:summarize('boundary').map(r=>({...r,name:boundaries.find(b=>b.id===r.id)?.label??r.id})),scenes:summarize('scene').map(r=>({...r,name:SCENES[r.id]??r.id})),durations:summarize('duration'),played:[...played.values()],unserved:Object.values(registry.visits).filter(v=>v.status==='dismissed').length};
 }
 
@@ -151,6 +164,7 @@ export function validateGuestRegistry(club){
  if(!registry.persons||!registry.visits||!registry.requests||!registry.outcomes)throw new Error('Повреждена история посетителей.');
  for(const[id,person]of Object.entries(registry.persons))if(person.id!==id||!person.identity?.id||!person.profile||!person.preferences||!Number.isInteger(person.visits)||person.visits<1||!Number.isInteger(person.played)||person.played<0||!Number.isFinite(person.availableAfter)||!Array.isArray(person.history)||!person.programs||!person.knownAnswers)throw new Error('Повреждена постоянная личность гостя.');
  for(const[id,visit]of Object.entries(registry.visits))if(visit.id!==id||!own(registry.persons,visit.personId)||!Number.isFinite(visit.arrivedAt)||!['present','completed','dismissed'].includes(visit.status))throw new Error('Повреждён визит гостя.');
+ for(const outcome of Object.values(registry.outcomes))if(outcome.financial&&(['price','payment','tips'].some(k=>!Number.isFinite(outcome.financial[k])||outcome.financial[k]<0)||outcome.financial.payment>outcome.financial.price+1e-7))throw Error('Повреждён сохранённый платёж гостя.');
  const active=activeGuests(club);if(new Set(active.map(g=>g.personId)).size!==active.length)throw new Error('Один человек не может находиться в клубе дважды.');
  for(const guest of active)if(!own(registry.persons,guest.personId)||registry.visits[guest.id]?.personId!==guest.personId||registry.visits[guest.id]?.status!=='present'||guest.visitId!==guest.id)throw new Error('Гость не связан со своим визитом.');
  return true;

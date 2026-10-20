@@ -6,12 +6,14 @@ import {ensureOperations,serviceAvailability,serviceDirt,registerServiceRequest,
 import {minute} from '../data/operations-catalog.js';
 import {STOCK_PRODUCTS,OPERATIONS_BALANCE} from '../data/operations-catalog.js';
 import {KIT_BALANCE} from './kit-lifecycle.js';
+import {plannedGuestCount,groupLimits} from './group-size.js';
+import {directionHourlyCost} from './club-direction.js';
 export const cashText=value=>Math.round(value).toLocaleString('ru-RU')+' ₽';
 export const activeRooms=club=>club.rooms.filter(r=>r.operational||r.status==='running');
 export function obligations(club){return club.rooms.filter(r=>r.status==='running').reduce((sum,r)=>sum+(r.run.contract?.wageTotal??0),0);}
 export function hourlyCosts(club){
  const count=activeRooms(club).length,runningGuests=club.rooms.filter(r=>r.status==='running').reduce((n,r)=>n+r.run.guests.length,0);
- return{general:generalHour(count),rooms:count*ECONOMY.roomHour,consumables:runningGuests*ECONOMY.consumableHour,equipment:club.layout.objects.filter(i=>i.enabled!==false&&(!club.operations||equipmentRunning(club,i))).reduce((n,i)=>n+(productFor(i).hourly??0),0),serviceStaff:serviceHourlyCost(club)};
+ return{general:generalHour(count)+directionHourlyCost(club),rooms:count*ECONOMY.roomHour,consumables:runningGuests*ECONOMY.consumableHour,equipment:club.layout.objects.filter(i=>i.enabled!==false&&(!club.operations||equipmentRunning(club,i))).reduce((n,i)=>n+(productFor(i).hourly??0),0),serviceStaff:serviceHourlyCost(club)};
 }
 // Forecast the table's share of the currently open club. Split shared costs
 // among running tables in each interval, including when another table ends.
@@ -23,8 +25,8 @@ export function sessionForecast(club,roomId){
  const guestPrice=run?.contract?.guestPrice??hours*ECONOMY.guestHour,masterCost=run?.contract?.wageTotal??hours*(room.master?.hourlyWage??0),costs=hourlyCosts(club),sharedHourly=costs.general+costs.rooms+costs.equipment+costs.serviceStaff;
  const other=club.rooms.filter(r=>r.id!==roomId&&r.status==='running'&&r.run),ends=[from,...other.map(r=>r.run.endsAt).filter(t=>t>from&&t<to),to].sort((a,b)=>a-b);
  let sharedCost=0;for(let i=0;i<ends.length-1;i++){const tables=1+other.filter(r=>r.run.endsAt>ends[i]).length;sharedCost+=(ends[i+1]-ends[i])*sharedHourly/tables;}
- const consumables=hours*4*ECONOMY.consumableHour,operatingCost=Math.round((sharedCost+consumables)*100)/100,income=guestPrice*4,totalCost=Math.round((masterCost+operatingCost)*100)/100;
- return {hours,endsAt:to,guestHourlyRate:guestPrice/hours,guestPrice,income,masterCost,operatingCost,totalCost,profitIfAllPay:Math.round((income-totalCost)*100)/100,breakEvenGuests:guestPrice?Math.ceil(totalCost/guestPrice):5};
+ const guestCount=plannedGuestCount(club,room),limits=groupLimits(room),consumables=hours*guestCount*ECONOMY.consumableHour,operatingCost=Math.round((sharedCost+consumables)*100)/100,income=guestPrice*guestCount,totalCost=Math.round((masterCost+operatingCost)*100)/100;
+ return {hours,endsAt:to,guestCount,minimumGuests:limits.minimum,maximumGuests:limits.maximum,guestHourlyRate:guestPrice/hours,guestPrice,income,masterCost,operatingCost,totalCost,profitIfAllPay:Math.round((income-totalCost)*100)/100,breakEvenGuests:guestPrice?Math.ceil(totalCost/guestPrice):5};
 }
 // Cash still needed to finish existing commitments in the current open/shift
 // configuration. Purchases, courses and repairs are already paid: only their
@@ -70,7 +72,7 @@ export function reserveEstimate(club,{through=club.clock}={}){
    return sum+(repaired||condition>0?(productFor(item)?.hourly??0):0);
   },0);
   const guests=runs.filter(({run})=>run.endsAt>from).reduce((sum,{run})=>sum+run.guests.length,0);
-  const costs={general:generalHour(count)*hours,rooms:count*ECONOMY.roomHour*hours,equipment:equipment*hours,serviceStaff:shift*hours,consumables:guests*ECONOMY.consumableHour*hours};
+  const costs={general:(generalHour(count)+directionHourlyCost(club))*hours,rooms:count*ECONOMY.roomHour*hours,equipment:equipment*hours,serviceStaff:shift*hours,consumables:guests*ECONOMY.consumableHour*hours};
   segments.push({from,to,roomCount:count,...costs,total:Object.values(costs).reduce((sum,n)=>sum+n,0)});
  }
  const wages=obligations(club),operating=segments.reduce((sum,s)=>sum+s.total,0);

@@ -1,0 +1,498 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    "Forty dense production-renderer scenes plus eight near-hand scenes cover both tables, five body shapes, four chair directions and both synchronized action frames; dense props fit without overlaps; a lamp in each chair reach retracts the hand",
+    "Reduced motion stops animation and keeps one consistent static pose",
+    "Off, broken and maintenance are distinct, both real floor finishes render and dirt is visible"
+  ],
+  "errors": [],
+  "screenshots": [
+    "table-dense-pose-0.png",
+    "table-dense-pose-1.png",
+    "tableComfort-dense-pose-0.png",
+    "tableComfort-dense-pose-1.png",
+    "materials-and-states.png"
+  ],
+  "audio": "-noaudio; --mute-audio; ReviewAudioSilence; isolated context; sandbox enabled",
+  "limitations": [
+    "The generated scene matrix uses the production renderers but is a visual fixture, not earned gameplay. Screenshots must be inspected in addition to assertions."
+  ],
+  "url": "http://127.0.0.1:51814/",
+  "table": [
+    {
+      "body": "lean",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "lean",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "lean",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "lean",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "regular",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "regular",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "regular",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "regular",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "soft",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "soft",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "soft",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "soft",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "broad",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "broad",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "broad",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "broad",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "compact",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "compact",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "compact",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "compact",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    }
+  ],
+  "tableComfort": [
+    {
+      "body": "lean",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "lean",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "lean",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "lean",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "regular",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "regular",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "regular",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "regular",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "soft",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "soft",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "soft",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "soft",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "broad",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "broad",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "broad",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "broad",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "compact",
+      "rotation": 0,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "compact",
+      "rotation": 1,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "compact",
+      "rotation": 2,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    },
+    {
+      "body": "compact",
+      "rotation": 3,
+      "blockedNearLamp": [
+        -1,
+        1
+      ],
+      "sceneBlocked": [],
+      "propCount": 5,
+      "dressingFaces": 0
+    }
+  ],
+  "states": [
+    {
+      "state": "ready",
+      "flag": null,
+      "label": "12 порц.",
+      "stock": 12
+    },
+    {
+      "state": "off",
+      "flag": "off",
+      "label": "Выключен",
+      "stock": 12
+    },
+    {
+      "state": "broken",
+      "flag": "broken",
+      "label": "Сломан",
+      "stock": 12
+    },
+    {
+      "state": "repair",
+      "flag": "repair",
+      "label": "Обслуживание",
+      "stock": 12
+    },
+    {
+      "state": "empty",
+      "flag": "empty",
+      "label": "Нет пригодного запаса",
+      "stock": 0
+    }
+  ]
+}

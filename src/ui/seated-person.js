@@ -3,6 +3,7 @@ import {personArt} from './people.js';
 import {solidArt} from './isometric-solids.js';
 import {tube,softBlock,flat} from './model-art.js';
 import {chairBaseFaces} from './seat-solids.js';
+import {poseFrames} from './table-actions.js';
 const paint=(value,fallback)=>/^#[\da-f]{6}$/i.test(value??'')?value:fallback;
 const shade=(hex,n)=>'#'+[1,3,5].map(i=>Math.max(0,Math.min(255,parseInt(hex.slice(i,i+2),16)+n)).toString(16).padStart(2,'0')).join('');
 const points=ps=>ps.map(p=>p.x+','+p.y).join(' ');
@@ -20,14 +21,15 @@ export function seatedLegFaces(rotation=0,pants='#40515c',shoes='#303b42'){
  }return faces;
 }
 
-export function seatedArmFaces(person,{rotation=0,atTable=false,forearmsOnly=false}={}){
+export function seatedArmFaces(person,{rotation=0,atTable=false,forearmsOnly=false,actionFrame=0,playing=false,master=false,blockedSides=[]}={}){
  const identity=person?.identity??person??{},look=identity.portrait??{},frame=seatFrame(rotation),coat=paint(look.coat,'#6c7e80'),skin=paint(look.skin,'#e3b79e'),accent=paint(look.accent,'#d8cab2'),faces=[];
- const variant=[...(identity.name??person?.profile?.name??person?.name??'Гость')].reduce((n,c)=>n+c.charCodeAt(0),0)%3;
+ const variant=[...(identity.name??person?.profile?.name??person?.name??'Гость')].reduce((n,c)=>n+c.charCodeAt(0),0)%3,size=look.bodyShape==='broad'?1.1:look.bodyShape==='lean'?.91:look.bodyShape==='soft'?1.06:1;
  for(const side of [-1,1]){
-  const tableSide=atTable&&(variant===0||side===(variant===1?1:-1));if(forearmsOnly&&!tableSide)continue;
-  const coordinates=tableSide?[[.23,.125,35.8],[.27,.20,32.5],[.285,.35,28.9],[.23,.44,28.9],[.175,.565,28.9]]:[[.21,.045,35.8],[.255,.095,31.5],[.27,.17,26.4],[.22,.245,23.5],[.17,.30,21.8]],radii=[.078,.075,.06,.048,.038],points=coordinates.map(([u,v,z])=>[u*side,v,z]);
+  const gesture=atTable&&playing&&actionFrame===1&&side===(master?1:variant===1?1:-1)&&!blockedSides.includes(side),tableSide=atTable&&!blockedSides.includes(side)&&(variant===0||side===(variant===1?1:-1)||master);
+  if(forearmsOnly&&!tableSide&&!gesture)continue;
+  const coordinates=gesture?[[.23,.125,35.8],[.285,.17,33.2],[.31,.25,30],[.27,.34,30.5],[.21,.42,31.4]]:tableSide?[[.23,.125,35.8],[.26,.20,32.9],[.27,.35,29.4],[.235,.46,28.7],[.175,.565,28.9]]:[[.21,.045,35.8],[.25,.095,31.6],[.255,.17,26.5],[.22,.245,23.5],[.17,.30,21.8]],radii=[.074,.072,.058,.047,.036],points=coordinates.map(([u,v,z],i)=>[u*side*(i<2?size:1),v,z]);
   faces.push(...tube(forearmsOnly?points.slice(2):points,forearmsOnly?radii.slice(2):radii,coat,'sleeve-'+side));
-  const wrist=points.at(-1),handV=tableSide?(side>0?.62:.67):.37,handZ=tableSide?27.8:20.0,handU=side*(tableSide?(side>0?.185:.145):.165);
+  const wrist=points.at(-1),handV=gesture?.45:tableSide?(side>0?.62:.67):.37,handZ=gesture?31.4:tableSide?27.8:20.0,handU=side*(gesture?.20:tableSide?(side>0?.185:.145):.165);
   faces.push(...tube([wrist,[handU,handV-.025,handZ+.9]],[.038,.032],accent,'cuff-'+side));
   faces.push(...softBlock(handU,handV,handZ,.095,.135,1.35,skin,'hand-'+side,.035));
   for(const du of [-.024,0,.024])faces.push(flat([[handU+du-.002,handV+.008,handZ+1.37],[handU+du+.002,handV+.008,handZ+1.37],[handU+du+.002,handV+.046,handZ+1.37],[handU+du-.002,handV+.046,handZ+1.37]],shade(skin,-19),'fingers-'+side));
@@ -35,10 +37,15 @@ export function seatedArmFaces(person,{rotation=0,atTable=false,forearmsOnly=fal
  return faces.map(f=>({...f,points:f.points.map(p=>frame.world(p.x,p.y,p.z))}));
 }
 
-export function seatedPersonArt(person,{rotation=0,kind='chair',width=1,height=1,offsetX=0,offsetY=0,atTable=false}={}){
+const seatedCache=new Map();
+export function seatedPersonArt(person,options={}){
+ const identity=person?.identity??person??{},key=JSON.stringify([identity.name??person?.profile?.name,identity.age,identity.portrait,options]);
+ if(!seatedCache.has(key)){if(seatedCache.size>320)seatedCache.clear();seatedCache.set(key,renderSeatedPerson(person,options));}return seatedCache.get(key);
+}
+function renderSeatedPerson(person,{rotation=0,kind='chair',width=1,height=1,offsetX=0,offsetY=0,atTable=false,playing=false,master=false,blockedSides=[]}={}){
  const identity=person?.identity??person??{},look=identity.portrait??{},frame=seatFrame(rotation),P=frame.point,coat=paint(look.coat,'#6c7e80'),pants=paint(look.trousers,'#40515c'),shoes=paint(look.shoes,'#303b42'),skin=paint(look.skin,'#e3b79e'),accent=paint(look.accent,'#d8cab2');
  const chair=chairBaseFaces(width,height,kind,rotation).map(f=>({...f,points:f.points.map(p=>({...p,x:p.x+offsetX,y:p.y+offsetY}))})),legs='<g class="seated-legs" data-chair-occlusion="solid-depth">'+solidArt(seatedLegFaces(rotation,pants,shoes),chair)+'</g>';
- const rightNear=frame.right[0]+frame.right[1]>0,nearSide=rightNear?1:-1,armFaces=seatedArmFaces(person,{rotation,atTable}),arm=side=>'<g class="seated-arm" data-pose="'+(atTable?'table':'rest')+'">'+solidArt(armFaces.filter(f=>f.part.endsWith('-'+side)),chair)+'</g>';
+ const rightNear=frame.right[0]+frame.right[1]>0,nearSide=rightNear?1:-1,armFrames=[0,...(playing&&atTable?[1]:[])].map(actionFrame=>seatedArmFaces(person,{rotation,atTable,playing,master,blockedSides,actionFrame})),arm=side=>poseFrames(actionFrame=>{const faces=armFrames[actionFrame];return '<g class="seated-arm" data-pose="'+(atTable?(master?'explaining':'listening'):'rest')+'" data-blocked-sides="'+blockedSides.join(',')+'">'+solidArt(faces.filter(f=>f.part.endsWith('-'+side)),chair)+'</g>';},{playing:playing&&atTable,person});
  const size=look.bodyShape==='broad'?1.1:look.bodyShape==='lean'?.91:look.bodyShape==='soft'?1.06:1,screenRight=P(1,0,0).x>0?1:-1;
  const T=(u,z)=>P(u*size*1.14*screenRight,(frame.backNear?-.055:.065)+(z-36)*.006+(atTable?.08:0),z),p=(u,z)=>{const q=T(u,z);return q.x+' '+q.y;};
  // Continuous cloth silhouette: sloping shoulders, a curved rib cage and a

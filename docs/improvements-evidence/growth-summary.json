@@ -1,0 +1,210 @@
+{
+  "finished": true,
+  "passed": true,
+  "audio": "-noaudio; ReviewAudioSilence; pure model, no browser",
+  "sourceHashes": {
+    "src/model/assessment.js": "cb976b25408dee457601e298e2b5777d632ff464ac5e885109c13618954bc93c",
+    "src/model/camera.js": "254d835b4739efb4db1028ce57149b9f92bfc7c39407de044181883d77123f88",
+    "src/model/campaign-construction.js": "1018b0adc52c0002070ae3fe9e38b361ee0c93a2becc41cff23460ad6f74b110",
+    "src/model/campaign-layout.js": "dbef195bbac829d6c309f7b1a1bdb71e2b9ab9a4b748e7f13ed5a5a3324473a1",
+    "src/model/campaign-rating.js": "73fa5a84a7ccb861643038a6f08e2e099bd4292c92c0c6b3205906eab1a90e75",
+    "src/model/campaign-view.js": "6254c5e84c1cadc9518b29b400188e4dc39e0938bc0eade0c2354cfebbc2bcaa",
+    "src/model/campaign.js": "44aff0d3772b5d3987296712206ef00bb31cff7e7af77508838bb44b78b8412e",
+    "src/model/club-direction.js": "9889802a722608cc062f0d7d799d6f8cdeeedb0a41c0ac0403e6db884ba9f9ef",
+    "src/model/club.js": "85cf95a8ec03ef661d084d09ddcc7bdd57e4651a4dc2f26132e07806335ec68e",
+    "src/model/construction.js": "507d3444e3a80d972e3dd045004e7e146e6149d4c13791bbbc3d6634b2706fe9",
+    "src/model/development.js": "406ad2391d5fb298eadbe10c6cd344476bd963de55de958992c1bd39560dc822",
+    "src/model/drag-geometry.js": "43ff212f545eb8fdc2b89f076911eeb3ec71e1c391a0348eb248c47f0031cbf6",
+    "src/model/event-clock.js": "fe3ae8851c648c8cdaf19cd050e8dc933a51293055e48d3a0820c12f253e6563",
+    "src/model/finance-breakdown.js": "c71e4e79076b7ba0974094a2bf3da51f4c1c868b0cdce454c331c8bff2ef1720",
+    "src/model/finances.js": "f5b110a4404876b6f4fd33089d001ede303363b0b05023d308ce851d0da48b11",
+    "src/model/generator.js": "5f59f15d0b603c2c87459828fb295892e9b3f9eee3e9873ebeab91bff893433d",
+    "src/model/group-size.js": "499b414ad8dec971794d20a6eb1b3bfbc97a30d6f13ad932cecd7338177211f7",
+    "src/model/guest-flow.js": "ac3363c61eaded4180783d6c60a6b1dc3d573a7a350e76b35ca7b04da9b706d7",
+    "src/model/guest-knowledge.js": "0a99b0e8ff9022cc8bcd3ad100c0fcfcb2fcc252eb6c70e102673404615f2262",
+    "src/model/guest-waiting.js": "3e6c87a1e65ebf2a36351205bbf78650a51a2ce00cb84a6fbe275b014676869d",
+    "src/model/guests-history.js": "00e80879c254f86e52a0e257294f28fd7510a5aff93aeb948b117bff16b3ee40",
+    "src/model/inventory.js": "49eaa553af6bbb943ff1cd7fd7a3e729619dea9192fd452e4a4c014370dc61cc",
+    "src/model/item-context.js": "f684e11dc407d788e929a946385096cb1eabeb3f7d25f2f911151b3c943b655e",
+    "src/model/kit-lifecycle.js": "127c2b19f930ecf3b244ee9a83d92f8bf6bedafbcb8b74542ae3c3ffc7ddb374",
+    "src/model/layout-club.js": "667a428ee1799850ada7ca3c5074e8cf6ea045eea1a7b241b5ec3876348caf90",
+    "src/model/layout.js": "b7c7ff4d1a518de8a4c1016314ad249c6e9885dd28e9a533cf9a29dd71f64b75",
+    "src/model/lifecycle.js": "39c8c30edfcf8bfd75f39d3ec5e66c7f6b8cc44346e3f42166340026cc629a7d",
+    "src/model/operations.js": "b821c226555bbf09631a8f45065937834890291aca469ee380698ff6ba667db9",
+    "src/model/preferences.js": "f6ff56817b42b966dc95ad81d96602d7b2563d71507ab05b154c5cae8648dd2d",
+    "src/model/puppet.js": "bef531c17bbb8287090223049952ca45871e5dca6b0c12ee6fc420b732d54f53",
+    "src/model/rating.js": "7b32f97eba852b9b28929fdb4f63b3d1c75d81cdfbb33a51e91585b5089be1a0",
+    "src/model/reception-area.js": "0e75518bd0e953cd086854f169c9a2b18b5f10589f864bf5a42873712ed886c2",
+    "src/model/reception.js": "5b7253116f8cad5908cacaddda08cc31a5637cc86325fa0185245fdaa98de61d",
+    "src/model/search.js": "41ba431906aa04ff3fb69a11d555ed9fb378c3b950506e09afbbbe4a6ed02b41",
+    "src/model/service-staff.js": "fa2995c75be1c3df61411f9f548551ae79143cae8f7dc73a88c365e5c844a891",
+    "src/model/session-journal.js": "63050a511e833c979b4c41d5c8a4c54c517aff401e72ab912512f6da776c2500",
+    "src/model/solvency.js": "d910c382c45aaf8ca8f1f5610ab1018e68948bbe69cb2ef4708ba6b086580fc6",
+    "src/model/staff-room.js": "d8f99e980b2a37e087e204464ba0bc8c20a97fbf061604b4b6d105e88f928412",
+    "src/model/studio-building.js": "e376da936ec7ec243697ae32b7a2992e06727eb350b1517d25a8489690e7a9c2",
+    "src/model/table-plan.js": "ff3e0ce5d119e0844ca140e098ec4186f9808e84ae7823fa2b7aa36830c3a9c5",
+    "src/model/table-surface.js": "bc068f4e7319547348166afd9cbfbd186e74602f90fdda906ab2011519d3fca1",
+    "src/model/upgrades.js": "83228cfa64108650b0c86c88616f857331a932aefa50d46e1dacda3788361052",
+    "src/model/wall-placement.js": "598bcce1bc5d04ff7b5ee2294051d83a036d584e25b95ae24a29141001abf52b",
+    "src/data/balance.js": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08",
+    "src/data/build-catalog.js": "68c8046a3f6e30c791337a9f11195347c5701641f8df774422dba339782368d7",
+    "src/data/catalog.js": "be3315dbfce2997ed7695d8033bcb8f86e09fa5256b378617ccf8ad8f83d18b3",
+    "src/data/club-adventures.js": "2ffd7c1e17ee3357d5721af7ff47ecdea0ee1de795087a10b5c7600d4075586c",
+    "src/data/club.js": "9625fa8979a87fb0818049442d2812800001edd49af0ce59687927f668bdf305",
+    "src/data/commerce.js": "6047703505e67ebf78050df5a6e3f1d200e751a586bd7ea016a2b56fb70a1faf",
+    "src/data/identities.js": "cef74424b051d139a2376f82f82c605b18b1fe8528e98996aa800ef5717e3a7d",
+    "src/data/master-applicants.js": "9f11a4e2536c4a79358ff98b830ca2c0ce41a37c176124040a568fd682d2695a",
+    "src/data/masters-market.js": "79f2d63d727e1c8f96062dc4dd07d6affbe03be74fa0e686bf946c9ad0b5090f",
+    "src/data/operations-catalog.js": "7cf4c0c08a128398c5aa8f808e9908079d5ab3f709ab4d19d58e70e832d74132",
+    "src/data/preferences.js": "e4b030c07c80cbd67ead8c9e63ca7ea14e4738fa820ad1111039899588f2f06b",
+    "src/data/systems.js": "47898833e71f17252435d689023c66efee3f5e8ec716e1e7c828c8c60e3c3d31",
+    "src/data/visuals.js": "eb2a33f542e7edcf656f6e5189d854d5bc086bc55f5c6095e30263f0d5b6e978"
+  },
+  "settings": {
+    "seeds": 1,
+    "parties": 400,
+    "target": 10,
+    "policies": [
+      "heard-flex"
+    ],
+    "direction": "general"
+  },
+  "checks": [
+    "All requested deterministic growth trajectories completed with finished outcomes and no injected cash"
+  ],
+  "failures": [],
+  "runs": [
+    {
+      "policy": "heard-flex",
+      "seed": 0,
+      "openingCash": 4050,
+      "completed": 405,
+      "actions": 16001,
+      "expansions": [
+        {
+          "rooms": 1,
+          "afterParties": 0,
+          "clock": 12,
+          "cash": 4050
+        },
+        {
+          "afterParties": 26,
+          "clock": 66,
+          "rooms": 2,
+          "cash": 6079
+        },
+        {
+          "afterParties": 50,
+          "clock": 94,
+          "rooms": 3,
+          "cash": 7725
+        },
+        {
+          "afterParties": 79,
+          "clock": 116,
+          "rooms": 4,
+          "cash": 10306
+        },
+        {
+          "afterParties": 103,
+          "clock": 130,
+          "rooms": 5,
+          "cash": 10706
+        },
+        {
+          "afterParties": 130,
+          "clock": 142,
+          "rooms": 6,
+          "cash": 12492
+        },
+        {
+          "afterParties": 155,
+          "clock": 152,
+          "rooms": 7,
+          "cash": 14052
+        },
+        {
+          "afterParties": 192,
+          "clock": 164,
+          "rooms": 8,
+          "cash": 20309
+        },
+        {
+          "afterParties": 218,
+          "clock": 172,
+          "rooms": 9,
+          "cash": 20968
+        },
+        {
+          "afterParties": 235,
+          "clock": 176,
+          "rooms": 10,
+          "cash": 16886
+        }
+      ],
+      "investments": [],
+      "waitingHours": 2,
+      "roomOpenHours": 936,
+      "roomBusyHours": 810,
+      "stop": null,
+      "currentCash": 139471,
+      "currentRooms": 10,
+      "finalCash": 139471,
+      "rooms": 10,
+      "clock": 216,
+      "reviews": 1617,
+      "rating": 7.416202844774273,
+      "actionsPerParty": 39.50864197530864,
+      "costs": {
+        "construction": 133830,
+        "hire": 5450,
+        "game": 10000,
+        "operations": 144740.00000000003,
+        "wage": 146110,
+        "cleaning": 8320,
+        "kit-maintenance": 486,
+        "direction": 0
+      },
+      "profitPerGameHour": 663.8284313725491,
+      "loadedChecks": 1,
+      "utilization": 0.8653846153846154,
+      "unreachedRoomMilestones": [],
+      "elapsedMs": 248767,
+      "direction": {
+        "id": "general",
+        "name": "Открытый клуб",
+        "activationCost": 300,
+        "hourlyCost": 0,
+        "beginnersHourlyCost": 15,
+        "demandBonus": 0,
+        "returningLearnerChance": 0.65,
+        "description": "Общий поток без платы за направление. Можно проводить любые купленные истории и обучать гостей.",
+        "progress": {
+          "introduced": 120,
+          "returningLearners": 72
+        },
+        "progressLabels": {
+          "introduced": "Гости, освоившие первый ход новой системы",
+          "returningLearners": "Из них вернулись в клуб"
+        }
+      },
+      "finalDemand": {
+        "baseRate": 3,
+        "recentSatisfied": 619,
+        "recentHours": 96,
+        "organicRate": 65.09154745916283,
+        "directionRate": 0,
+        "rate": 65.09,
+        "description": "Поток растёт за счёт разных довольных посетителей за последние 96 игровых часов; после 30 посещений/ч прирост плавно замедляется без жёсткого потолка. Новая комната даёт места, а не создаёт гостей."
+      }
+    }
+  ],
+  "limitations": [
+    "Explicit deterministic management policies, not a human playtest. No budget grants, no hidden final score and no free replacement of guests.",
+    "Expansion is paid through normal construction/hiring/library APIs. The policy retains the starter and purchased base adventures; it is not optimal investment.",
+    "Actions include individual questions, not the existing one-click quick interview. They are not physical UI clicks. UI fatigue and subjective fun require human playtesting."
+  ],
+  "probeSha256": "5e9e13403ec2297fda1b3ef879628cfcab7efa4440662f12dbab860038f588fe",
+  "elapsedMs": 248764,
+  "fullLocalReportSha256": "01c70a05891475ec70218ca62579e1e8cb3a2b56397bcd851f23a5a500de7008"
+}
