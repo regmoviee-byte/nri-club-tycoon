@@ -2,7 +2,7 @@ import {SYSTEMS} from './systems.js';
 import {SESSIONS} from './club.js';
 export {masterCandidate,marketCandidates,availableMasterCandidates,MASTER_MARKET_COUNT} from './masters-market.js';
 import {BUILD_CATALOG} from './build-catalog.js';
-export const ECONOMY={initialBudget:14020,openingSpent:9970,guestHour:150,payThreshold:6,roomHour:80,consumableHour:10};
+export const ECONOMY={initialBudget:15220,openingSpent:11170,guestHour:150,payThreshold:6,roomHour:80,consumableHour:10};
 export const PRODUCTS={
  table:{name:'Игровой стол',price:1600,w:2,h:2,kind:'table'},
  wideTable:{name:'Просторный стол',price:3800,w:2,h:2,kind:'table',effect:'materials'},

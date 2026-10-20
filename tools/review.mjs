@@ -1,0 +1,126 @@
+import assert from 'node:assert/strict';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {dirname,resolve} from 'node:path';
+import {createRequire} from 'node:module';
+import {serve} from './serve.mjs';
+const require=createRequire(import.meta.url);
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE??'playwright-core');
+if(!process.argv.includes('-noaudio'))throw new Error('Silent review requires -noaudio');
+const out=resolve(process.argv[process.argv.indexOf('--out')+1]),folder=dirname(out);
+await mkdir(folder,{recursive:true});
+const report={finished:false,passed:false,checks:[],errors:[],screenshots:[],audio:'-noaudio; Chromium --mute-audio; ReviewAudioSilence before app scripts'};
+let server,browser;
+async function clickApply(page){const button=page.locator('#build-preview [data-action="apply-build"]');assert.ok(await button.isEnabled(),await page.locator('#build-preview').innerText());await button.click();}
+function ReviewAudioSilence(){
+ const mute=()=>document.querySelectorAll('audio,video').forEach(media=>{media.muted=true;media.volume=0;media.pause();});
+ Object.defineProperty(globalThis,'ReviewAudioSilence',{value:Object.freeze({enabled:true,mute})});
+ HTMLMediaElement.prototype.play=function(){this.muted=true;this.volume=0;return Promise.resolve();};
+ for(const name of ['AudioContext','webkitAudioContext']){const Original=globalThis[name];if(Original)globalThis[name]=class extends Original{constructor(...args){super(...args);this.suspend();this.resume=async()=>this.suspend();}};}
+ new MutationObserver(mute).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:['muted','volume','autoplay']});
+ addEventListener('focus',mute);addEventListener('visibilitychange',mute);addEventListener('DOMContentLoaded',mute);
+}
+try{
+ server=await serve(0);const url='http://127.0.0.1:'+server.address().port;
+ browser=await chromium.launch({headless:true,chromiumSandbox:true,args:['--mute-audio','--autoplay-policy=user-gesture-required'],...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:{})});
+ const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'no-preference'});await context.addInitScript(ReviewAudioSilence);
+ const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));await page.goto(url);await page.waitForFunction(()=>Boolean(globalThis.clubStudio),null,{timeout:20000});
+ assert.equal(await page.evaluate(()=>ReviewAudioSilence.enabled),true);assert.equal(await page.locator('dialog').count(),0);
+ report.checks.push('Desktop boot, silence, no dialogs');
+ await page.screenshot({path:resolve(folder,'desktop.png')});report.screenshots.push('desktop.png');
+ for(const tab of ['guests','rooms','build','team','library','service','finance','goals','settings','club']){
+  await page.locator('[data-action="nav"][data-tab="'+tab+'"]').first().click();await page.waitForFunction(()=>document.querySelector('#panel-content').innerText.length>20);
+  const overflow=await page.evaluate(()=>({page:document.documentElement.scrollWidth>innerWidth,map:document.querySelector('#world-host').scrollWidth>document.querySelector('#world-host').clientWidth}));
+  assert.equal(overflow.page,false,tab+' page overflow');assert.equal(overflow.map,false,tab+' map scrollbar');
+ }report.checks.push('All ten integrated panels, no page/map overflow');
+ await page.locator('.game-rail [data-tab="build"]').click();await page.screenshot({path:resolve(folder,'construction.png')});report.screenshots.push('construction.png');
+
+ const snap=()=>page.evaluate(()=>clubStudio.snapshot());
+ const idle=()=>page.waitForFunction(()=>document.querySelector('#game').getAttribute('aria-busy')==='false');
+ // Input and camera are checked against actual pointer coordinates.
+ await page.locator('[data-action="fit"]').click();let mapBox=await page.locator('#world-host').boundingBox();
+ const beforePan=await page.evaluate(()=>clubStudio.camera());
+ await page.mouse.move(mapBox.x+mapBox.width-45,mapBox.y+55);await page.mouse.down();await page.mouse.move(mapBox.x+mapBox.width-145,mapBox.y+95,{steps:8});await page.mouse.up();
+ let afterPan=await page.evaluate(()=>clubStudio.camera());assert.ok(Math.abs(afterPan.x-beforePan.x)>70,'camera pan');
+ const anchor={x:Math.round(mapBox.x+mapBox.width*.7),y:Math.round(mapBox.y+mapBox.height*.3)};await page.mouse.move(anchor.x,anchor.y);
+ const oldCamera=await page.evaluate(()=>clubStudio.camera()),worldAnchor={x:(anchor.x-mapBox.x-oldCamera.x)/oldCamera.zoom,y:(anchor.y-mapBox.y-oldCamera.y)/oldCamera.zoom};await page.mouse.wheel(0,-260);await page.waitForFunction(z=>clubStudio.camera().zoom>z,oldCamera.zoom);
+ const newCamera=await page.evaluate(()=>clubStudio.camera());assert.ok(Math.abs((anchor.x-mapBox.x-newCamera.x)/newCamera.zoom-worldAnchor.x)*newCamera.zoom<1,'zoom anchor x within one input pixel');assert.ok(Math.abs((anchor.y-mapBox.y-newCamera.y)/newCamera.zoom-worldAnchor.y)*newCamera.zoom<1,'zoom anchor y within one input pixel');
+ await page.keyboard.press('Home');
+ const separator=await page.locator('.panel-resizer').boundingBox(),oldWidth=await page.locator('.side-panel').evaluate(n=>n.clientWidth);
+ await page.mouse.move(separator.x+3,separator.y+80);await page.mouse.down();await page.mouse.move(separator.x+83,separator.y+80,{steps:8});await page.mouse.up();assert.ok(await page.locator('.side-panel').evaluate(n=>n.clientWidth)>oldWidth+50);
+ await page.locator('[data-action="fit"]').click();assert.ok(await page.locator('.guest-queue').evaluate(n=>n.clientHeight)>=70);report.checks.push('Pan, cursor-anchored zoom, Home, resizable panel and visible queue');
+ await page.locator('[data-object="starter-reception"]').click();assert.equal(await page.locator('#panel-title').innerText(),'Знакомство');
+ for(let seat=0;seat<4;seat++){
+  const guestId=await page.evaluate(()=>clubStudio.snapshot().guests.find(g=>!g.roomId).id);
+  await page.locator('[data-action="ask"][data-question="stories"]').click();await page.waitForFunction(id=>clubStudio.snapshot().guests.find(g=>g.id===id)?.asked.includes('stories'),guestId);await page.locator('[data-action="ask"][data-question="time"]').click();await page.waitForFunction(id=>clubStudio.snapshot().guests.find(g=>g.id===id)?.asked.includes('time'),guestId);
+  if(seat===0){const avatar=await page.locator('.guest-portrait').boundingBox(),target=await page.evaluate(()=>clubStudio.point(1.5,1.5)),z=await page.evaluate(()=>clubStudio.camera().zoom);await page.mouse.move(avatar.x+avatar.width/2,avatar.y+30);await page.mouse.down();await page.mouse.move(target.x,target.y-19*z,{steps:14});await page.mouse.up();}else await page.locator('button[data-action="seat"][data-seat="'+seat+'"]').click();await page.waitForFunction(count=>clubStudio.snapshot().guests.filter(g=>g.roomId).length===count,seat+1);
+  if(seat===0){await page.waitForSelector('.is-walking',{timeout:4000});report.checks.push('Guest walks from reception through the floor route');}
+ }
+ await page.waitForFunction(()=>!document.querySelector('.is-walking'),null,{timeout:6000});
+ await page.locator('.game-rail [data-tab="rooms"]').click();await page.locator('[data-action="start-room"]').click();await page.waitForFunction(()=>clubStudio.snapshot().rooms[0].status==='running');assert.equal((await snap()).clock,12);
+ await page.screenshot({path:resolve(folder,'running-session.png')});report.screenshots.push('running-session.png');
+ await page.locator('[data-action="advance"]').click();await page.waitForFunction(()=>clubStudio.snapshot().rating.count===4);await idle();
+ let current=await snap();assert.equal(current.clock,14);assert.equal(current.rooms[0].tablePreparation,null);assert.ok(current.lastReport.completed[0].reviews.every(r=>!r.violations.some(t=>t.includes('раньше'))));assert.equal(await page.locator('#panel-title').innerText(),'Касса и отзывы');
+ await page.screenshot({path:resolve(folder,'session-results.png')});report.screenshots.push('session-results.png');report.checks.push('Reception, conversations, seating, session, itemized payment and no 15-minute setup');
+ await page.locator('.game-rail [data-tab="build"]').click();await page.locator('[data-action="category"][data-category="decoration"]').click();await page.locator('[data-action="build-item"][data-kind="plant"]').click();
+ let p=await page.evaluate(()=>clubStudio.point(1.5,5.5)),beforeBuild=await snap();const beforeBuildPrestige=Number(await page.locator('.resource.prestige strong').innerText()),stableMap=await page.locator('#world-host').boundingBox(),stableCamera=await page.evaluate(()=>clubStudio.camera());await page.mouse.move(p.x,p.y);assert.deepEqual(await page.locator('#world-host').boundingBox(),stableMap);assert.deepEqual(await page.evaluate(()=>clubStudio.camera()),stableCamera);await page.mouse.click(p.x,p.y);await clickApply(page);await page.waitForFunction(()=>clubStudio.snapshot().layout.objects.some(o=>o.kind==='plant'));
+ current=await snap();assert.equal(current.finance.cash,beforeBuild.finance.cash-200);assert.equal(Number(await page.locator('.resource.prestige strong').innerText()),beforeBuildPrestige+2);
+ await page.locator('[data-action="tool"][data-tool="land"]').click();const landBefore=await snap();
+ for(const [x,y]of [[-1,6],[-1,7],[-2,7]]){p=await page.evaluate(([x,y])=>clubStudio.point(x+.5,y+.5),[x,y]);await page.mouse.click(p.x,p.y);}
+ await clickApply(page);await page.waitForFunction(n=>clubStudio.snapshot().layout.plots.length===n,landBefore.layout.plots.length+3);assert.equal((await snap()).finance.cash,landBefore.finance.cash-375);report.checks.push('Real plant purchase changes prestige; arbitrary three-cell land purchase debits exactly 375');
+ await page.locator('[data-action="category"][data-category="service"]').click();await page.locator('[data-action="build-item"][data-kind="fan"]').click();await page.dispatchEvent('body','keydown',{key:'к',code:'KeyR',bubbles:true});p=await page.evaluate(()=>clubStudio.point(-.5,6.5));
+ await page.mouse.click(p.x,p.y);await clickApply(page);await page.waitForFunction(()=>clubStudio.snapshot().layout.objects.some(o=>o.kind==='fan'));assert.equal((await snap()).layout.objects.find(o=>o.kind==='fan').rotation,1);
+ await page.locator('[data-action="undo-build"]').click();await page.waitForFunction(()=>!clubStudio.snapshot().layout.objects.some(o=>o.kind==='fan'));report.checks.push('Russian-layout R rotates the purchased object; undo restores geometry and money');
+ await page.locator('[data-action="category"][data-category="equipment"]').click();await page.locator('[data-action="build-item"][data-kind="mat"]').click();p=await page.evaluate(()=>clubStudio.point(3.4,2.3));
+ // Pointer lies on the raised table, not on the ground behind it.
+ await page.mouse.click(p.x,p.y-27*(await page.evaluate(()=>clubStudio.camera().zoom)));await clickApply(page);await page.waitForFunction(()=>clubStudio.snapshot().layout.objects.some(o=>o.kind==='mat'));
+ await page.locator('[data-action="build-item"][data-kind="dice"]').click();p=await page.evaluate(()=>clubStudio.point(3.5,1.5));await page.mouse.click(p.x,p.y-27*(await page.evaluate(()=>clubStudio.camera().zoom)));await clickApply(page);await page.waitForFunction(()=>clubStudio.snapshot().layout.objects.some(o=>o.kind==='dice'));report.checks.push('Table mat snaps to full table and supports additional dice on top');
+ await page.screenshot({path:resolve(folder,'built-club.png')});report.screenshots.push('built-club.png');
+ await page.locator('[data-action="nav"][data-tab="settings"]').first().click();const exported=await snap();const [download]=await Promise.all([page.waitForEvent('download'),page.locator('[data-action="export"]').click()]);const savePath=resolve(folder,'campaign.json');await download.saveAs(savePath);
+ await page.locator('#import-save').setInputFiles(savePath);await page.waitForSelector('.inline-confirm');assert.deepEqual(await snap(),exported);await page.locator('[data-action="cancel-confirm"]').click();assert.deepEqual(await snap(),exported);
+ await page.locator('#import-save').setInputFiles(savePath);await page.waitForSelector('.inline-confirm');await page.locator('[data-action="confirm"]').click();await idle();assert.deepEqual(await snap(),exported);
+ await page.locator('#import-save').setInputFiles({name:'broken.json',mimeType:'application/json',buffer:Buffer.from('{"version":999999}')});await page.waitForFunction(()=>document.querySelector('#message').classList.contains('is-error'));assert.deepEqual(await snap(),exported);
+ await page.locator('.new-game-rail').click();await page.waitForSelector('.inline-confirm');await page.locator('[data-action="cancel-confirm"]').click();assert.deepEqual(await snap(),exported);report.checks.push('Export, import cancellation, confirmed restoration, broken-file rejection, new-game cancellation');
+ await page.reload();await page.waitForFunction(()=>Boolean(globalThis.clubStudio));assert.deepEqual(await snap(),exported);report.checks.push('Reload preserves complete club, people, financial history and construction');
+ for(const width of [390,320]){
+  await page.setViewportSize({width,height:844});await page.locator('.game-rail [data-tab="guests"]').click();
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile '+width);
+  await page.screenshot({path:resolve(folder,'mobile-'+width+'.png')});report.screenshots.push('mobile-'+width+'.png');
+ }report.checks.push('Responsive 390 and 320 widths');
+
+ // A separate, explicitly labelled budget fixture verifies expansion and services.
+ // This fixture is not presented as earned money or an ordinary campaign win.
+ const tech=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});await tech.addInitScript(ReviewAudioSilence);const tp=await tech.newPage();tp.on('pageerror',e=>report.errors.push(e.message));await tp.goto(url+'/package.json');
+ await tp.evaluate(async()=>{const {createCampaign,decodeClub,CLUB_KEY}=await import('/src/model/campaign.js'),{recordMoney}=await import('/src/model/finances.js'),{importSaveRecord}=await import('/src/ui/save-store.js');const c=createCampaign('technical-expansion-fixture');recordMoney(c,75000,'fixture','Технический бюджет проверки строительства; не обычное прохождение');await importSaveRecord({key:CLUB_KEY,raw:JSON.stringify(c),decode:decodeClub});});
+ await tp.goto(url);await tp.waitForFunction(()=>Boolean(globalThis.clubStudio));await tp.locator('.game-rail [data-tab="build"]').click();await tp.locator('[data-action="tool"][data-tool="land"]').click();
+ for(let i=0;i<4;i++)await tp.locator('[data-action="zoom-out"]').click();await tp.keyboard.press('ArrowDown');await tp.keyboard.press('ArrowDown');
+ const techStart=await tp.evaluate(()=>clubStudio.snapshot().finance.cash);
+ for(let y=0;y<8;y++)for(let x=6;x<12;x++){const point=await tp.evaluate(([x,y])=>clubStudio.point(x+.5,y+.5),[x,y]),box=await tp.locator('#world-host').boundingBox();assert.ok(point.x>box.x&&point.x<box.x+box.width&&point.y>box.y&&point.y<box.y+box.height,'land pointer must remain in viewport');await tp.mouse.click(point.x,point.y);}
+ await clickApply(tp);await tp.waitForFunction(()=>clubStudio.snapshot().layout.plots.length===49);assert.equal(await tp.evaluate(()=>clubStudio.snapshot().finance.cash),techStart-6000);
+ await tp.locator('[data-action="tool"][data-tool="door"]').click();let pt=await tp.evaluate(()=>clubStudio.point(6,6.5));await tp.mouse.click(pt.x,pt.y);await clickApply(tp);await tp.waitForFunction(()=>clubStudio.snapshot().layout.walls.some(w=>w.x===6&&w.y===6&&w.axis==='v'&&w.kind==='door'));
+ await tp.locator('[data-action="tool"][data-tool="room"]').click();let a=await tp.evaluate(()=>clubStudio.point(7.1,.1)),b=await tp.evaluate(()=>clubStudio.point(11.8,4.8));await tp.mouse.move(a.x,a.y);await tp.mouse.down();await tp.mouse.move(b.x,b.y,{steps:14});await tp.mouse.up();await clickApply(tp);await tp.waitForFunction(()=>clubStudio.snapshot().rooms.length===2);
+ await tp.locator('.game-rail [data-tab="library"]').click();await tp.locator('[data-action="buy-game"][data-id="fate"]').click();await tp.waitForFunction(()=>clubStudio.snapshot().library.copies.length===2);
+ const candidate=await tp.evaluate(async()=>{const {campaignMarket}=await import('/src/model/campaign.js'),{prestigeNeeded}=await import('/src/model/upgrades.js');return campaignMarket(clubStudio.snapshot()).candidates.find(m=>m.systems.includes('fate')&&prestigeNeeded(m)===0)?.id;});assert.ok(candidate,'a public cheap Fate candidate exists');
+ await tp.locator('.game-rail [data-tab="team"]').click();await tp.locator('[data-action="team-tab"][data-candidates="true"]').click();await tp.locator('[data-action="hire"][data-id="'+candidate+'"]').click();await tp.waitForFunction(()=>clubStudio.snapshot().staff.length===2);
+ const second=await tp.evaluate(()=>clubStudio.snapshot().rooms[1].id);await tp.locator('.game-rail [data-tab="rooms"]').click();await tp.locator('[data-action="room"][data-id="'+second+'"]').click();await tp.locator('#room-form select[name="hours"]').selectOption('3');await tp.locator('#room-form button[type="submit"]').click();await tp.waitForFunction(id=>clubStudio.snapshot().rooms.find(r=>r.id===id)?.hours===3,second);
+ assert.equal(await tp.evaluate(()=>clubStudio.snapshot().rooms.filter(r=>r.operational).length),2);assert.equal(await tp.evaluate(()=>clubStudio.snapshot().guests.length),12);await tp.locator('[data-action="fit"]').click();await tp.screenshot({path:resolve(folder,'technical-expanded-club.png')});report.screenshots.push('technical-expanded-club.png');report.checks.push('Technical budget fixture: hand-built second room, connected door, bought game copy, hired master and 1.5 guests per seat');
+ const roomIds=await tp.evaluate(()=>clubStudio.snapshot().rooms.map(r=>r.id));
+ for(const roomId of roomIds){for(let seat=0;seat<4;seat++){await tp.locator('.queue-person').first().click();await tp.locator('button[data-action="seat"][data-room="'+roomId+'"][data-seat="'+seat+'"]').click();await tp.waitForFunction(([id,n])=>clubStudio.snapshot().guests.filter(g=>g.roomId===id).length===n,[roomId,seat+1]);}
+  await tp.locator('.game-rail [data-tab="rooms"]').click();await tp.locator('[data-action="room"][data-id="'+roomId+'"]').click();await tp.locator('[data-action="start-room"]').click();if(await tp.locator('.inline-confirm').count())await tp.locator('[data-action="confirm"]').click();await tp.waitForFunction(id=>clubStudio.snapshot().rooms.find(r=>r.id===id)?.status==='running',roomId);
+ }
+ const secondRun=await tp.evaluate(id=>clubStudio.snapshot().rooms.find(r=>r.id===id).run.id,second);await tp.locator('[data-action="advance"]').click();await tp.waitForFunction(()=>clubStudio.snapshot().clock===14);assert.equal(await tp.evaluate(id=>clubStudio.snapshot().rooms.find(r=>r.id===id).status,second),'running');assert.equal(await tp.evaluate(id=>clubStudio.snapshot().rooms.find(r=>r.id===id).run.id,second),secondRun);await tp.locator('[data-action="advance"]').click();await tp.waitForFunction(()=>clubStudio.snapshot().clock===15);assert.equal(await tp.evaluate(()=>clubStudio.snapshot().rating.count),8);report.checks.push('Two independent 2-hour and 3-hour sessions preserve the later table and settle each exactly once');
+ await tp.locator('.game-rail [data-tab="build"]').click();await tp.locator('[data-action="category"][data-category="service"]').click();
+ for(const [kind,x,y]of [['water',9,6],['coffee',10,6]]){await tp.locator('[data-action="build-item"][data-kind="'+kind+'"]').click();pt=await tp.evaluate(([x,y])=>clubStudio.point(x+.5,y+.5),[x,y]);await tp.mouse.click(pt.x,pt.y);await clickApply(tp);await tp.waitForFunction(kind=>clubStudio.snapshot().layout.objects.some(o=>o.kind===kind),kind);}
+ const equipment=await tp.evaluate(()=>clubStudio.snapshot().layout.objects.filter(o=>['water','coffee'].includes(o.kind)).map(o=>o.id));await tp.locator('.game-rail [data-tab="service"]').click();
+ await tp.locator('[data-action="auto-stock"][data-id="'+equipment[0]+'"]').click();await tp.waitForFunction(id=>clubStudio.snapshot().layout.objects.find(o=>o.id===id).autoRefill===true,equipment[0]);await tp.locator('[data-action="auto-stock"][data-id="'+equipment[0]+'"]').click();await tp.waitForFunction(id=>clubStudio.snapshot().layout.objects.find(o=>o.id===id).autoRefill===false,equipment[0]);for(let i=0;i<equipment.length;i++){await tp.locator('[data-action="restock"][data-id="'+equipment[i]+'"]').click();await tp.waitForFunction(n=>clubStudio.snapshot().inventory.orders.filter(o=>o.state==='ordered').length===n,i+1);}
+ await tp.locator('[data-action="wait"]').click();await tp.waitForFunction(()=>clubStudio.snapshot().clock===16);assert.equal(await tp.evaluate(()=>clubStudio.snapshot().inventory.batches.length),2);await tp.locator('[data-action="hire-service"]').click();await tp.waitForFunction(()=>clubStudio.snapshot().serviceStaff.length===1);await tp.screenshot({path:resolve(folder,'technical-service-stock.png')});report.screenshots.push('technical-service-stock.png');report.checks.push('Technical fixture: physical service equipment, paid orders, timed delivery, stock batches, common-zone cleaning controls and service staff');await tech.close();
+ const touch=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});await touch.addInitScript(ReviewAudioSilence);const mp=await touch.newPage();mp.on('pageerror',e=>report.errors.push(e.message));await mp.goto(url);await mp.waitForFunction(()=>Boolean(globalThis.clubStudio));const cd=await touch.newCDPSession(mp),mb=await mp.locator('#world-host').boundingBox(),cx=Math.round(mb.x+mb.width*.5),cy=Math.round(mb.y+mb.height*.5),z0=await mp.evaluate(()=>clubStudio.camera().zoom);
+ await cd.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:cx-20,y:cy,id:0},{x:cx+20,y:cy,id:1}]});for(let r=25;r<=55;r+=10)await cd.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:cx-r,y:cy,id:0},{x:cx+r,y:cy,id:1}]});await cd.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.ok(await mp.evaluate(()=>clubStudio.camera().zoom)>z0*1.5);report.checks.push('Real mobile touch pinch changes map zoom without a page scrollbar');await touch.close();
+ await page.setViewportSize({width:1440,height:1000});await page.locator('.new-game-rail').click();await page.locator('[data-action="confirm"]').click();await page.waitForFunction(old=>clubStudio.snapshot().seed!==old,exported.seed);assert.equal((await snap()).rooms.length,1);assert.equal((await snap()).guests.length,6);assert.equal((await snap()).rating.count,0);await page.locator('[data-action="fit"]').click();await page.screenshot({path:resolve(folder,'new-club-desktop.png')});report.screenshots.push('new-club-desktop.png');report.checks.push('Confirmed new game archives the old campaign and opens one room with reception');
+
+ const corrupt=await browser.newContext({viewport:{width:1000,height:800},reducedMotion:'reduce'});await corrupt.addInitScript(ReviewAudioSilence);const cp=await corrupt.newPage();await cp.goto(url+'/package.json');
+ await cp.evaluate(async()=>{const {openSaveDatabase}=await import('/src/ui/save-store.js'),{CLUB_KEY}=await import('/src/model/campaign.js'),db=await openSaveDatabase();await new Promise((done,fail)=>{const tx=db.transaction('saves','readwrite');tx.objectStore('saves').put({key:CLUB_KEY,revision:1,token:'technical-corrupt-fixture',raw:'corrupt-original-bytes'});tx.oncomplete=done;tx.onabort=()=>fail(tx.error);});db.close();});
+ await cp.goto(url);await cp.waitForSelector('#recover-original');const [original]=await Promise.all([cp.waitForEvent('download'),cp.locator('#recover-original').click()]);await original.saveAs(resolve(folder,'corrupt-original-fixture.json'));await cp.locator('.boot-error summary').click();await cp.locator('#recover-new').click();await cp.waitForFunction(()=>Boolean(globalThis.clubStudio));assert.equal(await cp.evaluate(()=>clubStudio.snapshot().rooms.length),1);
+ assert.equal(await cp.evaluate(async()=>{const {openSaveDatabase}=await import('/src/ui/save-store.js'),db=await openSaveDatabase();const rows=await new Promise((done,fail)=>{const tx=db.transaction('archives','readonly'),r=tx.objectStore('archives').getAll();tx.oncomplete=()=>done(r.result);tx.onabort=()=>fail(tx.error);});db.close();return rows.some(r=>r.raw==='corrupt-original-bytes');}),true);report.checks.push('Malformed saved record remains downloadable; new game archives original bytes atomically');await corrupt.close();
+ assert.deepEqual(report.errors,[]);report.passed=true;await context.close();
+}catch(error){report.errors.push(error.stack??String(error));if(browser){const pages=browser.contexts().flatMap(c=>c.pages());if(pages[0])await pages[0].screenshot({path:resolve(folder,'failure.png')}).catch(()=>{});}}
+finally{if(browser)await browser.close();if(server)await new Promise(done=>server.close(done));report.finished=true;await writeFile(out,JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,checks:report.checks,errors:report.errors,report:out}));if(!report.passed)process.exitCode=1;}

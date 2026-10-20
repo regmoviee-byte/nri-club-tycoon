@@ -4,6 +4,7 @@ const item = (kind, name, category, price, width = 1, height = 1, layer = 'floor
   Object.freeze({kind, name, category, price, width, height, layer, passable: layer !== 'floor', ...extras});
 
 export const BUILD_CATALOG = Object.freeze(Object.fromEntries([
+  item('reception', 'Стойка ресепшна', 'waiting', 1200, 2, 1, 'floor', {family: 'reception'}),
   item('table', 'Простой игровой стол', 'furniture', 1600, 2, 2, 'floor', {family: 'table'}),
   item('tableComfort', 'Удобный игровой стол', 'furniture', 3800, 2, 2, 'floor', {family: 'table'}),
   item('chair', 'Простой стул', 'furniture', 350, 1, 1, 'floor', {family: 'chair'}),

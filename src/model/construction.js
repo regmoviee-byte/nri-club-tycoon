@@ -17,6 +17,15 @@ const fingerprint=edit=>JSON.stringify(edit);
 // The revision check makes the same resolution reproducible at confirmation.
 export function normalizeEdit(club,input) {
   const edit=clone(input),layout=club.layout;
+  function bindTabletop(object){
+    if(BUILD_CATALOG[object.kind]?.layer!=='tabletop')return object;
+    const table=layout.objects.find(o=>BUILD_CATALOG[o.kind]?.family==='table'&&objectCells(o).some(c=>c.x===object.x&&c.y===object.y));
+    if(!table)return object;
+    const cells=objectCells(table),minX=Math.min(...cells.map(c=>c.x)),maxX=Math.max(...cells.map(c=>c.x)),minY=Math.min(...cells.map(c=>c.y)),maxY=Math.max(...cells.map(c=>c.y));
+    if(object.kind==='mat'){object.x=minX;object.y=minY;}
+    if(object.kind==='screen'){if(object.rotation===0)object.y=minY;else if(object.rotation===1)object.x=maxX;else if(object.rotation===2)object.y=maxY;else object.x=minX;}
+    return object;
+  }
   function bindChair(object,previous=null) {
     if(BUILD_CATALOG[object.kind]?.family!=='chair')return object;
     const cells=objectCells(object);
@@ -37,11 +46,12 @@ export function normalizeEdit(club,input) {
     object.rotation??=0;
     const zone=layout.rooms.find(r=>r.cells.some(c=>tileKey(c.x,c.y)===tileKey(object.x,object.y)));
     if(zone&&object.roomId===undefined)object.roomId=zone.id;
-    bindChair(object);
+    bindTabletop(object);bindChair(object);
     return {type:'place',object};
   }
   if(edit.type==='move') {
     const previous=layout.objects.find(o=>o.id===edit.id);
+    if(BUILD_CATALOG[previous?.kind]?.layer==='tabletop'){const object=bindTabletop({...previous,...edit});edit.x=object.x;edit.y=object.y;}
     if(BUILD_CATALOG[previous?.kind]?.family==='chair') {
       const object=bindChair({...previous,...edit},previous);
       for(const key of ['roomId','role','seat'])edit[key]=object[key]??null;

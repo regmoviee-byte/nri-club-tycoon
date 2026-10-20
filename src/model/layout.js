@@ -3,7 +3,7 @@ import {
   FURNITURE_REFUND_RATE, CONSTRUCTION_REFUND_RATE,
 } from '../data/build-catalog.js';
 
-const LIMIT = 8192, MAX_PLOTS = 256, MAX_CELLS = MAX_PLOTS * 48;
+const LIMIT = 8192, MAX_PLOTS = 4096, MAX_CELLS = 12288;
 const own = (value, key) => typeof key === 'string' && Object.hasOwn(value, key);
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value) &&
   [Object.prototype, null].includes(Object.getPrototypeOf(value));
@@ -130,14 +130,15 @@ function structuralError(layout) {
   const ids = new Set(), occupiedPlots = new Set();
   const unique = id => validId(id) && !ids.has(id) && (ids.add(id), true);
   for (const plot of layout.plots) {
-    if (!point(plot) || !unique(plot.id) || plot.w !== 6 || plot.h !== 8 || !integer(plot.x + 6) || !integer(plot.y + 8) ||
+    if (!point(plot) || !unique(plot.id) || !Number.isSafeInteger(plot.w) || !Number.isSafeInteger(plot.h) || plot.w < 1 || plot.h < 1 || plot.w > 64 || plot.h > 64 || !integer(plot.x + plot.w) || !integer(plot.y + plot.h) ||
         !allowedKeys(plot, ['id', 'x', 'y', 'w', 'h'])) return 'Некорректный участок или повторяющийся идентификатор.';
-    for (let y = plot.y; y < plot.y + 8; y++) for (let x = plot.x; x < plot.x + 6; x++) {
+    for (let y = plot.y; y < plot.y + plot.h; y++) for (let x = plot.x; x < plot.x + plot.w; x++) {
       const key = tileKey(x, y);
       if (occupiedPlots.has(key)) return 'Участки пересекаются.';
       occupiedPlots.add(key);
     }
   }
+  if (occupiedPlots.size > MAX_CELLS) return 'Площадь клуба слишком велика.';
   if (!occupiedPlots.has(keyOf(layout.entry))) return 'Вход находится за пределами участка.';
   if (!connected([...occupiedPlots].map(keyPoint))) return 'Участки должны соприкасаться стороной.';
   const floors = new Set();
@@ -190,7 +191,7 @@ function structuralError(layout) {
       layers.add(key);
     } else {
       for (const cell of cells) {
-        const key = `${item.layer}:${keyOf(cell)}`;
+        const key = `${object.kind === 'mat' ? 'tabletop-base' : item.layer}:${keyOf(cell)}`;
         if (layers.has(key)) return 'Предметы занимают одно и то же место.';
         layers.add(key);
       }
@@ -374,6 +375,12 @@ export function quoteEdit(layout, edit, {lockedRoomIds = []} = {}) {
       const index = next.walls.findIndex(wall => wall.id === change.id), wall = next.walls[index];
       if (!wall) throw new Error('Стена не найдена.');
       protect([], [wall]); next.walls.splice(index, 1); refund += WALL_PRICES[wall.kind] * CONSTRUCTION_REFUND_RATE;
+    } else if (change.type === 'buyCells') {
+      if (!Array.isArray(change.cells) || !change.cells.length || change.cells.length > 200 || change.cells.some(cell => !point(cell))) throw new Error('Выберите от 1 до 200 клеток участка.');
+      const occupied = ownedTiles(next), selected = new Set(change.cells.map(keyOf));
+      if (selected.size !== change.cells.length || change.cells.some(cell => occupied.has(keyOf(cell)))) throw new Error('Эти клетки уже куплены или повторяются.');
+      for (const cell of change.cells) next.plots.push({id: allocateId(next, 'cell'), x: cell.x, y: cell.y, w: 1, h: 1});
+      cost += change.cells.length * 125;
     } else if (change.type === 'expand') {
       const source = next.plots.find(plot => plot.id === (change.plotId ?? next.plots[0].id));
       const offset = {east: [6, 0], west: [-6, 0], north: [0, -8], south: [0, 8]}[change.direction];

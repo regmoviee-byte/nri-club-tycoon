@@ -1,1 +1,1 @@
-import './game.js';
+import './studio.js';
