@@ -1,0 +1,135 @@
+/* The scene is projected in geometry. No screen-space skew touches figures or UI. */
+.layout-world[data-projection=isometric]{position:relative;background:transparent}
+.layout-world[data-projection=isometric] .layout-content{position:absolute;inset:0;pointer-events:none}
+.layout-world[data-projection=isometric] .layout-ground{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible;filter:drop-shadow(0 9px 7px #57493624)}
+.layout-world[data-projection=isometric] .layout-room{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;isolation:auto;transform:none;z-index:auto}
+.layout-world[data-projection=isometric] .room-floor{position:absolute;inset:0;isolation:auto;z-index:auto}
+.layout-world[data-projection=isometric] .layout-object{position:absolute;pointer-events:none;border-radius:0;overflow:visible}
+.layout-world[data-projection=isometric] .layout-object-art{position:absolute;inset:0;filter:drop-shadow(0 2px 1px #59462c12);pointer-events:none}
+.layout-world[data-projection=isometric] .layout-furniture-svg{display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
+.layout-world[data-projection=isometric] .layout-iso-wall{position:absolute;pointer-events:none;overflow:visible}
+.layout-world[data-projection=isometric] .layout-layer-ceiling{opacity:.88}
+.layout-world[data-projection=isometric] .map-chair,.layout-world[data-projection=isometric] .master-seat{position:absolute;width:64px;height:86px;min-height:86px;z-index:2;pointer-events:auto;overflow:visible;justify-content:flex-start;transform:none}
+.layout-world[data-projection=isometric] :is(.map-chair,.master-seat):hover:enabled{background:transparent;box-shadow:none}
+.layout-world[data-projection=isometric] .map-person,.layout-world[data-projection=isometric] .master-visual,.layout-world[data-projection=isometric] .master-figure{display:block;position:relative;width:64px;height:74px;flex:0 0 74px;transform:none}
+.layout-world[data-projection=isometric] .map-person>.graphic-portrait,.layout-world[data-projection=isometric] .master-figure>.graphic-portrait{width:64px;height:74px;overflow:visible;transform:none}
+.layout-world[data-projection=isometric] .map-chair .empty-seat{position:absolute;display:grid;place-content:center;top:43px;left:17px;width:30px;height:30px;min-height:0;padding:0;line-height:1;border-radius:50%;background:#fff2d4d9;color:#74654e;border:1px solid #b8a37b;font:22px Georgia,serif;box-shadow:0 2px 3px #68593b30}
+.layout-world[data-projection=isometric] .map-chair:not(.occupied) .chair-label{display:none}
+.layout-world[data-projection=isometric] .map-chair:not(.occupied):is(:hover,:focus-visible) .chair-label{display:block}
+.layout-world[data-projection=isometric] .chair-label,.layout-world[data-projection=isometric] .master-name{top:25px!important;font-size:max(11px,calc(9px / var(--map-zoom)));background:#69594de8;box-shadow:0 1px 2px #4a392d28}
+.layout-world[data-projection=isometric] .master-name{background:#70866be8}
+.layout-world[data-projection=isometric] .staff-resting .master-name{top:-12px!important;left:32px!important;right:auto!important;transform:translateX(-50%)}
+.layout-world[data-projection=isometric] .label-left .chair-label,.layout-world[data-projection=isometric] .label-left .master-name{right:55px}
+.layout-world[data-projection=isometric] .label-right .chair-label,.layout-world[data-projection=isometric] .label-right .master-name{left:55px}
+.layout-world[data-projection=isometric] .layout-seat-object:has(:is(.map-chair,.master-seat):hover),.layout-world[data-projection=isometric] .layout-seat-object:has(:is(.map-chair,.master-seat):focus-visible){z-index:950!important}
+.layout-world[data-projection=isometric] .layout-room-plaque{position:absolute;z-index:1100;transform:translate(-50%,-100%) scale(clamp(1,calc(.8 / var(--map-zoom)),2.7));transform-origin:50% 100%;max-width:264px;min-width:184px;width:max-content;gap:3px 10px;padding:7px 10px;border-color:#b3a083;background:#f6ecd4f5;box-shadow:2px 4px 0 #75675020;pointer-events:auto}
+.layout-world[data-projection=isometric] .layout-room-title{font-size:14px}
+.layout-world[data-projection=isometric] .layout-room-game{font-size:11px;max-width:150px}
+.layout-world[data-projection=isometric] .layout-room-state{font-size:10px;max-width:104px}
+.layout-world[data-projection=isometric] .layout-room-issue{max-width:235px;font-size:10px;max-height:26px;overflow:hidden}
+.layout-world[data-projection=isometric] .layout-manage-room{font-size:11px;min-height:25px}
+.layout-world[data-projection=isometric] .layout-start-room{min-height:32px}
+.layout-world[data-projection=isometric] .layout-preview{position:absolute;inset:0;pointer-events:none;z-index:2000}
+.layout-world[data-projection=isometric] .layout-iso-blocked{position:absolute;display:grid;place-content:center;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#b96f52;color:#fff1d1;z-index:970;font:bold 19px Georgia,serif;pointer-events:none}
+.layout-world[data-projection=isometric] .layout-object-state{position:absolute;left:50%;bottom:72%;display:grid;place-content:center;min-width:20px;height:20px;padding:0 3px;border-radius:50%;background:#f4e2b2;border:1px solid #b28755;color:#7d5b3f;font:bold 15px Georgia,serif;pointer-events:none}
+.layout-object-state>span{position:absolute;display:none;left:24px;top:0;white-space:nowrap;padding:3px 5px;background:#f6eacd;border:1px solid #bda77d;border-radius:3px;font:11px 'Segoe UI',sans-serif}
+.layout-object:hover .layout-object-state>span{display:block}
+.layout-world[data-projection=isometric] .layout-object.is-off .layout-object-art{filter:saturate(.45)}
+.is-building .layout-world[data-projection=isometric] .layout-object{pointer-events:auto}
+.is-building .layout-world[data-projection=isometric] .layout-object.is-build-selected{outline:2px solid #d6a751;outline-offset:3px;background:#f6d38620}
+.is-building .layout-world[data-projection=isometric] .layout-room-plaque{opacity:.65;pointer-events:none}
+.layout-world[data-projection=isometric] .layout-departing{position:absolute;width:64px;height:86px;pointer-events:none}
+.layout-world[data-projection=isometric] .layout-departing>span:last-child{font-size:11px;background:#6a594b;color:#f8ebce;padding:2px 4px;border-radius:3px}
+.layout-iso-ghost{display:block;pointer-events:none;filter:drop-shadow(0 0 3px #f5e7b6)}
+.build-item .layout-furniture-svg{overflow:visible}
+@media(max-width:600px){
+ .layout-world[data-projection=isometric] .layout-room-plaque{transform:translate(-50%,-100%) scale(clamp(1,calc(.78 / var(--map-zoom)),3.2))}
+ .layout-world[data-projection=isometric] .layout-room-state{font-size:10px}
+}
+/* Keep the portrait-sized empty slot: avatar drag measures this exact box. */
+.layout-world[data-projection=isometric] .map-chair .empty-seat{top:0;left:0;width:64px;height:74px;border:0;border-radius:0;background:none;box-shadow:none;font-size:0;pointer-events:none}
+.layout-world[data-projection=isometric] .map-chair .empty-seat:after{content:'+';position:absolute;left:17px;top:43px;display:grid;place-content:center;width:30px;height:30px;border-radius:50%;background:#fff2d4d9;border:1px solid #b8a37b;color:#74654e;font:22px Georgia,serif;box-shadow:0 2px 3px #68593b30}
+.layout-world[data-projection=isometric] .layout-room-plaque{left:clamp(calc(102px / var(--map-zoom)),var(--plaque-x),calc(100% - 102px / var(--map-zoom)))}
+.layout-world[data-projection=isometric] .layout-staff-plaque{display:block;min-width:0;padding:4px 8px;max-width:210px;transform:translate(-50%,0) scale(clamp(1,calc(.7 / var(--map-zoom)),2.7));transform-origin:50% 0}
+.layout-world[data-projection=isometric] .layout-staff-plaque .layout-room-title{font-size:11px}
+.layout-world[data-projection=isometric] .layout-staff-plaque .layout-room-state{display:none}
+.layout-world[data-projection=isometric] .master-away{display:grid;place-content:end center;padding-bottom:10px;font-size:22px;color:#71816a;text-shadow:0 1px #f5edcf;opacity:.9}
+.layout-world[data-projection=isometric] .master-away+.master-name{top:51px!important;font-size:max(10px,calc(8px / var(--map-zoom)));opacity:.8}
+.layout-world[data-projection=isometric] .layout-dirt{position:absolute;inset:0;pointer-events:none;z-index:1}
+.layout-world[data-projection=isometric] .layout-cleaning-sign{position:absolute;width:27px;height:31px;transform:translate(-50%,-50%);pointer-events:none;z-index:500}
+.layout-world[data-projection=isometric] .layout-object.is-broken .layout-object-art{filter:saturate(.35)}
+.layout-world[data-projection=isometric] .layout-object.is-broken .layout-object-state,.layout-world[data-projection=isometric] .layout-object.is-repairing .layout-object-state{background:#d2a56f;color:#62412c}
+.build-price{white-space:normal}
+/* Furniture can be picked through transparent SVG margins in construction. */
+.is-building .layout-world[data-projection=isometric] .layout-object,
+.is-building .layout-world[data-projection=isometric] .map-chair,
+.is-building .layout-world[data-projection=isometric] .master-seat{pointer-events:none}
+.is-building .layout-world[data-projection=isometric] .layout-object-art .layout-furniture-svg :is(path,polygon,polyline,circle,ellipse,rect){pointer-events:visiblePainted}
+.is-building .layout-world[data-projection=isometric] .layout-room-plaque *{pointer-events:none}
+/* Operational conditions are words at map scale, not unexplained tiny badges. */
+.layout-world[data-projection=isometric] .layout-object-state{left:50%;bottom:100%;display:flex;align-items:center;gap:4px;width:max-content;max-width:156px;height:auto;min-height:20px;padding:3px 6px;border-radius:4px;transform:translateX(-50%) scale(clamp(1,calc(.85 / var(--map-zoom)),2.8));transform-origin:50% 100%;font-size:13px;pointer-events:auto;box-shadow:0 2px 3px #634e3922}
+.layout-world[data-projection=isometric] .layout-object-state>span{position:static;display:block;white-space:normal;padding:0;border:0;background:transparent;font:10px/1.2 'Segoe UI',sans-serif}
+.layout-world[data-projection=isometric] .layout-zone-state{position:absolute;z-index:700;transform:translate(-50%,-100%) scale(clamp(1,calc(.85 / var(--map-zoom)),2.8));transform-origin:50% 100%;padding:4px 6px;border:1px solid #b79b68;border-radius:4px;background:#f0dbac;color:#70563b;white-space:nowrap;font:11px 'Segoe UI',sans-serif;pointer-events:none}
+/* The absent GM must not leave an invisible portrait rectangle over guest seats. */
+.layout-world[data-projection=isometric] .master-seat:has(.master-away){pointer-events:none}
+.layout-world[data-projection=isometric] .master-away{pointer-events:none}
+.layout-world[data-projection=isometric] .master-away .master-mark{display:block;pointer-events:auto;cursor:pointer;line-height:1}
+.layout-world[data-projection=isometric] .master-away+.master-name{pointer-events:auto;cursor:pointer}
+.is-building .layout-world[data-projection=isometric] .master-away .master-mark,
+.is-building .layout-world[data-projection=isometric] .master-away+.master-name{pointer-events:none}
+.layout-world[data-projection=isometric] .map-chair.drop-target .empty-seat:after{background:#e1efbd;outline:3px solid #99ac6c;outline-offset:2px;color:#476a3d}
+.layout-world[data-projection=isometric] .map-chair.drop-target .map-person{filter:drop-shadow(0 0 3px #f1d281)}
+.layout-world[data-projection=isometric] .map-chair.drop-blocked .empty-seat:after{background:#d3c1b7;outline:2px dashed #916d5e}
+/* Room actions stay at screen size. The world keeps only short room markers. */
+.layout-room-strip-wrap{position:relative;flex:0 0 auto;min-width:0;background:#ded8c3;border-bottom:1px solid #b8ae92}
+.layout-room-strip{display:flex;gap:7px;padding:6px 22px 7px 7px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#a99b7d #e6dfcc;overscroll-behavior-x:contain;scroll-snap-type:x proximity;outline-offset:-2px}
+.layout-room-strip .layout-room-plaque{position:relative;inset:auto;flex:0 0 232px;display:grid;grid-template-columns:minmax(0,1fr) 83px;grid-template-rows:minmax(44px,auto) minmax(27px,1fr) auto;align-content:stretch;gap:3px 8px;width:232px;min-width:0;max-width:none;padding:5px 8px;transform:none;background:#f5ecd6;border:1px solid #b9a68a;border-radius:5px;box-shadow:1px 2px 0 #8c7c5922;scroll-snap-align:start;pointer-events:auto}
+.layout-room-strip .layout-room-game{position:static;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;grid-row:1;grid-column:1;max-width:100%;min-height:44px;padding:1px 0;margin:0;border:0;background:transparent;color:#75614f;text-decoration:none;font:11px/1.2 'Segoe UI',sans-serif;white-space:normal;overflow:hidden;text-align:left}
+.layout-room-strip button.layout-room-game:hover{background:#efe2c8;color:#51432f}
+.layout-room-strip .layout-room-title{display:block;max-width:100%;overflow-wrap:anywhere;white-space:normal;font:bold 13px/1.2 Georgia,serif;color:#635041}
+.layout-room-strip .layout-room-state{grid-column:2;grid-row:1;align-self:center;font:11px/1.25 'Segoe UI',sans-serif;color:#6d7559;max-width:none}
+.layout-room-strip .layout-room-issue{grid-column:1/-1;grid-row:2;max-width:none;max-height:none;overflow-wrap:anywhere;font:10px/1.25 'Segoe UI',sans-serif}
+.layout-room-strip .layout-room-actions{grid-column:1/-1;grid-row:3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-self:end;gap:5px;min-width:0}
+.layout-room-strip .layout-manage-room,.layout-room-strip .layout-start-room{flex:1;min-width:0;min-height:44px;margin:0;padding:6px;border:1px solid #9a9b7c;border-radius:3px;background:#e4e3ca;color:#4a6249;font:11px/1.15 'Segoe UI',sans-serif;text-align:center}
+.layout-room-strip .layout-manage-room{grid-column:1;grid-row:1}
+.layout-room-strip .layout-start-room{grid-column:2;grid-row:1}
+.layout-room-strip .layout-start-room{background:#819b71;color:#fff8e3;border-color:#6f875f;font-weight:600}
+.layout-room-strip .layout-manage-room:hover{background:#cdd9b9;color:#3d5836}
+.layout-room-strip .layout-start-room:hover{background:#688655;color:#fff}
+.layout-room-strip .is-running{background:#e9ecd8;border-color:#a4b18e}
+.layout-strip-scroll-hint{position:absolute;right:1px;top:0;bottom:0;display:grid;place-content:center;width:20px;background:linear-gradient(90deg,#ded8c300,#ded8c3 45%);color:#8c7e60;font:bold 18px Georgia,serif;pointer-events:none}
+.layout-world[data-projection=isometric] .layout-room-marker{position:absolute;z-index:800;display:grid;place-content:center;min-width:22px;height:22px;padding:0 4px;border:1px solid #aa9778;border-radius:4px;background:#f5ead0;color:#65513f;font:bold 12px Georgia,serif;box-shadow:1px 2px 0 #79674422;transform:translate(-50%,-100%) scale(clamp(1,calc(.75 / var(--map-zoom)),3));transform-origin:50% 100%;pointer-events:none}
+.is-building .layout-room-strip-wrap{display:none}
+@media(max-width:600px){
+ .layout-room-strip .layout-room-plaque{flex-basis:218px;width:218px}
+ .build-options:has([data-build-purpose]){flex-wrap:wrap;overflow:visible}
+ .build-options:has([data-build-purpose]) label{max-width:100%}
+}
+@media(max-width:350px){.build-options:has([data-build-purpose]) [data-build-room]{max-width:95px}}
+
+.layout-world[data-projection=isometric] .waiting-seat .chair-label{top:-12px!important;left:32px!important;right:auto!important;transform:translateX(-50%);background:#806c52e8}
+.layout-waiting-summary{margin:0;padding:5px 9px;color:#675745;background:#eee6d1;font-size:11px;line-height:1.35;border:1px solid #c0b399;border-top:0}
+/* Measured screen-space names never inherit the world's zoom or chair clipping. */
+.layout-world.has-name-layout [data-name-source]{display:none!important;pointer-events:none}
+.map-person-label-layer{position:absolute;left:0;top:0;z-index:1200;pointer-events:none;overflow:visible}
+.map-person-label{position:absolute;display:block;min-width:0;min-height:0;margin:0;padding:2px 4px;border:1px solid #a09079;border-radius:3px;background:#fff7e7;color:#493c32;box-shadow:0 1px 2px #4a392d20;font:600 12px/1.2 'Segoe UI',sans-serif;white-space:normal;overflow-wrap:anywhere;word-break:normal;overflow:visible;pointer-events:none}
+.map-person-label.is-master{background:#edf2df;color:#3e593d;border-color:#96a383}
+.map-person-label.is-waiting{background:#f3e6cc;border-color:#b79d76}
+.map-person-label.is-chosen{background:#ffe4a7;border-color:#a77d43;color:#4b3c24}
+.map-name-leaders{position:absolute;inset:0;overflow:visible;pointer-events:none}
+.map-name-leader{fill:none;stroke:#786b56;stroke-width:.8;stroke-linejoin:round;stroke-linecap:round;opacity:.7}
+.map-name-leaders circle{fill:#786b56}
+@keyframes map-name-departure{0%,35%{opacity:1}100%{opacity:0}}
+.layout-room-strip .layout-room-game{overflow:visible;overflow-wrap:anywhere}
+/* Whole cards on each page: never a sliced title or half a management button. */
+.layout-room-strip{display:grid;grid-template-columns:repeat(var(--room-columns,1),minmax(0,1fr));align-items:stretch;gap:7px;padding:6px 7px 4px;overflow:visible;scroll-snap-type:none}
+.layout-room-strip .layout-room-plaque{width:auto;min-width:0;max-width:none;grid-template-columns:minmax(0,1fr) 83px}
+.layout-room-pages{display:flex;align-items:center;justify-content:center;gap:12px;padding:0 7px 5px;font-size:11px;color:#635442}
+.layout-room-pages button{min-width:44px;min-height:32px;padding:2px 8px;background:#f7f1df;color:#5a5046;border:1px solid #c7b99f;border-radius:3px;font-size:18px;line-height:1}
+.layout-room-pages button:disabled{opacity:.4}
+.layout-room-pages span{min-width:112px;text-align:center}
+/* A queue entry fits even the narrowest rail; long names use a second line. */
+#queue button{flex:0 0 auto;max-width:min(220px,100%);white-space:normal;overflow-wrap:anywhere;line-height:1.15}
+.speaker-row{flex-wrap:wrap}
+.speaker-row h1{min-width:0;max-width:100%}
+.speaker-row #guest-name,#ticket-name{max-width:100%;overflow-wrap:anywhere}

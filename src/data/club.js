@@ -1,6 +1,8 @@
 import {visualFor} from './visuals.js';
 import { contexts } from './catalog.js';
 import { SYSTEMS } from './systems.js';
+import {PREFERENCE_QUESTIONS} from './preferences.js';
+import {CLUB_ADVENTURES} from './club-adventures.js';
 export const ROOM_COUNT=5;
 export const ROOM_CAPACITY=4;
 export const GUEST_COUNT=ROOM_COUNT*ROOM_CAPACITY;
@@ -24,10 +26,10 @@ const announcements=[
 ];
 const rulesText={light:'Правил немного: чаще вы предлагаете, что делает ваш герой',flexible:'Правила помогают решить спорный исход; об исключениях договариваются за столом',precise:'Нужно часто бросать кости, считать результат и сверять способности героя'};
 const paceText={brisk:'Решения часто нужно принимать быстро',reflective:'Есть время подумать и обсудить план',varied:'После быстрых сцен есть время спокойно поговорить'};
-export const SESSIONS=announcements.map(([id,systemId,title,premise,sourceUrl,genres,genreText,rules,pace,minutes,topicText])=>({id,systemId,game:SYSTEMS[systemId].name,title,premise,sourceUrl,genres,genreText,rules,rulesText:rulesText[rules],pace,paceText:paceText[pace],minutes,requiredTopics:[],topicText,slotNote:'Длительность и ритм — условия учебного слота клуба; границы согласуются до начала игры.'}));
+export const SESSIONS=[...announcements.map(([id,systemId,title,premise,sourceUrl,genres,genreText,rules,pace,minutes,topicText])=>({id,systemId,game:SYSTEMS[systemId].name,title,premise,sourceUrl,genres,genreText,rules,rulesText:rulesText[rules],pace,paceText:paceText[pace],minutes,requiredTopics:[],topicText,slotNote:'Длительность и ритм — условия учебного слота клуба; границы согласуются до начала игры.'})),...CLUB_ADVENTURES.map(session=>({...session,game:SYSTEMS[session.systemId].name,genreText:session.genres.map(id=>({mystery:'Расследование',journey:'Путешествие',science:'Фантастика',tactics:'Тактика',drama:'Драма',horror:'Ужас',comedy:'Комедия',heist:'Интрига',history:'История',myth:'Миф'}[id])).join(' · '),rulesText:rulesText[session.rules],paceText:paceText[session.pace]}))];
 export const MASTERS=[
- {id:'asya',name:'Ася',style:'Вопросы и паузы',detail:"Спрашивает каждого, что делает его герой, и помогает с первым ходом. Если игрокам нужно больше времени, даёт обсудить план. Может подсказать решение без просьбы.",skills:['Объясняет первый ход','Даёт слово каждому'],invites:true,coaching:true,adviceBoundary:false,flexiblePace:true},
- {id:'mark',name:'Марк',style:'Порядок и ясность',detail:"Обращается к игрокам по очереди и объясняет, что бросить и посчитать. Спрашивает, нужна ли помощь, и не решает за новичка. Ведёт игру в заранее выбранном темпе.",skills:['Объясняет процедуры','Ограничивает советы без запроса'],invites:true,coaching:true,adviceBoundary:true,flexiblePace:false},
+ {id:'asya',name:'Ася',style:'Вопросы и паузы',detail:"Спрашивает каждого, что делает его герой, и помогает с первым ходом. Если игрокам нужно больше времени, даёт обсудить план. Может сразу предложить, какой ход сделать.",skills:['Объясняет первый ход','Даёт слово каждому'],invites:true,coaching:true,adviceBoundary:false,flexiblePace:true},
+ {id:'mark',name:'Марк',style:'Порядок и ясность',detail:"Обращается к игрокам по очереди и объясняет, что бросить и посчитать. Спрашивает, нужна ли помощь, и не решает за новичка. Ведёт игру в заранее выбранном темпе.",skills:['Объясняет процедуры','Защищает выбор игрока'],invites:true,coaching:true,adviceBoundary:true,flexiblePace:false},
  {id:'mira',name:'Мира',style:'Свой темп, ясные границы',detail:"После напряжённых сцен даёт время спокойно поговорить и обсудить план. Не даёт одному игроку решать за другого. С правилами предлагает разобраться вместе с соседями. Ждёт, что игроки сами предложат действия.",skills:['Чередует ритм','Следит за согласием'],invites:false,coaching:false,adviceBoundary:true,flexiblePace:true},
  {id:'lev',name:'Лев',style:'Инициатива игроков',detail:"Разбирает броски и расчёты вместе с новичком. Может сразу предложить, что сделать герою. Ждёт инициативы от игроков и не делает долгих пауз.",skills:['Поддерживает инициативу','Помогает с правилами'],invites:false,coaching:true,adviceBoundary:false,flexiblePace:false},
  {id:'vera',name:'Вера',style:'Равное внимание',detail:"Спрашивает тихих игроков, что делают их герои. Даёт больше времени на разговор или план, если это нужно столу. Не объясняет каждый ход; иногда сама предлагает решение.",skills:['Делит внимание','Чередует ритм'],invites:true,coaching:false,adviceBoundary:false,flexiblePace:true},
@@ -38,6 +40,6 @@ export const HABITS=[
  {id:'ask-help',reply:'Если застряну с правилами, мне нужна помощь. Но сначала дайте попробовать самостоятельно.'},
  {id:'offer-help',reply:'Могу объяснить правило, если попросят. Решения за чужого героя принимать не хочу.'},
  {id:'unsolicited',reply:'Бывает, сразу предлагаю другим решения. Лучше заранее договориться, когда совет уместен.'},
- {id:'own-space',reply:'Хочу самостоятельно решать за своего героя. Непрошеные советы сбивают — лучше сначала спросить.'},
+ {id:'own-space',reply:'Не любит советы от других игроков. Хочу самостоятельно решать за своего героя, даже если ошибусь.'},
 ];
-export const QUESTIONS=[{id:'stories',text:'Что цепляет в историях?'},{id:'rules',text:'Как вам с правилами?'},{id:'pace',text:'Какой темп вам удобен?'},{id:'time',text:'Какая длительность подойдёт?'},{id:'boundaries',text:'Какие темы исключаем?'},{id:'habits',text:'Как вам советы и помощь?'},{id:'participation',text:'Как включаться в сцену?'},{id:'experience',text:'Уже доводилось играть?'},{id:'priorities',text:'Что для вас главное?'}];
+export const QUESTIONS=[{id:'stories',text:'Что цепляет в историях?'},{id:'rules',text:'Как вам с правилами?'},{id:'pace',text:'Какой темп вам удобен?'},{id:'time',text:'Какая длительность подойдёт?'},{id:'boundaries',text:'Какие темы исключаем?'},{id:'habits',text:'Как вам советы и помощь?'},{id:'participation',text:'Как включаться в сцену?'},{id:'experience',text:'Уже доводилось играть?'},{id:'priorities',text:'Что для вас главное?'},...PREFERENCE_QUESTIONS];

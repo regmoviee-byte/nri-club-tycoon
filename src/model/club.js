@@ -3,6 +3,9 @@ import { ROOM_COUNT,ROOM_CAPACITY,GUEST_COUNT,SESSIONS,MASTERS,HABITS,QUESTIONS 
 import { IDENTITIES,IDENTITY_AGE_MIX,SPARSE_PORTRAIT_IDS,experienceReply } from '../data/identities.js';
 import { assessGroup,assessGuest,better } from './assessment.js';
 import { shuffled,feasibleGrouping,searchArrangement } from './search.js';
+import {roomOperational} from './layout-club.js';
+import {preferenceAnswer} from './preferences.js';
+import {captureGuestConversation} from './guests-history.js';
 export { assessGroup,assessGuest,searchArrangement,feasibleGrouping };
 export const actorById=(shift,id)=>shift.guests.find(g=>g.id===id);
 export const roomById=(shift,id)=>shift.rooms.find(r=>r.id===id);
@@ -39,8 +42,14 @@ const paceReplies={reflective:'Мне нужны паузы перед важн�
 const participationReplies={invited:'Мне легче вступить, когда меня прямо спрашивают. Если просто ждать инициативы, я могу не успеть включиться.',shared:'Люблю предложить идею и передать ход. Хочется, чтобы всем хватило внимания.',proactive:'Идей обычно много. Если я увлекусь, можно напомнить передать ход другим.'};
 export function answerText(g,q,variant=0){
   const v=g.profile;if(q==='stories'){const work=v.tastes[variant%v.tastes.length];return`Из любимого — ${work.title}. Цепляет вот что: ${work.why}. ${v.wish}`;}
+  const specific=preferenceAnswer(g,q);if(specific!==null)return specific;
   if(q==='rules')return rulesReplies[v.traits.rules.id];if(q==='pace')return paceReplies[v.traits.pace.id];
-  if(q==='time'&&g.schedule){const hour=Math.floor(g.schedule.leaveAt%24),day=Math.floor(g.schedule.leaveAt/24)+1;return `Обычно мне удобно ${g.schedule.preferred[0]===g.schedule.preferred[1]?g.schedule.preferred[0]:g.schedule.preferred.join('–')} ч за столом. Сегодня могу до ${hour}:00${day>1?' (день '+day+')':''}; время ожидания тоже входит.`;}
+  if(q==='time'&&g.schedule){
+    const minute=Math.round(g.schedule.leaveAt*60),precise=(g.dialogueVersion??1)>=2;
+    const hour=precise?Math.floor((minute%1440)/60):Math.floor(g.schedule.leaveAt%24),day=precise?Math.floor(minute/1440)+1:Math.floor(g.schedule.leaveAt/24)+1;
+    const time=precise?`${hour}:${String(minute%60).padStart(2,'0')}`:`${hour}:00`;
+    return `Обычно мне удобно ${g.schedule.preferred[0]===g.schedule.preferred[1]?g.schedule.preferred[0]:g.schedule.preferred.join('–')} ч за столом. Сегодня могу до ${time}${day>1?' (день '+day+')':''}; время ожидания тоже входит.`;
+  }
   if(q==='time')return v.context;
   if(q==='priorities')return g.ratingPriority??'Главное — услышать ожидания друг друга и договориться перед игрой.';
   if(q==='boundaries')return v.boundaries.map(b=>b.text).join(' ');if(q==='habits')return g.habit.reply;
@@ -50,14 +59,15 @@ export function askQuestion(shift,id,q){
   const g=actorById(shift,id);if(!g||shift.phase!=='placing'||!QUESTIONS.some(v=>v.id===q))return null;
   if(roomById(shift,g.roomId)?.status==='running'){const heard=g.dialogue.findLast(a=>a.questionId===q);if(heard)g.lastAnswer=heard;return heard??null;}
   const variant=q==='stories'?g.storyIndex:0;if(q==='stories')g.storyIndex=(g.storyIndex+1)%3;
-  let answer=g.dialogue.find(a=>a.questionId===q&&a.variant===variant);
+  let answer=g.dialogue.find(a=>a.questionId===q&&a.variant===variant);const created=!answer;
   if(!answer){answer={questionId:q,variant,reply:answerText(g,q,variant)};g.dialogue.push(answer);}
-  if(!g.asked.includes(q))g.asked.push(q);g.lastAnswer=answer;return answer;
+  if(!g.asked.includes(q))g.asked.push(q);g.lastAnswer=answer;captureGuestConversation(shift,g,created?{questionId:q,variant}:null);return answer;
 }
 export function recallAnswer(shift,id,index){const g=actorById(shift,id);if(!g||!g.dialogue[index])return null;g.lastAnswer=g.dialogue[index];return g.lastAnswer;}
 export function assignGuest(shift,id,roomId,preferredSeat=null){
   if(shift.phase!=='placing')return{ok:false,reason:'Итог зафиксирован. Выберите явный повтор рассадки.'};
   const g=actorById(shift,id),r=roomById(shift,roomId);if(!g||!r)return{ok:false,reason:'Гость или комната не найдены.'};
+  if(!roomOperational(shift,roomId))return{ok:false,reason:'Сначала оборудуйте комнату и откройте проход ко всем пяти стульям.'};
   if(r.status==='running'||roomById(shift,g.roomId)?.status==='running')return{ok:false,reason:'Эта сессия уже идёт. Пересаживать можно до её запуска.'};
   const occupied=roomOccupants(shift,roomId).filter(p=>p.id!==id).map(p=>p.seat),seat=preferredSeat??Array.from({length:r.capacity},(_,i)=>i).find(i=>!occupied.includes(i));
   if(!Number.isInteger(seat)||seat<0||seat>=r.capacity||occupied.includes(seat))return{ok:false,reason:'Место занято. Выберите гостя для обмена.',needsSwap:true,roomId};
@@ -66,6 +76,7 @@ export function assignGuest(shift,id,roomId,preferredSeat=null){
 export function swapGuests(shift,aId,bId){
   if(shift.phase!=='placing')return{ok:false,reason:'Итог зафиксирован.'};
   const a=actorById(shift,aId),b=actorById(shift,bId);if(!a||!b||a===b)return{ok:false,reason:'Выберите двух разных гостей.'};
+  if([a,b].some(g=>g.roomId&&!roomOperational(shift,g.roomId)))return{ok:false,reason:'К одному из мест нет доступа.'};
   if([a,b].some(g=>roomById(shift,g.roomId)?.status==='running'))return{ok:false,reason:'Гости уже играют. Их места сохранятся до конца сессии.'};
   [a.roomId,b.roomId]=[b.roomId,a.roomId];[a.seat,b.seat]=[b.seat,a.seat];return{ok:true,swapped:true};
 }

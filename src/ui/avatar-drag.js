@@ -5,7 +5,7 @@ import {createPuppet,resizePuppet,stepPuppet,puppetPose,pinPuppet,standingPose,s
 import {puppetSVG,FIGURE_FRAMES} from './graphic-portrait.js';
 import {chairScale,figureAnchor,grabOffset,bindGrip,gripPoint,dragAnchor,DEFAULT_CHAIR_SCALE} from '../model/drag-geometry.js';
 
-export function installAvatarDrag({getClub,select,changed,placement,error,reveal}) {
+export function installAvatarDrag({getClub,select,changed,placement,error,reveal,enabled=()=>true}) {
   const game=document.querySelector('#game'),ghost=document.querySelector('#ticket-ghost');
   let session=null,rag=null,animation=null,raf=0,last=0,point={x:0,y:0},note='',ignoreClick=false,destroyed=false;
   const listeners=[];
@@ -95,14 +95,15 @@ export function installAvatarDrag({getClub,select,changed,placement,error,reveal
     rag=null;removeMarks();goal.node.classList.add(goal.className);last=0;schedule();
     if(returningToDesk){goal.node.style.transition='none';goal.node.style.opacity='.15';}
   }
-  function cancelInteraction({animate=false}={}) {
+  async function cancelInteraction({animate=false}={}) {
     const held=session,g=source(),wasDragging=held?.dragging;
     // Detach before releasePointerCapture, whose lost event may be synchronous.
     session=null;gesture.cancel();cancelDrag(getClub());
+    if(raf)cancelAnimationFrame(raf);raf=0;
     if(held) {
       game.classList.toggle('show-rooms',held.roomsShown);
       release(held);
-      if(wasDragging){ignoreClick=true;changed();}
+      if(wasDragging){ignoreClick=true;await changed();}
     }
     if(animate&&wasDragging)settle(held,g,null);else finishVisual();
   }
@@ -151,21 +152,23 @@ export function installAvatarDrag({getClub,select,changed,placement,error,reveal
       hover();last=0;schedule();
     },
     drag:p=>{point=p;hover();},
-    drop:p=>{
+    drop:async p=>{
       point=p;const held=session,g=source(),target=targetAt(p);
       const result=endDrag(getClub(),target?.roomId??null,target?.seat??null);
       session=null;
       if(!result.ok)game.classList.toggle('show-rooms',held.roomsShown);
-      removeMarks();changed();
-      settle(held,g,result.ok?target:null);
+      removeMarks();if(raf)cancelAnimationFrame(raf);raf=0;const saved=await changed();
+      settle(held,g,result.ok&&saved!==false?target:null);
       if(!result.ok&&!result.cancelled)error(result.reason);
     },
-    select:id=>{
-      if(id){select(id);if(session?.kind==='desk'&&(innerWidth<=850||session.pointerType!=='mouse'))placement();}
+    select:async id=>{
+      const shouldPlace=session?.kind==='desk'&&(innerWidth<=850||session.pointerType!=='mouse');
+      if(id){await select(id);if(shouldPlace)placement();}
     },
   });
 
   listen(window,'pointerdown',e=>{
+    if(!enabled())return;
     if(e.button!==0)return;
     // A second finger anywhere cancels; it need not land on another avatar.
     if(session){if(session.pointerId!==e.pointerId)cancelInteraction({animate:true});return;}
@@ -194,8 +197,8 @@ export function installAvatarDrag({getClub,select,changed,placement,error,reveal
     gesture.up({id:e.pointerId,x:e.clientX,y:e.clientY});
     ignoreClick=true;session=null;release(held);
   });
-  listen(game,'click',e=>{
-    if(ignoreClick&&e.detail>0){ignoreClick=false;e.preventDefault();e.stopImmediatePropagation();}
+  listen(window,'click',e=>{
+    if(game.contains(e.target)&&ignoreClick&&e.detail>0){ignoreClick=false;e.preventDefault();e.stopImmediatePropagation();}
   },true);
   listen(game,'lostpointercapture',e=>{if(session?.pointerId===e.pointerId)cancelInteraction({animate:true});});
   listen(window,'pointercancel',e=>{if(session?.pointerId===e.pointerId)cancelInteraction({animate:true});});

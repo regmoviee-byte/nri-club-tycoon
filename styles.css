@@ -64,3 +64,11 @@ dialog.info-popover{position:fixed;inset:auto;margin:0;width:min(360px,calc(100v
 
 /* Masters share the same seated frame and wooden chair as their guests. */
 .master-visual{position:relative;display:block;width:64px;height:74px;flex:0 0 74px}.master-visual .master-figure{position:relative;z-index:2;width:64px;height:74px;margin:0;overflow:hidden}.master-seat{height:87px;min-height:87px}.master-name{margin-top:-1px;line-height:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.save-readonly-notice{position:fixed;z-index:2000;left:12px;right:12px;top:12px;max-width:640px;margin:auto;padding:16px;background:#fff4d8;color:#332d24;border:2px solid #a78044;border-radius:12px;box-shadow:0 8px 30px #0005;font:16px/1.5 system-ui}.save-readonly-notice button{display:block;margin-top:10px;min-height:44px;padding:8px 16px}
+
+/* Portable saves: a short header entry, full-size controls on every screen. */
+#save-menu-open{font-size:11px;min-height:36px;padding:6px 8px;white-space:nowrap}
+.save-file-actions{display:flex;flex-wrap:wrap;gap:10px}.save-file-actions button{flex:1 1 180px;min-height:44px;white-space:normal}
+#save-file-message,#save-import-error{overflow-wrap:anywhere;min-height:1.5em}#save-import-summary{overflow-wrap:anywhere}
+@media(max-width:850px){#save-menu-open{font-size:10px;min-height:36px;padding:6px}.header-actions{gap:4px}.save-file-actions{flex-direction:column}.save-file-actions button{flex:auto;width:100%}}

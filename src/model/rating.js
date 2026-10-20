@@ -32,7 +32,7 @@ export function ratingEvidence(run,guest){
   // One support need, even when both experience and habits reveal it.
   master.push(m.coaching?fact(1,'Мастер объясняет ход и помогает с правилом по просьбе.',needsExample?'experience':'habits'):helper?fact(needsExample?.6:1,needsExample?'Сосед готов объяснить правило, но мастер не показывает первый ход.':'Сосед готов объяснить правило по просьбе.',needsExample?'experience':'habits'):fact(0,needsExample?'Просили пример хода; ни мастер, ни сосед не предлагают нужной поддержки.':'Нужна помощь по просьбе, но её не предлагает ни мастер, ни соседи.',needsExample?'experience':'habits'));
  }
- if(guest.habit.id==='own-space')master.push(m.adviceBoundary?fact(1,'Мастер защищает самостоятельные решения.','habits'):fact(0,'Просили сначала спрашивать, а мастер может предлагать решения без просьбы.','habits'));
+ if(guest.habit.id==='own-space')master.push(m.adviceBoundary?fact(1,'Мастер защищает самостоятельные решения.','habits'):fact(0,'Хотелось сначала решить самостоятельно, а мастер сразу предлагал, как поступить.','habits'));
 
  // Turn-taking is a group condition, counted here once rather than also in
  // the master component. Mixed personalities alone are not a conflict.
@@ -43,8 +43,8 @@ export function ratingEvidence(run,guest){
  else company.push(fact(initiative==='shared'?.85:.7,initiative==='shared'?'Гость сам передаёт ход; поддержки этой привычки со стороны стола пока не обещано.':'Инициатива есть; напоминать о передаче хода мастер не обещает.','participation'));
  const asksFirst=g=>['own-space','ask-help'].includes(g.habit.id);
  const adviceClash=asksFirst(guest)&&others.some(g=>g.habit.id==='unsolicited');
- if(m.adviceBoundary)company.push(fact(1,'Мастер останавливает советы без согласия.','habits'));
- else if(adviceClash)company.push(fact(0,'Советы без запроса расходятся с просьбой сначала дать решить самостоятельно; посредничество не обещано.','habits'));
+ if(m.adviceBoundary)company.push(fact(1,'Мастер напоминает, что игрок выбирает свой ход сам.','habits'));
+ else if(adviceClash)company.push(fact(0,'Другой игрок продолжал предлагать ход, хотя хотелось решить самостоятельно; мастер не обещал помогать в таком споре.','habits'));
  else if(guest.habit.id==='unsolicited')company.push(fact(.7,'Гость предлагает заранее договориться о советах; мастер не берётся поддержать эту договорённость.','habits'));
  else company.push(fact(1,'Озвученные привычки сохраняют право решать за своего героя.','habits'));
  // Peer pace differences are not charged again: a varied slot already serves

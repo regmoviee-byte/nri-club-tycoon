@@ -21,8 +21,8 @@ export function assessGuest(room,guest){
 export function assessPair(room,a,b){
   const ids=new Set([a.habit.id,b.habit.id]),good=[],needs=[];let soft=0;
   if(ids.has('unsolicited')&&ids.has('own-space')){
-    if(room.master.adviceBoundary)good.push(`${room.master.name} ограничивает непрошеные советы — это поддерживает разные способы участия.`);
-    else{soft+=2;needs.push(`${a.profile.name} и ${b.profile.name}: один сразу советует, другому нужны советы только по запросу. Нужна договорённость.`);}
+    if(room.master.adviceBoundary)good.push(`${room.master.name} защищает право выбирать свой ход — это поддерживает разные способы участия.`);
+    else{soft+=2;needs.push(`${a.profile.name} и ${b.profile.name}: один сразу советует, другой не любит советы от других игроков. Нужно договориться.`);}
   }
   const paces=new Set([a.profile.traits.pace.id,b.profile.traits.pace.id]);
   if(paces.has('brisk')&&paces.has('reflective')){

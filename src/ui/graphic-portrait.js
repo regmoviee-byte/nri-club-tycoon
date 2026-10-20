@@ -9,7 +9,7 @@ export function figureParts(identity,pose,{emotion,idle=false}={}){
  const s=pose,p=identity.portrait,head=characterHead(identity,emotion),body=characterClothes(identity,s);
  const angle=(s.headAngle??s.angle??0)+(p.pose??0)*Math.PI/180,transform=`translate(${xy(s.head)}) rotate(${angle*180/Math.PI})`,motion=idle?'portrait-head':'';
  const rear=`<g data-layer="rear-hair" transform="${transform}"><g class="${motion}" style="transform-origin:0px 0px">${head.back}</g></g>`;
- return `${body.legs}${rear}${body.arms}<g data-layer="torso" class="${idle?'portrait-breathe':''}" style="transform-origin:${body.anchor.x}px ${body.anchor.y}px">${body.torso}</g>${body.armsFront}<g data-layer="front-hair-face" transform="${transform}"><g class="${motion}" style="transform-origin:0px 0px">${head.front}</g></g>`;
+ return `${body.legs}<g data-layer="upper-body" class="${idle?'portrait-breathe':''}" style="transform-origin:${body.anchor.x}px ${body.anchor.y}px">${rear}${body.arms}<g data-layer="torso">${body.torso}</g>${body.armsFront}<g data-layer="front-hair-face" transform="${transform}"><g class="${motion}" style="transform-origin:0px 0px">${head.front}</g></g></g>`;
 }
 export const FIGURE_FRAMES={portrait:'0 0 360 365',seated:'30 15 300 500',full:'0 0 360 650'};
 export function graphicPortrait(identity,{mini=false,full=false,emotion}={}){
