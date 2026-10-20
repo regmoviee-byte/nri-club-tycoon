@@ -4,7 +4,7 @@ import {SYSTEMS} from '../data/systems.js';
 import {campaignProgress,readyRooms,masterTrainingOffer,configureRoom} from './campaign.js';
 import {staffRoomStatus,staffSeatForMaster,staffCanRest} from './staff-room.js';
 import {zoneCleaning} from './operations.js';
-import {hourlyCosts,obligations,reserveRequired,reserveEstimate} from './finances.js';
+import {hourlyCosts,obligations,reserveRequired,reserveEstimate,sessionForecast} from './finances.js';
 import {masterPreferences,sessionDurationRange} from './preferences.js';
 import {kitStatus,roomPreparation} from './kit-lifecycle.js';
 import {libraryStorageStatus} from './layout-club.js';
@@ -57,7 +57,7 @@ export function startQuote(club,id,settings={}){
  if(candidate.status!=='running'&&!preparation.ready)return{ok:false,reason:preparation.reason};
  if(candidate.status!=='running'&&!kit.ok)return{ok:false,reason:kit.reason};
  const ready=readyRooms(draft).some(r=>r.id===id);
- const hours=candidate.hours;
+ const hours=candidate.hours,forecast=sessionForecast(draft,id);
  if(candidate.status!=='running'){candidate.status='running';candidate.run={endsAt:club.clock+hours,guests:Array.from({length:4},()=>({})),contract:{wageTotal:hours*candidate.master.hourlyWage}};}
- const reserve=reserveRequired(draft);return {ok:true,reserve,cash:club.finance.cash,risky:club.finance.cash<reserve,projectedExpense:reserve-reserveRequired(club),guestPrice:hours*ECONOMY.guestHour,wages:hours*candidate.master.hourlyWage,hours,adventureId:candidate.adventureId,ready};
+ const reserve=reserveRequired(draft);return {ok:true,reserve,cash:club.finance.cash,risky:club.finance.cash<reserve,projectedExpense:reserve-reserveRequired(club),...forecast,wages:forecast.masterCost,hours,adventureId:candidate.adventureId,ready};
 }

@@ -5,6 +5,7 @@ import {readSaveFile,saveDownload} from './save-files.js';
 import {createConstructionService} from '../model/construction.js';
 import {constructionBudgetAdapter} from '../model/campaign-construction.js';
 import {BUILD_CATALOG} from '../data/build-catalog.js';
+import {ECONOMY} from '../data/commerce.js';
 import {SYSTEMS} from '../data/systems.js';
 import {SESSIONS,QUESTIONS} from '../data/club.js';
 import {clubPrestige,prestigeNeeded,effectText} from '../model/upgrades.js';
@@ -12,7 +13,8 @@ import {roomEdit,rectangle,nearestEdge} from '../model/studio-building.js';
 import {objectCells,tileKey} from '../model/layout.js';
 import {ownedCells} from '../model/campaign-layout.js';
 import {syncGuestWaiting} from '../model/guest-waiting.js';
-import {createWorld} from './world.js';
+import {createWorld,itemThumbnail} from './world.js';
+import {sessionForecast} from '../model/finances.js';
 import {receptionStatus} from '../model/reception-area.js';
 import {visibleGuestHistory,visibleDemand} from '../model/guests-history.js';
 import {portrait,personArt,escapeHTML as esc} from './people.js';
@@ -26,7 +28,7 @@ const button=(label,action,attrs='',className='')=>'<button type="button" data-a
 const options=(list,value)=>list.map(([id,name])=>'<option value="'+esc(id)+'" '+(id===value?'selected':'')+'>'+esc(name)+'</option>').join('');
 const nameOf=g=>g?.profile?.name??g?.name??'Гость';
 let club,store,writer,busy=false,readOnly=false,world,buildService,undo=null;
-const ui={tab:'club',guest:null,room:null,object:null,tool:'select',kind:'plant',rotation:0,category:'furniture',purpose:'game',furnished:true,cells:new Map(),edges:new Map(),preview:null,hover:null,pending:null,walls:'cut',message:'',error:false,candidates:false,ledgerLimit:40,seatArmed:false};
+const ui={tab:'club',guest:null,room:null,object:null,tool:'select',kind:'plant',rotation:0,category:'furniture',purpose:'game',furnished:true,cells:new Map(),edges:new Map(),preview:null,hover:null,pending:null,walls:'cut',message:'',error:false,candidates:false,ledgerLimit:40,seatArmed:false,catalogSearch:'',libraryTab:'adventures',librarySearch:''};
 const panels={club:['СВОДКА КЛУБА','Сегодня в клубе'],guests:['РАЗГОВОР У РЕСЕПШНА','Знакомство'],rooms:['НАСТРОЙКИ И СОСТАВ СТОЛОВ','Игровые комнаты'],build:['РЕДАКТОР ПЛАНИРОВКИ','Строительство'],team:['ШТАТ, ОТДЫХ И НАЙМ','Мастера'],library:['ИГРЫ И ИСТОРИИ','Библиотека'],service:['ЗАБОТА О КЛУБЕ','Сервис'],finance:['ДЕНЬГИ И РЕЗУЛЬТАТЫ ПАРТИЙ','Касса и отзывы'],goals:['ОТ ПЕРВОГО СТОЛА К КЛУБУ','Развитие'],settings:['ВАША КАМПАНИЯ','Сохранение']};
 
 function layout(){
@@ -115,26 +117,35 @@ function demandHTML(){
 }
 function roomsHTML(){
  const r=club.rooms.find(r=>r.id===ui.room)??club.rooms[0];if(!r)return intro('Разметьте игровую комнату и поставьте мебель.')+button('Строить','nav','data-tab="build"');
- ui.room=r.id;const market=campaignMarket(club),guests=roomOccupants(club,r.id),zone=club.layout.rooms.find(z=>z.id===r.id),running=r.status==='running';
- const adventures=SESSIONS.filter(s=>club.library.adventures.includes(s.id)&&s.systemId===club.library.copies.find(k=>k.id===r.kitId)?.systemId);
- return '<div class="room-switcher">'+club.rooms.map(roomListRow).join('')+'</div>'+
- section(esc(zone?.name??'Комната'),badge(running?'Играет':'Подбор компании',running?'running':'')+'<p class="room-description">'+esc(r.session?.premise??r.session?.title??'Назначьте игру и ведущего.')+'</p>'+
+ ui.room=r.id;const guests=roomOccupants(club,r.id),zone=club.layout.rooms.find(z=>z.id===r.id),running=r.status==='running',plan=sessionForecast(club,r.id),system=club.library.copies.find(k=>k.id===r.kitId)?.systemId;
+ const adventures=SESSIONS.filter(s=>club.library.adventures.includes(s.id)&&s.systemId===system),free=(field,id)=>!club.rooms.some(other=>other.id!==r.id&&other.enabled!==false&&other[field]===id);
+ const kits=club.library.copies.filter(k=>k.id===r.kitId||free('kitId',k.id)),masters=club.staff.filter(m=>(m.id===r.masterId||free('masterId',m.id))&&m.known.includes(system)&&!m.training);
+ const late=guests.filter(g=>g.asked.includes('time')&&g.schedule.leaveAt<(r.run?.endsAt??club.clock+r.hours));
+ return '<div class="room-tabs">'+club.rooms.map(room=>button('Комната '+room.number+' <small>'+roomOccupants(club,room.id).length+'/4</small>','room','data-id="'+esc(room.id)+'"',room.id===r.id?'active':'')).join('')+'</div>'+
+ '<div class="party-heading"><span>'+badge(running?'Идёт партия':'Подготовка',running?'running':'')+'</span><h2>'+esc(r.session?.title??zone?.name??'Комната')+'</h2><p>'+r.hours+' ч · '+clockText(r.run?.startedAt??club.clock)+' — '+clockText(r.run?.endsAt??club.clock+r.hours)+'</p></div>'+
  (r.layoutErrors.length?'<div class="notice error">'+r.layoutErrors.map(e=>esc(e.text)).join('<br>')+'</div>':'')+
- '<form id="room-form"><label>Комплект игры<select name="game" '+(running?'disabled':'')+'>'+options(club.library.copies.map(k=>[k.id,SYSTEMS[k.systemId]?.name??k.systemId]),r.kitId)+'</select></label><label>Мастер<select name="master" '+(running?'disabled':'')+'>'+options(club.staff.map(m=>[m.id,m.name+' · '+money(m.hourlyWage)+'/ч']),r.masterId)+'</select></label><label>Приключение<select name="adventure" '+(running?'disabled':'')+'>'+options(adventures.map(s=>[s.id,s.title]),r.adventureId)+'</select></label><label>Длительность<select name="hours" '+(running?'disabled':'')+'>'+options([2,3,4,5,6].map(h=>[String(h),h+' часа']),String(r.hours))+'</select></label>'+(!running?'<button class="full" type="submit">Применить назначения</button>':'')+'</form>')+
- section('Компания за столом',guests.map(g=>'<button type="button" class="list-row" data-action="guest" data-id="'+esc(g.id)+'"><span class="mini-portrait">'+portrait(g)+'</span><span><b>'+esc(nameOf(g))+'</b><small>'+guestTime(g)+'</small></span></button>').join('')+(guests.length<4?intro('Свободно мест: '+(4-guests.length))+button('Выбрать гостей','nav','data-tab="guests"'):'') )+
- section('Договор партии',metric('Длительность',r.hours+' ч')+metric('Каждый гость',money(r.hours*150))+metric('Мастер',money((r.master?.hourlyWage??0)*r.hours))+intro('Зарплата и содержание остаются расходами, даже если гости откажутся платить.')+
- (running?metric('Окончание',clockText(r.run.endsAt)):button('Начать партию','start-room','data-id="'+esc(r.id)+'" '+(!readyRooms(club).includes(r)?'disabled':''),'primary full'))+
- (!running?button(r.enabled?'Закрыть пустую комнату':'Открыть комнату','toggle-room','data-id="'+esc(r.id)+'"','quiet full'):''));
+ (plan?'<div class="party-plan" data-guest-price="'+plan.guestPrice+'"><div><small>БИЛЕТ С ГОСТЯ</small><strong>'+money(plan.guestPrice)+'</strong><span>'+money(plan.guestHourlyRate)+'/ч × '+r.hours+' ч</span></div><div><small>ПРИ ЧЕТЫРЁХ ОПЛАТАХ</small><strong class="'+(plan.profitIfAllPay<0?'negative':'positive')+'">'+(plan.profitIfAllPay>=0?'+':'')+money(plan.profitIfAllPay)+'</strong><span>после расходов стола</span></div></div>'+
+ '<details class="party-costs"><summary>Доходы и расходы партии</summary>'+metric('Четыре билета',money(plan.income))+metric('Зарплата мастера','−'+money(plan.masterCost))+metric('Доля содержания и расходники','−'+money(plan.operatingCost))+metric('Для окупаемости',plan.breakEvenGuests<=4?plan.breakEvenGuests+' из 4 оплат':'Не окупается даже с 4 оплатами')+'<p>Содержание делится между работающими столами с учётом их окончания. Чаевые и кафе в план не включены.</p></details>':'')+
+ (!running?button('Начать партию · '+guests.length+'/4','start-room','data-id="'+esc(r.id)+'" '+(!readyRooms(club).includes(r)?'disabled':''),'primary full start-party'):metric('Партия закончится',clockText(r.run.endsAt)))+
+ (late.length?'<p class="notice error">Не успеют до конца: '+late.map(g=>esc(nameOf(g))).join(', ')+'.</p>':'')+
+ '<form id="room-form" class="room-settings"><label>Игра<select name="game" '+(running?'disabled':'')+'>'+options(kits.map(k=>[k.id,SYSTEMS[k.systemId]?.name??k.systemId]),r.kitId)+'</select></label><label>Приключение<select name="adventure" '+(running?'disabled':'')+'>'+options(adventures.map(a=>[a.id,a.title+' · '+a.minutes/60+' ч']),r.adventureId)+'</select></label><label>Мастер<select name="master" '+(running?'disabled':'')+'>'+(masters.length?options(masters.map(m=>[m.id,m.name+' · '+money(m.hourlyWage)+'/ч']),r.masterId):'<option value="">Нет знающего эту игру мастера</option>')+'</select></label><p class="small-copy">Длительность задаётся приключением. Назначения сохраняются сразу.</p></form>'+
+ button('Купить другие приключения','stories-for-system','data-system="'+esc(system??'')+'"','quiet full')+
+ section('Места за столом',guests.length?'<div class="party-guests">'+guests.map(g=>'<button type="button" data-action="guest" data-id="'+esc(g.id)+'"><span class="mini-portrait">'+portrait(g)+'</span><span><b>'+esc(nameOf(g))+'</b><small>'+guestTime(g)+'</small></span></button>').join('')+'</div>':intro('Выберите гостя у ресепшна или перетащите фигурку на свободный стул.'))+
+ (!running?button('Выбрать гостей','nav','data-tab="guests"','full')+button(r.enabled?'Закрыть пустую комнату':'Открыть комнату','toggle-room','data-id="'+esc(r.id)+'"','quiet full'):'');
 }
 const tools=[['select','Выбор'],['land','Участок'],['room','Комната'],['wall','Стена'],['door','Дверь'],['window','Окно'],['floor','Пол']];
+function catalogItems(){
+ const query=ui.catalogSearch.trim().toLocaleLowerCase('ru-RU');return Object.values(BUILD_CATALOG).filter(item=>(query||item.category===ui.category)&&(!query||item.name.toLocaleLowerCase('ru-RU').includes(query)));
+}
+function catalogCards(){return catalogItems().map(item=>'<button type="button" class="catalog-item '+(ui.tool==='item'&&ui.kind===item.kind?'active':'')+'" data-action="build-item" data-kind="'+item.kind+'" title="'+esc(item.name)+'"><span class="item-thumbnail">'+itemThumbnail(item.kind)+'</span><b>'+esc(item.name)+'</b><strong>'+money(item.price)+'</strong></button>').join('')||empty('Таких предметов нет. Попробуйте другое название.');}
 function buildingHTML(){
- const categories={furniture:'Мебель',equipment:'Стол и стены',staff:'Отдых',waiting:'Ожидание',service:'Сервис',decoration:'Декор'};
- const selected=club.layout.objects.find(o=>o.id===ui.object);
+ const categories={furniture:'Мебель',equipment:'Оснащение столов и стен',staff:'Отдых мастеров',waiting:'Вход и ожидание',service:'Сервис',decoration:'Декор'},selected=club.layout.objects.find(o=>o.id===ui.object),item=ui.tool==='item'?BUILD_CATALOG[ui.kind]:null;
  return '<div class="build-tools">'+tools.map(([id,title])=>button(title,'tool','data-tool="'+id+'"',ui.tool===id?'active':'')).join('')+'</div>'+
- (ui.tool==='land'?intro('Отмечайте нужные клетки рядом с участком. Можно провести кистью произвольную форму. Цена — 125 ₽ за клетку.'):ui.tool==='room'?'<label>Назначение<select id="room-purpose">'+options([['game','Игровая комната'],['staff','Отдых мастеров']],ui.purpose)+'</select></label><label class="check"><input type="checkbox" id="room-furnished" '+(ui.furnished?'checked':'')+'> С готовой мебелью</label>'+intro('Потяните от одного угла к другому. Вход будет в левой стене у нижнего угла; рядом нужен купленный проход.'):ui.tool==='wall'||ui.tool==='door'||ui.tool==='window'?intro('Ведите вдоль границ клеток. Предпросмотр показывает каждую выбранную грань и полную стоимость.'):ui.tool==='floor'?intro('Проведите кистью по клеткам, которым нужно деревянное покрытие.'):intro('Выберите вещь, наведите на карту и нажмите. R поворачивает, пробел позволяет двигать камеру.'))+
- section('Каталог','<div class="catalog-tabs">'+Object.entries(categories).map(([id,title])=>button(title,'category','data-category="'+id+'"',ui.category===id?'active':'')).join('')+'</div>'+Object.values(BUILD_CATALOG).filter(item=>item.category===ui.category).map(item=>'<button type="button" class="catalog-item '+(ui.tool==='item'&&ui.kind===item.kind?'active':'')+'" data-action="build-item" data-kind="'+item.kind+'"><span class="item-glyph">'+icon(item.category==='staff'?'team':item.category==='service'?'service':item.category==='equipment'?'library':'rooms')+'</span><span><b>'+esc(item.name)+'</b><small>'+esc(effectText(item.kind))+'</small><em>'+item.width+'×'+item.height+' · '+(item.layer==='tabletop'?'на стол':item.layer==='wall'?'на стену':item.layer==='ceiling'?'свет':'на пол')+(item.hourlyCost?' · '+money(item.hourlyCost)+'/ч':'')+'</em></span><strong>'+money(item.price)+'</strong></button>').join(''))+
- (selected?section('Выбранный предмет',objectHTML(selected)):'')+
- '<div class="button-row">'+button('↶ Последнее строительство','undo-build',!undo?'disabled':'')+button('Отмена инструмента','cancel-build')+'</div>';
+ (ui.tool==='land'?intro('Отмечайте клетки рядом с участком. 125 ₽ за клетку.'):ui.tool==='room'?'<label>Назначение<select id="room-purpose">'+options([['game','Игровая комната'],['staff','Отдых мастеров']],ui.purpose)+'</select></label><label class="check"><input type="checkbox" id="room-furnished" '+(ui.furnished?'checked':'')+'> С готовой мебелью</label>'+intro('Потяните от одного угла к другому. Вход появится у нижнего угла левой стены.'):['wall','door','window'].includes(ui.tool)?intro('Ведите вдоль границ клеток.'):ui.tool==='floor'?intro('Проведите кистью по клеткам пола.'):'')+
+ (selected?'<div class="selected-object">'+objectHTML(selected)+'</div>':'')+
+ '<div class="catalog-header"><div class="catalog-filters"><input id="catalog-search" type="search" placeholder="Найти предмет…" aria-label="Найти предмет" value="'+esc(ui.catalogSearch)+'"><select id="catalog-category" aria-label="Категория предметов">'+options(Object.entries(categories),ui.category)+'</select></div>'+
+ (item?'<div class="selected-product"><span>'+itemThumbnail(item.kind)+'</span><div><b>'+esc(item.name)+'</b><small>'+item.width+'×'+item.height+' · '+({floor:'на пол',wall:'на стену',tabletop:'на стол',ceiling:'на потолок'}[item.layer])+' · '+money(item.price)+(item.hourlyCost?' · '+money(item.hourlyCost)+'/ч':'')+'</small><p>'+esc(effectText(item.kind))+'</p></div></div>':'<p class="catalog-tip">Выберите вещь → нажмите на карту → подтвердите покупку. R — поворот.</p>')+'</div><div class="catalog-grid" id="catalog-grid">'+catalogCards()+'</div>'+
+ '<div class="build-bottom">'+button('↶ Отменить стройку','undo-build',!undo?'disabled':'')+button('Снять инструмент','cancel-build')+'</div>';
 }
 function objectHTML(o){
  const spec=BUILD_CATALOG[o.kind];
@@ -148,12 +159,17 @@ function teamHTML(){
  (ui.candidates?data.candidates.map(m=>{const required=prestigeNeeded(m),reason=prestige.value<required?'Нужен престиж '+required:data.staffRoom.free<1?'Нужно место отдыха':club.finance.cash<m.hireCost?'Не хватает денег':'';return '<article class="staff-row"><div class="staff-heading"><div class="staff-portrait">'+portrait(m)+'</div><div><h2>'+esc(m.name)+'</h2><span>'+esc(m.temperament)+'</span><b>'+money(m.wage)+'/ч</b></div></div><p>'+esc(m.detail)+'</p><p class="small-copy">'+esc(m.systems.map(s=>SYSTEMS[s]?.name??s).join(' · '))+'</p>'+button('Пригласить · '+money(m.hireCost),'hire','data-id="'+esc(m.id)+'" '+(reason?'disabled':''),'full')+(reason?'<small class="blocked-reason">'+reason+'</small>':'')+'</article>';}).join(''):
  data.staff.map(m=>'<article class="staff-row"><div class="staff-heading"><div class="staff-portrait">'+portrait(m)+'</div><div><h2>'+esc(m.name)+'</h2><span>'+esc(m.training?'Учится: '+m.training.label:m.canRest?'Отдыхает':'Ведёт партию')+'</span><b>'+money(m.wage)+'/ч</b></div></div><div class="fatigue-heading"><span>Усталость</span><b>'+m.fatigueValue.toFixed(1)+' / 12</b></div><meter min="0" max="12" low="4" high="8" optimum="0" value="'+m.fatigueValue+'">'+m.fatigueValue+'</meter><small class="small-copy">'+esc(m.fatigue)+(m.canRest?' · восстановление '+(m.restSeat?.restRate??.65)+'/ч':'')+'</small><p>'+esc(m.detail)+'</p><p class="small-copy">'+esc(m.systems.map(s=>SYSTEMS[s]?.name??s).join(' · '))+'</p>'+(!m.training&&!m.dismissal.busy?'<form class="training-form" data-id="'+esc(m.id)+'"><label>Обучение<select name="course">'+options(m.trainingOptions.map(o=>[o.systemId,o.name+' · '+money(o.price)+' · '+o.hours+' ч']),'')+'</select></label><button type="submit" '+(!m.trainingOptions.length?'disabled':'')+'>Начать обучение</button></form>'+button('Уволить мастера','dismiss-master','data-id="'+esc(m.id)+'"','quiet'):'')+'</article>').join(''));
 }
+function libraryCards(){
+ const data=campaignMarket(club),query=ui.librarySearch.trim().toLocaleLowerCase('ru-RU'),match=name=>!query||name.toLocaleLowerCase('ru-RU').includes(query);
+ if(ui.libraryTab==='adventures')return data.adventures.filter(a=>match(a.title+' '+SYSTEMS[a.systemId]?.name)).map((a,i)=>'<article class="story-card"><div class="story-cover book-'+i%4+'">'+icon('library')+'<span>'+a.minutes/60+' ч</span></div><div><small>'+esc(SYSTEMS[a.systemId]?.name)+'</small><h3>'+esc(a.title)+'</h3><b class="story-duration">'+a.minutes/60+' ч · билет '+money(a.minutes/60*ECONOMY.guestHour)+'</b><details><summary>О чём история</summary><p>'+esc(a.description)+'</p></details>'+(a.owned?badge('В библиотеке'):button('Купить · '+money(a.price),'buy-adventure','data-id="'+esc(a.id)+'" '+(club.finance.cash<a.price?'disabled':'')))+'</div></article>').join('')||empty('Нет подходящих историй. Приключения доступны для купленных игр.');
+ if(ui.libraryTab==='games')return data.games.filter(g=>match(g.name)).map((g,i)=>{const copies=data.ownedGames.filter(k=>k.systemId===g.systemId).length;return '<article class="book-row"><div class="story-cover book-'+i%4+'">'+icon('library')+'<span>'+esc(g.name.slice(0,3))+'</span></div><div><h3>'+esc(g.name)+'</h3><small>'+copies+' экземпляров</small><details><summary>Об игре</summary><p>'+esc(g.description)+'</p></details>'+button((copies?'Ещё экземпляр':'Купить')+' · '+money(g.price),'buy-game','data-id="'+g.systemId+'" '+(club.finance.cash<g.price||data.libraryStorage.free<=0?'disabled':''))+'</div></article>';}).join('');
+ return data.ownedGames.filter(k=>match(k.name)).map(k=>'<div class="owned-kit"><b>'+esc(k.name)+'</b>'+metric('Состояние',Math.round(k.state.condition)+'%')+button('Обслужить · '+money(k.state.repairQuote.cost),'repair-kit','data-id="'+esc(k.id)+'" '+(!k.state.repairQuote.available?'disabled':''))+button('Продать · '+money(k.state.saleValue),'sell-kit','data-id="'+esc(k.id)+'" '+(k.state.running?'disabled':''),'quiet')+'</div>').join('');
+}
 function libraryHTML(){
  const data=campaignMarket(club);
- return metric('Хранение игр',data.libraryStorage.used+' / '+data.libraryStorage.capacity)+intro('Один экземпляр обслуживает один стол. Здесь '+data.games.length+' систем; приключения показываются отдельно.')+
- demandHTML()+section('Комплекты игр',data.games.map((g,i)=>{const copies=data.ownedGames.filter(k=>k.systemId===g.systemId).length;return '<article class="book-row"><div class="book-spine book-'+i%4+'"><span>'+esc(g.name)+'</span></div><div><h2>'+esc(g.name)+'</h2><small>'+copies+' в библиотеке</small><p>'+esc(g.description)+'</p><p class="small-copy">'+esc(SYSTEMS[g.systemId]?.dice??SYSTEMS[g.systemId]?.learning??'')+'</p>'+button((copies?'Ещё экземпляр':'Купить')+' · '+money(g.price),'buy-game','data-id="'+g.systemId+'" '+(club.finance.cash<g.price||data.libraryStorage.free<=0?'disabled':''))+'</div></article>';}).join(''))+
- section('Купленные экземпляры',data.ownedGames.map(k=>'<div class="owned-kit"><b>'+esc(k.name)+'</b>'+metric('Состояние',Math.round(k.state.condition)+'%')+button('Обслужить · '+money(k.state.repairQuote.cost),'repair-kit','data-id="'+esc(k.id)+'" '+(!k.state.repairQuote.available?'disabled':''))+button('Продать · '+money(k.state.saleValue),'sell-kit','data-id="'+esc(k.id)+'" '+(k.state.running?'disabled':''),'quiet')+'</div>').join(''))+
- section('Приключения',data.adventures.map(a=>'<article class="story-row"><small>'+esc(SYSTEMS[a.systemId]?.name)+'</small><h3>'+esc(a.title)+'</h3><p>'+esc(a.description)+'</p><small>'+a.durationRange.join('–')+' ч</small>'+(a.owned?badge('В библиотеке'):button('Купить · '+money(a.price),'buy-adventure','data-id="'+esc(a.id)+'" '+(club.finance.cash<a.price?'disabled':'')))+'</article>').join(''));
+ return '<div class="library-header"><div class="segmented">'+[['adventures','Приключения'],['games','Игры'],['copies','Комплекты']].map(([id,name])=>button(name,'library-tab','data-id="'+id+'"',ui.libraryTab===id?'active':'')).join('')+'</div><input id="library-search" type="search" placeholder="Поиск по названию…" aria-label="Поиск в библиотеке" value="'+esc(ui.librarySearch)+'"></div>'+
+ (ui.libraryTab==='adventures'?intro('Каждая история задаёт свою длительность. Покупка разовая; проводить её можно снова.'):metric('Хранение игр',data.libraryStorage.used+' / '+data.libraryStorage.capacity))+
+ '<div id="library-cards">'+libraryCards()+'</div><details class="demand-details"><summary>Спрос и опыт клуба</summary>'+demandHTML()+'</details>';
 }
 function serviceHTML(){
  const data=campaignMarket(club),batches=club.inventory?.batches??[],tasks=club.operations?.tasks?.filter(t=>['active','queued'].includes(t.state))??[],orders=(club.inventory?.orders??[]).filter(o=>o.state==='ordered');
@@ -263,7 +279,7 @@ function download(){
 async function handle(action,d){
  if(action==='nav'){nav(d.tab);return;}if(action==='guest'){ui.guest=d.id;ui.seatArmed=true;nav('guests');return;}if(action==='room'){ui.room=d.id;nav('rooms');return;}
  if(action==='fit'){world.fit();return;}if(action==='zoom-in'){world.zoom(1.2);return;}if(action==='zoom-out'){world.zoom(1/1.2);return;}if(action==='walls'){ui.walls=ui.walls==='cut'?'hidden':ui.walls==='hidden'?'full':'cut';render();return;}
- if(action==='category'){ui.category=d.category;render(true);return;}if(action==='team-tab'){ui.candidates=d.candidates==='true';render(true);return;}
+ if(action==='library-tab'){ui.libraryTab=d.id;ui.librarySearch='';render(true);return;}if(action==='stories-for-system'){ui.libraryTab='adventures';ui.librarySearch=SYSTEMS[d.system]?.name??'';ui.tab='library';render(true);return;}if(action==='category'){ui.category=d.category;ui.catalogSearch='';render(true);return;}if(action==='team-tab'){ui.candidates=d.candidates==='true';render(true);return;}
  if(action==='tool'){clearSelection();ui.tool=d.tool;render();return;}if(action==='build-item'){clearSelection();ui.kind=d.kind;ui.tool='item';ui.rotation=0;render();return;}
  if(action==='cancel-build'){clearSelection();ui.tool='select';render();return;}
  if(action==='rotate'){ui.rotation=(ui.rotation+1)%4;if(ui.preview&&(ui.preview.type==='place'||ui.preview.type==='move')){if(ui.preview.object)ui.preview.object.rotation=ui.rotation;else ui.preview.rotation=ui.rotation;const o=ui.preview.object??{...club.layout.objects.find(o=>o.id===ui.object),...ui.preview};world.drawPreview(objectCells(o),o,buildService.quote(ui.preview).ok);}else if(ui.hover){if(ui.hover.object)ui.hover.object.rotation=ui.rotation;else ui.hover.rotation=ui.rotation;const o=ui.hover.object??{...club.layout.objects.find(o=>o.id===ui.object),...ui.hover};world.drawPreview(objectCells(o),o,buildService.quote(ui.hover).ok);}renderPreview();return;}
@@ -298,13 +314,24 @@ async function handle(action,d){
 root.addEventListener('click',e=>{const n=e.target.closest('[data-action]');if(n){e.preventDefault();handle(n.dataset.action,n.dataset).catch(error=>note(error.message,true));}});
 root.addEventListener('submit',e=>{
  e.preventDefault();const data=new FormData(e.target);
- if(e.target.id==='room-form')command({type:'assignRoom',roomId:ui.room,gameId:data.get('game'),masterId:data.get('master'),adventureId:data.get('adventure'),hours:Number(data.get('hours'))});
+ if(e.target.id==='room-form')command({type:'assignRoom',roomId:ui.room,gameId:data.get('game'),masterId:data.get('master'),adventureId:data.get('adventure')});
  if(e.target.classList.contains('service-policy'))command({type:'configureAutoPurchase',itemId:e.target.dataset.id,settings:{target:Number(data.get('target')),budget:Number(data.get('budget')),threshold:0,maxOrder:Math.min(10,Number(data.get('target')))}});
  if(e.target.classList.contains('training-form'))command({type:'trainMaster',masterId:e.target.dataset.id,systemId:data.get('course')});
 });
+root.addEventListener('input',e=>{
+ if(e.target.id==='catalog-search'){ui.catalogSearch=e.target.value;root.querySelector('#catalog-grid').innerHTML=catalogCards();}
+ if(e.target.id==='library-search'){ui.librarySearch=e.target.value;root.querySelector('#library-cards').innerHTML=libraryCards();}
+});
 root.addEventListener('change',async e=>{
  if(e.target.id==='room-purpose'){ui.purpose=e.target.value;cancelBuild();return;}if(e.target.id==='room-furnished'){ui.furnished=e.target.checked;cancelBuild();return;}
- if(e.target.name==='game'&&e.target.closest('#room-form')){const id=club.library.copies.find(k=>k.id===e.target.value)?.systemId;e.target.form.elements.adventure.innerHTML=options(SESSIONS.filter(s=>s.systemId===id&&club.library.adventures.includes(s.id)).map(s=>[s.id,s.title]),'');}
+ if(e.target.closest('#room-form')){
+  const r=club.rooms.find(r=>r.id===ui.room),data=new FormData(e.target.form),gameId=data.get('game'),system=club.library.copies.find(k=>k.id===gameId)?.systemId;
+  const free=(field,id)=>!club.rooms.some(other=>other.id!==r.id&&other.enabled!==false&&other[field]===id);
+  const adventureId=e.target.name==='game'?SESSIONS.find(a=>a.systemId===system&&club.library.adventures.includes(a.id))?.id:data.get('adventure');
+  let masterId=data.get('master');if(!club.staff.find(m=>m.id===masterId)?.known.includes(system))masterId=club.staff.find(m=>m.known.includes(system)&&!m.training&&free('masterId',m.id))?.id??'';
+  await command({type:'assignRoom',roomId:r.id,gameId,masterId,adventureId});return;
+ }
+ if(e.target.id==='catalog-category'){ui.category=e.target.value;ui.catalogSearch='';render(true);return;}
  if(e.target.id==='import-save'){
   if(busy||readOnly)return;busy=true;root.classList.add('busy');root.setAttribute('aria-busy','true');
   try{const next=await readSaveFile(e.target.files[0]);ui.pending={title:'Заменить клуб из файла?',text:'В загружаемой кампании '+next.rating.count+' отзывов, в кассе '+money(next.finance.cash)+'. Текущий клуб сохранится в местном архиве.',run:()=>perform(draft=>{Object.keys(draft).forEach(k=>delete draft[k]);Object.assign(draft,next);return {ok:true};},{archive:true,message:'Кампания восстановлена из файла.'})};}catch(error){note(error.message,true);}finally{busy=false;render(true);}

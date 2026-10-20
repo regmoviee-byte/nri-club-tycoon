@@ -1,10 +1,10 @@
 {
   "baseRepository": "https://github.com/regmoviee-byte/nri-club-tycoon",
-  "baseCommit": "912f32b2926b0f3ea7d0b42ec16b5ca13bac1d31",
+  "baseCommit": "e3934203840359d4a7c2f3e95d479be07d10f67b",
   "date": "2026-10-20",
-  "scope": "Runtime, tests and documentation at final verification. Evidence files excluded to avoid self-reference.",
-  "modelChecks": 50,
-  "browserCheckBlocks": 19,
+  "scope": "Source after adventure duration, economy, seating and UI update. Evidence files excluded to avoid self-reference.",
+  "modelChecks": 60,
+  "browserCheckBlocks": 22,
   "files": [
     {
       "path": ".gitignore",
@@ -22,6 +22,11 @@
       "bytes": 331
     },
     {
+      "path": "docs/ADVENTURE-ECONOMY-UPDATE.md",
+      "sha256": "32d978f1f3da46743e1ed6a4a0c824e3f174af816e436b35e6406e7015906082",
+      "bytes": 5639
+    },
+    {
       "path": "docs/CLUB_CYCLE.md",
       "sha256": "171c117fb23154bfb97cd7e7b30aed48c1e2fd48198f95dff0bfea1f53c925fb",
       "bytes": 9020
@@ -33,8 +38,8 @@
     },
     {
       "path": "docs/REWORK.md",
-      "sha256": "e689620efc71859b8c2eac2149475f83e242d5e8940d02cca01a54058dda4b93",
-      "bytes": 12062
+      "sha256": "2df827af00f52ce09ae80826d832fdba136527d861f55a3e90863418d3badb9f",
+      "bytes": 12501
     },
     {
       "path": "docs/ROADMAP.md",
@@ -43,8 +48,8 @@
     },
     {
       "path": "index.html",
-      "sha256": "6ea37c6a56ef791c7f42c662411785b0dc37811e539919cff3f0a3b20863f8e4",
-      "bytes": 569
+      "sha256": "ba8d1f72378b4cd0d5db34fdf23db36a55c66d72258255d902cd8f44f8682c36",
+      "bytes": 5620
     },
     {
       "path": "package.json",
@@ -58,8 +63,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "924e87d184f58ec7413d931d3b92ae8ead509b69c9e9d25186096037ced44f10",
-      "bytes": 5535
+      "sha256": "4e9313d23c7abce2b8b019840aabfc599685ae780645f71138adaacac59647d1",
+      "bytes": 5903
     },
     {
       "path": "RECOVERY.md",
@@ -93,7 +98,7 @@
     },
     {
       "path": "src/data/commerce.js",
-      "sha256": "6be932abd0ea07c8a99a4c14ceefb1d4e6ecd051396d3a249073f46eaff867dc",
+      "sha256": "2cd889ee49eec7cc18119cc0c7873893388d607201da32be373f76c5e41ca0ae",
       "bytes": 5657
     },
     {
@@ -153,13 +158,13 @@
     },
     {
       "path": "src/model/campaign-view.js",
-      "sha256": "15ca40fab4c2d808b1c9578901d9f960c4d9b838862a070f86eb7920058cd2ce",
-      "bytes": 8799
+      "sha256": "55a03f8b3e27f323624fba52144c843d2551a59faf38ce175691a65ab8aa6836",
+      "bytes": 8813
     },
     {
       "path": "src/model/campaign.js",
-      "sha256": "e248fbd72eb3159050a201f08671bc49cd9f2858aa009a99de0d46262f1dbfca",
-      "bytes": 43255
+      "sha256": "778b7aa4a1a9a36a3268c03345755ca365ccba36cbb8586e1304c2aadfb2f08c",
+      "bytes": 42986
     },
     {
       "path": "src/model/club.js",
@@ -188,8 +193,8 @@
     },
     {
       "path": "src/model/finances.js",
-      "sha256": "fd13bc8cf4d293992e8b58735e329d54fe99fdf6ccb5efee5a4578aabe2fc37f",
-      "bytes": 11391
+      "sha256": "1d4020ded344848252eb013141f6bb9ea41721136b9f7b0e16400a9ae0a46e4a",
+      "bytes": 12965
     },
     {
       "path": "src/model/generator.js",
@@ -238,8 +243,8 @@
     },
     {
       "path": "src/model/preferences.js",
-      "sha256": "ad650ad28a4bc3c76201e2b45d220e58b2d2522c6724cf0d737cff501f89eef2",
-      "bytes": 20942
+      "sha256": "f6ff56817b42b966dc95ad81d96602d7b2563d71507ab05b154c5cae8648dd2d",
+      "bytes": 20969
     },
     {
       "path": "src/model/puppet.js",
@@ -388,8 +393,8 @@
     },
     {
       "path": "src/ui/people.js",
-      "sha256": "fd4deeb0b10f4bc5b2850d970e5d09e2756cb39a25cbde3741ac0e8b0fcb9bfb",
-      "bytes": 11856
+      "sha256": "92ccf1dd1b54990c6f876d85f084d93332e3e48c6762bc44e5637655a23d4112",
+      "bytes": 12575
     },
     {
       "path": "src/ui/portrait.js",
@@ -433,18 +438,18 @@
     },
     {
       "path": "src/ui/studio.css",
-      "sha256": "e71354f7a2ca25f2609a998f8c494d8cfb2e4d328ef57e9742c27112a9970318",
-      "bytes": 27301
+      "sha256": "922846aed86714aec530b56bd3010bda5470814f2699266846ee007c465572a7",
+      "bytes": 33677
     },
     {
       "path": "src/ui/studio.js",
-      "sha256": "e3c999535e0d2cfd03cbf4309740cfd443155147e4ce20b4a2ed5f07b42c0d84",
-      "bytes": 62409
+      "sha256": "77cd25be959bf18c78ca5ca77d8e71073b589e239fa26acad6aa62087f764967",
+      "bytes": 66992
     },
     {
       "path": "src/ui/world.js",
-      "sha256": "3f7a266f4604bb1493472485377a39e005027db0a13b9c49f2865ad4081154f9",
-      "bytes": 26683
+      "sha256": "7981bb91a6fd03c1eb8da5b659205c74e26247c136cbd043b08a38f89602dcbb",
+      "bytes": 28302
     },
     {
       "path": "Start-Club.cmd",
@@ -462,24 +467,34 @@
       "bytes": 39104
     },
     {
+      "path": "tests/economy-ux.test.mjs",
+      "sha256": "34fcf250fa2a7e56da11e940670df3603e5dcf92dfcf03d35a75698e0d824b50",
+      "bytes": 4890
+    },
+    {
       "path": "tests/rework.test.mjs",
       "sha256": "0823b738a156d249ade16301377fa8ebef67ccfddc39b8872970aed63ba2cd69",
       "bytes": 11134
     },
     {
       "path": "tools/model-review.mjs",
-      "sha256": "dc0651333cf2a2f21f441d6a06e53ded0b9b93f0ab8eca1798c5e38d8f4373d2",
-      "bytes": 1239
+      "sha256": "1326473962ff7c45b3b9708f8fbfac9b6c2bf6d6e2e55a599a3aeb010a519862",
+      "bytes": 1329
+    },
+    {
+      "path": "tools/prepare-entry.mjs",
+      "sha256": "d18002de1c231a35d0655b3cb2b5b594c611883145b79d867217b504b4b843b3",
+      "bytes": 1076
     },
     {
       "path": "tools/review-live.mjs",
-      "sha256": "6cc57372fc7131f8eb90861e8ce3f6a4fa27ca4c78d6d13fa1948430b7aa8b39",
-      "bytes": 4245
+      "sha256": "163811f6b60d51ce0c759d35cce0b53df1dc7123bb513f6a1003ac39bd7a48b7",
+      "bytes": 5259
     },
     {
       "path": "tools/review.mjs",
-      "sha256": "6085e8a83369358459168774ca4f5842aab08313ea27c0d80d8a0f5405d480f3",
-      "bytes": 28706
+      "sha256": "e79814fcd756e277844d5a70ef7c76d04b671cd223a2147cee315ad2679723b2",
+      "bytes": 32066
     },
     {
       "path": "tools/serve.mjs",

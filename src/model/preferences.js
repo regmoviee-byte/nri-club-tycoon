@@ -73,10 +73,11 @@ export function sessionProgram(session){
  const genres=session.genres,scenes={combat:genres.includes('tactics')?1:.12,exploration:genres.includes('journey')?.95:.25,mystery:genres.includes('mystery')?1:.15,conversation:genres.includes('drama')||genres.includes('heist')?.95:.3,character:genres.includes('drama')?.9:.35};
  return{scenes,tone:genres.includes('horror')?'serious':session.systemId==='mausritter'?'mixed':'mixed',stakes:['cthulhu7','mausritter','cyberpunk'].includes(session.systemId)?'lethal':session.systemId==='fate'||session.systemId==='loop'?'safe':'risk',format:'one-shot',regularity:'irregular',...session.program};
 }
-export function sessionDurationRange(session){
- const range=session?.durationRange;
- return Array.isArray(range)&&range.length===2&&range.every(n=>Number.isInteger(n)&&n>=2&&n<=6)&&range[0]<=range[1]?[...range]:[2,6];
+export function sessionHours(session){
+ const hours=Number(session?.minutes)/60;
+ return Number.isInteger(hours)&&hours>=2&&hours<=6?hours:2;
 }
+export function sessionDurationRange(session){const hours=sessionHours(session);return [hours,hours];}
 export function masterPreferences(master){
  const base=master.baseId??master.id,policies={asya:'announced',mark:'raw',mira:'homebrew',lev:'raw',vera:'announced',denis:'homebrew',nika:'announced'};
  return{...master,rulesPolicy:master.rulesPolicy??policies[base]??'raw',announcesChanges:master.announcesChanges??true,disputePolicy:master.disputePolicy??(['mark','mira'].includes(base)?'check':'after'),wantsTeaching:master.wantsTeaching??master.coaching,teachingSkill:master.teachingSkill??({asya:.75,mark:.85,mira:.55,lev:.6,vera:.45,denis:.35,nika:.95}[base]??.6),teachingCapacity:master.teachingCapacity??(master.coaching?base==='nika'?3:2:0),facilitation:master.facilitation??(master.invites?.9:.35),protectsChoices:master.protectsChoices??master.adviceBoundary,breaks:master.breaks??['asya','mira','nika'].includes(base),preparedSheets:master.preparedSheets??master.coaching};
