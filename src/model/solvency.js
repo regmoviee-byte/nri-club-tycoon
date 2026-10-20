@@ -8,6 +8,8 @@ import {kitSalvage,kitStatus,ensureKits} from './kit-lifecycle.js';
 import {resolveIncidents} from './operations.js';
 import {recordMoney} from './finances.js';
 import {hash} from './generator.js';
+import {receptionStatus} from './reception-area.js';
+import {clubPrestige,prestigeNeeded} from './upgrades.js';
 
 const clone=value=>structuredClone(value),round=n=>Math.round(n*100)/100;
 const price=item=>item.price??BUILD_CATALOG[item.kind].price,salvage=item=>Math.floor(price(item)*.6);
@@ -50,6 +52,7 @@ function minimumFurniture(club,template){
  const staffRooms=new Set(club.layout.rooms.filter(r=>roomPurpose(r)==='staff').map(r=>r.id));
  const pendingStorage=new Set((club.inventory?.orders??[]).filter(o=>o.state==='ordered').map(o=>o.location));
  let preserved=club.layout.objects.filter(o=>staffRooms.has(o.roomId)||pendingStorage.has(o.id));
+ const reception=club.layout.objects.find(o=>o.kind==='reception');if(reception&&!preserved.some(o=>o.id===reception.id))preserved.push(reception);
  const staffTarget=Math.min(staffRoomStatus(club).physicalCapacity,Math.max(1,club.staff.length));
  for(const seat of preserved.filter(o=>BUILD_CATALOG[o.kind].family==='staffSeat').toSorted((a,b)=>salvage(b)-salvage(a))){
   const trial={...club,layout:{...club.layout,objects:club.layout.objects.filter(o=>o.id!==seat.id&&!club.layout.objects.some(p=>staffRooms.has(p.roomId)&&p.id===o.id&&!preserved.some(k=>k.id===p.id)))}};
@@ -73,6 +76,12 @@ function minimumFurniture(club,template){
   }else{
    const object={...clone(target),id:`restored-${template.room.id}-${objects.length}`,kind:basic,price:BUILD_CATALOG[basic].price,enabled:true,stock:0,autoRefill:false};objects.push(object);cost+=object.price;entries.push({name:BUILD_CATALOG[basic].name,action:'buy',cost:object.price,refund:0});
   }
+ }
+ if(!objects.some(o=>o.kind==='reception')){
+  const owned=new Set(club.layout.plots.flatMap(p=>Array.from({length:p.w*p.h},(_,i)=>`${p.x+i%p.w},${p.y+Math.floor(i/p.w)}`))),zoned=new Set([template.room,...club.layout.rooms.filter(r=>roomPurpose(r)==='staff')].flatMap(r=>r.cells.map(c=>`${c.x},${c.y}`))),occupied=new Set(objects.filter(o=>!BUILD_CATALOG[o.kind].passable).flatMap(objectCells).map(c=>`${c.x},${c.y}`));
+  const candidates=[...owned].map(key=>key.split(',').map(Number)).sort((a,b)=>(Math.abs(a[0]-club.layout.entry.x)+Math.abs(a[1]-club.layout.entry.y))-(Math.abs(b[0]-club.layout.entry.x)+Math.abs(b[1]-club.layout.entry.y)));
+  let desk=null;for(const [x,y]of candidates){for(const rotation of [0,1]){const o={id:'restored-reception',kind:'reception',x,y,rotation,price:1200,enabled:true},cells=objectCells(o);if(cells.every(c=>owned.has(`${c.x},${c.y}`)&&!zoned.has(`${c.x},${c.y}`)&&!occupied.has(`${c.x},${c.y}`)&&!(c.x===club.layout.entry.x&&c.y===club.layout.entry.y))){desk=o;break;}}if(desk)break;}
+  if(desk){objects.push(desk);cost+=1200;entries.push({name:'Стойка ресепшна',action:'buy',cost:1200,refund:0});}
  }
  return {objects,kept,cost,entries};
 }
@@ -100,9 +109,10 @@ export function findRecoveryPlan(club){
   const boundaryDoors=edges.filter(edge=>{const [a,b]=edge.axis==='h'?[[edge.x,edge.y-1],[edge.x,edge.y]]:[[edge.x-1,edge.y],[edge.x,edge.y]];return owned.has(`${a[0]},${a[1]}`)&&owned.has(`${b[0]},${b[1]}`);});
   for(const door of boundaryDoors){
    const structure=wallPlan(club,edges,edgeKey(door)),layout={...clone(club.layout),revision:club.layout.revision+1,floors:clone(keptFloors),walls:structure.walls,rooms:[clone(template.room),...clone(staffZones)],objects:assets.objects};
-   if(!validateLayout(layout).ok||!roomReadiness(layout,template.room.id).ok)continue;
+   if(!validateLayout(layout).ok||!roomReadiness(layout,template.room.id).ok||!receptionStatus({...club,layout}).ready)continue;
    const physicalStaff=staffRoomStatus({...club,layout}),storageCapacity=shelfCapacity(layout);
    for(const r of choices){
+    if(r.newMaster&&clubPrestige({...club,layout}).value<prestigeNeeded(r.master))continue;
     if(physicalStaff.capacity<club.staff.length+Number(r.newMaster)||r.newMaster&&physicalStaff.physicalCapacity<=club.staff.length)continue;
     // A migrated shelf deficit may remain, but a new copy cannot create one.
     if(storageCapacity<Math.min(1,shelfCapacity(club.layout))||storageCapacity<1&&(r.newKit||!club.library.copies.length))continue;

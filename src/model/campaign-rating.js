@@ -1,7 +1,8 @@
 import {makeLegacyPreferences,sessionProgram,masterPreferences,guestVoice} from './preferences.js';
 import {disclosedWeights} from './rating.js';
 import {gameProduct,PRODUCTS} from '../data/commerce.js';
-export const CAMPAIGN_RATING_VERSION=6;
+import {roomUpgradeBenefit} from './upgrades.js';
+export const CAMPAIGN_RATING_VERSION=7;
 const keys=['game','master','company','duration'];
 const clamp=n=>Math.max(0,Math.min(1,n));
 const fact=(fit,text,question,code)=>({fit:clamp(fit),text,question,code});
@@ -189,5 +190,13 @@ export function rateCampaignGuest(run,guest){
  if(version===4)return rateCampaignGuestV4(run,guest);
  if(version===5)return rateCampaignGuestV5(run,guest);
  if(version===6)return{...rateCampaignGuestV5(run,guest),ratingVersion:6};
+ if(version===7){
+  const review=rateCampaignGuestV5(run,guest),benefit=roomUpgradeBenefit(run,guest);
+  const genre=review.evidence.game.find(f=>f.code==='genre')?.fit??0;
+  if(review.violations.length||genre<.55||!benefit.effects.length)return {...review,ratingVersion:7};
+  const shortfall=Math.sqrt(keys.reduce((n,k)=>n+review.weights[k]*(1-review.components[k])**2,0)/10);
+  const score=Math.max(1,Math.min(10,Math.round(10-9*shortfall-review.comfort.penalty+benefit.bonus)));
+  return {...review,score,ratingVersion:7,equipmentBenefit:true,upgradeBenefit:benefit,comfort:{...review.comfort,helped:[...review.comfort.helped,...benefit.effects.map(e=>e.text)]}};
+ }
  throw new Error('Неизвестная версия оценки кампании.');
 }

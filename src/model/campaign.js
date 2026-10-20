@@ -1,3 +1,5 @@
+import {clubPrestige,prestigeNeeded} from './upgrades.js';
+import {receptionStatus} from './reception-area.js';
 import {createClub as createPrototype,decodeClub as decodePrototype,rateGuest as rateLegacyGuest,freeze,clockText,clubRating,lockedGuest} from './lifecycle.js';
 import {actorById,roomById,roomOccupants,answerText} from './club.js';
 import {hash,generateVisitor} from './generator.js';
@@ -88,7 +90,8 @@ export function replenish(club,{removeExpired=false,opening=false}={}){
  if(removeExpired)club.guests=club.guests.filter(g=>lockedGuest(club,g)||g.schedule.leaveAt>club.clock);
  const target=targetGuestCount(club);
  club.receptionAway=club.receptionAway.filter(g=>g.schedule.leaveAt>club.clock);
- while(club.guests.length<target)club.guests.push(club.receptionAway.shift()??makeGuest(club,{opening}));
+ const receptionReady=receptionStatus(club).ready;
+ while(receptionReady&&club.guests.length<target)club.guests.push(club.receptionAway.shift()??makeGuest(club,{opening}));
  // Capacity changes never silently discard a waiting person or their conversation.
  if(!actorById(club,club.selectedId))club.selectedId=waitingGuests(club)[0]?.id??club.guests[0]?.id??null;
  syncGuestWaiting(club);return club.guests;
@@ -121,6 +124,7 @@ export function hireMaster(club,index){
  const id=typeof index==='string'&&!/^\d+$/.test(index)?index:`hire-${index}`;
  if(club.staff.some(m=>m.id===id))return fail('Этот мастер уже работает в клубе.');
  const candidate=availableMasterCandidates(club).find(m=>m.id===id);if(!candidate)return fail('Кандидат не найден.');
+ if(clubPrestige(club).value<prestigeNeeded(candidate))return fail(`Для этого мастера нужен престиж ${prestigeNeeded(candidate)}. Оснастите клуб и проводите хорошие игры.`);
  if(!canHireStaff(club))return fail('Для нового мастера нужно свободное доступное место в комнате отдыха.');
  if(money(club)<candidate.fee)return fail(money(club)<0?'Сначала погасите долг.':'На наём не хватает денег.');
  const rehired=(club.personnelArchive??[]).some(m=>m.id===id);
@@ -203,7 +207,7 @@ function advanceCampaignTo(club,target){
   settleSessions(time){
    const gone=new Set();
    for(const room of runningRooms(club).filter(r=>Math.abs(r.run.endsAt-time)<1e-8)){
-    const run={...room.run,observed:club.activity[room.run.id]??{}},reviews=run.guests.map(g=>[3,4,5,6].includes(run.ratingVersion)?rateCampaignGuest(run,g):rateLegacyGuest(run,g));
+    const run={...room.run,observed:club.activity[room.run.id]??{}},reviews=run.guests.map(g=>[3,4,5,6,7].includes(run.ratingVersion)?rateCampaignGuest(run,g):rateLegacyGuest(run,g));
     const settlement=settleRun(club,run,reviews);if(!settlement)throw new Error('Эта игра уже рассчитана.');
     recordGuestOutcome(club,run,settlement.reviews);prepareAfterRun(club,run,room);
     for(const review of settlement.reviews)if(!club.reviewIds.includes(review.reviewId)){club.reviewIds.push(review.reviewId);club.rating.sum+=review.score;club.rating.count++;}
@@ -251,7 +255,7 @@ export function decodeClub(raw){
  if(!Number.isInteger(club.step)||club.step<0||!Number.isInteger(club.arrivals)||club.arrivals<0||new Set(club.rooms.map(r=>r.id)).size!==club.rooms.length||club.rooms.some(r=>r.capacity!==4||!Number.isInteger(r.turn)||r.turn<0||!Number.isInteger(r.hours)||r.hours<2||r.hours>6))throw new Error('Повреждены события клуба.');
  const ids=new Set(),seats=new Set();
  for(const g of club.guests){if(ids.has(g.id)||!g.identity?.portrait||!g.profile||!Array.isArray(g.dialogue)||!Array.isArray(g.asked)||!Number.isFinite(g.schedule?.leaveAt)||!g.preferences)throw new Error('Повреждён гость.');ids.add(g.id);if(g.roomId){const room=roomById(club,g.roomId),key=g.roomId+':'+g.seat;if(!room||!Number.isInteger(g.seat)||g.seat<0||g.seat>3||seats.has(key))throw new Error('Повреждена рассадка.');seats.add(key);}g.dialogueVersion??=1;g.dialogue.forEach(a=>{if(!QUESTIONS.some(q=>q.id===a.questionId))throw new Error('Повреждён разговор.');a.reply??=answerText(g,a.questionId,a.variant);});if(g.lastAnswer)g.lastAnswer=g.dialogue.find(a=>a.questionId===g.lastAnswer.questionId&&a.variant===g.lastAnswer.variant)??null;}
- for(const r of club.rooms)if(r.status==='running'){const run=r.run;if(!run||![1,2,3,4,5,6].includes(run.ratingVersion??1)||run.endsAt<=club.clock||run.guests.length!==4||new Set(run.guests.map(g=>g.id)).size!==4||run.endsAt!==run.startedAt+run.room.session.minutes/60||run.guests.some(g=>!roomOccupants(club,r.id).some(p=>p.id===g.id))||!Number.isFinite(run.contract?.guestPrice)||run.contract.guestPrice<0||run.contract.wageTotal<0||!Number.isFinite(run.contract?.wageTotal)||run.ratingVersion>=3&&run.guests.some(g=>!Number.isFinite(run.contract.tipRolls?.[g.id])||run.contract.tipRolls[g.id]<0||run.contract.tipRolls[g.id]>=1))throw new Error('Повреждена начатая игра.');freeze(run);}
+ for(const r of club.rooms)if(r.status==='running'){const run=r.run;if(!run||![1,2,3,4,5,6,7].includes(run.ratingVersion??1)||run.endsAt<=club.clock||run.guests.length!==4||new Set(run.guests.map(g=>g.id)).size!==4||run.endsAt!==run.startedAt+run.room.session.minutes/60||run.guests.some(g=>!roomOccupants(club,r.id).some(p=>p.id===g.id))||!Number.isFinite(run.contract?.guestPrice)||run.contract.guestPrice<0||run.contract.wageTotal<0||!Number.isFinite(run.contract?.wageTotal)||run.ratingVersion>=3&&run.guests.some(g=>!Number.isFinite(run.contract.tipRolls?.[g.id])||run.contract.tipRolls[g.id]<0||run.contract.tipRolls[g.id]>=1))throw new Error('Повреждена начатая игра.');freeze(run);}
  validateGuestWaiting(club);adoptGuestWaiting(club);ensureGuestRegistry(club);validateGuestRegistry(club);
  club.construction??={version:1,transactions:[]};club.campaignActions??=[];
  club.drag=null;club.phase='placing';syncRooms(club);replenish(club,{removeExpired:false});freeze(club.lastReport);return club;

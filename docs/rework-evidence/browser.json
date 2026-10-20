@@ -1,0 +1,40 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    "Desktop boot, silence, no dialogs",
+    "Physical administrator is visible behind the reception and shares the desk inspector",
+    "All ten integrated panels, no page/map overflow",
+    "Pan, cursor-anchored zoom, Home, resizable panel and visible queue",
+    "Guest walks from reception through the floor route",
+    "Reception, conversations, seating, session, itemized payment and no 15-minute setup",
+    "Real plant purchase changes prestige; arbitrary three-cell land purchase debits exactly 375",
+    "Russian-layout R rotates the purchased object; undo restores geometry and money",
+    "Table mat snaps to full table and supports additional dice on top",
+    "Export, import cancellation, confirmed restoration, broken-file rejection, new-game cancellation",
+    "Reload preserves complete club, people, financial history and construction",
+    "Responsive 390 and 320 widths",
+    "Technical budget fixture: hand-built second room, connected door, bought game copy, hired master and 1.5 guests per seat",
+    "Two independent 2-hour and 3-hour sessions preserve the later table and settle each exactly once",
+    "Technical fixture: physical service equipment, paid orders, timed delivery, stock batches, common-zone cleaning controls and service staff",
+    "Real mobile touch pinch changes map zoom without a page scrollbar",
+    "Confirmed new game archives the old campaign and opens one room with reception",
+    "Malformed saved record remains downloadable; new game archives original bytes atomically",
+    "Character gallery: twelve identities in portraits and three poses; administrator follows all four desk rotations"
+  ],
+  "errors": [],
+  "screenshots": [
+    "desktop.png",
+    "construction.png",
+    "running-session.png",
+    "session-results.png",
+    "built-club.png",
+    "mobile-390.png",
+    "mobile-320.png",
+    "technical-expanded-club.png",
+    "technical-service-stock.png",
+    "new-club-desktop.png",
+    "characters.png"
+  ],
+  "audio": "-noaudio; Chromium --mute-audio; ReviewAudioSilence before app scripts"
+}

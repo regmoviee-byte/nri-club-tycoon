@@ -41,6 +41,7 @@ export function starterLayout({plots=1}={}){
  for(let i=1;i<plots;i++)layout.plots.push({id:`plot-${i+1}`,x:i*6,y:0,w:6,h:8});
  layout.objects.push({id:'starter-shelf',kind:'shelf',x:5,y:4,rotation:0,roomId:'room-1'});
  addStarterStaffRoom(layout);
+ layout.objects.push({id:'starter-reception',kind:'reception',x:1,y:6,rotation:0});
  for(const object of layout.objects)Object.assign(object,{price:BUILD_CATALOG[object.kind].price,enabled:true,stock:0,autoRefill:false});return layout;
 }
 // Applied only to a new campaign. Loading old geometry never calls this helper.

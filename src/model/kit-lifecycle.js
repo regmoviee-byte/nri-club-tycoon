@@ -1,7 +1,7 @@
 import {recordMoney} from './finances.js';
 
 // Working game balance, not measured maintenance prices of real clubs.
-export const KIT_BALANCE=Object.freeze({preparationHours:.25,wearPerHour:1,warningCondition:30,repairHours:.5,repairRate:.15,minimumRepair:60});
+export const KIT_BALANCE=Object.freeze({preparationHours:0,wearPerHour:1,warningCondition:30,repairHours:1,repairRate:.15,minimumRepair:60});
 const busy=(club,id)=>club.rooms.some(r=>r.status==='running'&&(r.run?.room?.kitId??r.kitId)===id);
 const byId=(club,id)=>club.library.copies.find(k=>k.id===id);
 export function ensureKits(club){
@@ -25,9 +25,7 @@ export function roomPreparation(club,roomId){
 export function prepareAfterRun(club,run,room){
  ensureKits(club);const kit=byId(club,run.room.kitId??room.kitId);if(!kit||kit.usedRunIds.includes(run.id))return false;
  kit.usedRunIds.push(run.id);kit.useCount++;kit.condition=Math.max(0,Math.round((kit.condition-(run.endsAt-run.startedAt)*KIT_BALANCE.wearPerHour)*100)/100);
- const startedAt=Math.max(run.endsAt,...club.rooms.map(r=>r.tablePreparation?.endsAt??run.endsAt));
- kit.preparingUntil=startedAt+KIT_BALANCE.preparationHours;
- room.tablePreparation={runId:run.id,kitId:kit.id,queuedAt:run.endsAt,startedAt,endsAt:kit.preparingUntil};return true;
+ kit.preparingUntil=null;room.tablePreparation=null;return true;
 }
 export function kitDeadlines(club){return [...club.library.copies.flatMap(k=>[k.preparingUntil,k.repair?.endsAt]),...club.rooms.map(r=>r.tablePreparation?.endsAt)].filter(t=>Number.isFinite(t)&&t>club.clock);}
 export function finishKitTasks(club){

@@ -11,7 +11,7 @@ const itemFor=(club,id)=>club.layout.objects.find(item=>item.id===id);
 const maintained=item=>['coffee','cold'].includes(productFor(item)?.service);
 const at=(club,id)=>club.operations.equipment[id];
 export const zoneForItem=(club,item)=>item?.roomId??club.layout.rooms.find(r=>r.cells.some(c=>(typeof c==='string'?c:`${c.x},${c.y}`)===`${item?.x},${item?.y}`))?.id??'common';
-const zoneCells=(club,id)=>id==='common'?Math.max(1,club.layout.plots.length*48-club.layout.rooms.reduce((n,r)=>n+r.cells.length,0)):club.layout.rooms.find(r=>r.id===id)?.cells.length??0;
+const zoneCells=(club,id)=>id==='common'?Math.max(1,club.layout.plots.reduce((n,p)=>n+p.w*p.h,0)-club.layout.rooms.reduce((n,r)=>n+r.cells.length,0)):club.layout.rooms.find(r=>r.id===id)?.cells.length??0;
 function commonCleaningFootprint(club){
  const zoned=new Set(club.layout.rooms.flatMap(room=>room.cells.map(cell=>typeof cell==='string'?cell:`${cell.x},${cell.y}`))),cells=[];
  for(const plot of club.layout.plots)for(let y=plot.y;y<plot.y+plot.h;y++)for(let x=plot.x;x<plot.x+plot.w;x++)if(!zoned.has(`${x},${y}`))cells.push(`${x},${y}`);
