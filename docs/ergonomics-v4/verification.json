@@ -1,5 +1,5 @@
 {
-  "version": "20261021-ergonomics-v4",
+  "version": "20261021-ergonomics-v4-final",
   "scope": "Player task ergonomics: proximity, visible dependencies, scrolling, return paths and local feedback",
   "status": "local-verified-public-check-pending",
   "viewports": [
@@ -86,5 +86,19 @@
     "Scripted real-browser journeys plus visual inspection; no novice-participant study or physical touchscreen test.",
     "The results apply to measured tasks and layouts, not a guarantee that every possible future interface state is convenient.",
     "Catalogue browsing, long histories and advanced options may scroll; primary task actions remain available."
-  ]
+  ],
+  "initialPublicVersion": {
+    "commit": "97627ef314edf761dd5f8eb236e14b0ae8d83db8",
+    "pagesRun": 39569816385,
+    "runtimeFiles": 104,
+    "realTasks": 6,
+    "layoutStates": 17,
+    "regressionGroups": 13,
+    "reports": [
+      "review/ergonomics-v4/public-tasks/report.json",
+      "review/ergonomics-v4/public-layout/report.json",
+      "review/ergonomics-v4/public-regression/report.json"
+    ]
+  },
+  "finalItemEffectCheck": "review/ergonomics-v4/item-final/report.json"
 }

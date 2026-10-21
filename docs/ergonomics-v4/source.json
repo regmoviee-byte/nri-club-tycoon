@@ -1,8 +1,8 @@
 {
-  "version": "20261021-ergonomics-v4",
-  "parent": "d4476885e593cc7322961e2f5bd90d9d8ef20b8a",
+  "version": "20261021-ergonomics-v4-final",
+  "parent": "97627ef314edf761dd5f8eb236e14b0ae8d83db8",
   "sha256": {
-    "index.html": "68a31cf5a5b5cdb5d14a9f4dc1c25a9dd7433bb9f46a08f80d526caef9be1a17",
+    "index.html": "97c56090cd505f9108d911fa7471202aca977b43b4e7750962e46eef680db2a5",
     "src/data/balance.js": "566ebaf92c4bfd6f63c987acd721d887586bff028ef291f62a3a3cdac0090e08",
     "src/data/build-catalog.js": "68c8046a3f6e30c791337a9f11195347c5701641f8df774422dba339782368d7",
     "src/data/catalog.js": "be3315dbfce2997ed7695d8033bcb8f86e09fa5256b378617ccf8ad8f83d18b3",
@@ -72,7 +72,7 @@
     "src/ui/character-head.js": "6300c543aaa4732cf92dcc6630c8b28f5a285496b90af690b46677d97ccccb29",
     "src/ui/context-menu.js": "1c2d1e62f35bc14f0cb8306aca7ee80f750fbd71a832444a796c2130c7a28271",
     "src/ui/door-art.js": "4fac57480b83e2984f2ddc934bf15153dc2ef378ddd8812653c905b8cd7bf0cc",
-    "src/ui/ergonomics.css": "309fb024e5f11c04c0d57af35c2949d4b005f644197c8e69f50e1dfa32f457e6",
+    "src/ui/ergonomics.css": "4f07073fb41cfa7ec8f4f86dd564abc7e9f29dd25e17ec386336058d19d862ab",
     "src/ui/furniture-art.js": "b5a66cc712bad05ae35241075fe9ed58e3d1c34fb719e97a343f10d25f0b914a",
     "src/ui/game.js": "9b9b790b83deba1d7f6a00211618476f242121403e1c4a7b4fb8a368292dbc92",
     "src/ui/graphic-portrait.js": "ddcc0acc4086a159540dd73ad1fcdbcc90f122409cf696d04d43d7e38144a08c",
@@ -101,8 +101,8 @@
     "src/ui/seat-frame.js": "033248910f0faf02785b9136863002d05d0fb1314a788b810b84abfbefc07fa7",
     "src/ui/seat-solids.js": "b034f0e360adfc1f9c7d29ee85a4ce07b1cc77c120c4c919d3bb72fcfa488142",
     "src/ui/seated-person.js": "78e4475df214edd72384562fb8aa63119d4bc3f6a58056894aea9e58e2b2987f",
-    "src/ui/studio.css": "f65f7ba7551fcfb95ab57383a6ee8184148b622fabdb580229f4dfe6ba80a5cb",
-    "src/ui/studio.js": "a3133a79a698d478a0809dc990c0498858e08b015ebe5ae689200290b17deff1",
+    "src/ui/studio.css": "f941fcf79480a1d5313ac6b12158b45f5503cad701b449d51e97991b2158de32",
+    "src/ui/studio.js": "1876cb0998074c3acc74433f262f90bf6f42e16b3386b57006f13e77e09341b7",
     "src/ui/table-actions.js": "e0f84ad6d6fbdbbf20e1b62274d529d17b52de0da549a29ef7b4251bd15d2aa0",
     "src/ui/table-art.js": "8d79d9ba3d7ee3468a5160a81523060ea13b5d72cae064b25d35fda3dce52abe",
     "src/ui/world.js": "b36f7d0952d6003933b2f2164f89148555c5faa8a377e033ee7f87d65b8788a5"
