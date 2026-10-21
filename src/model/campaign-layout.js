@@ -15,7 +15,6 @@ export function inspectRooms(layout){
  return layout.rooms.filter(zone=>roomPurpose(zone)==='game').map(zone=>{
   const ready=roomReadiness(layout,zone.id),items=layout.objects.filter(o=>o.roomId===zone.id),table=items.find(o=>BUILD_CATALOG[o.kind].family==='table');
   const errors=ready.reasons.map(text=>({text,x:zone.cells[0]?.x??0,y:zone.cells[0]?.y??0}));
-  if(ready.ok&&!items.some(o=>BUILD_CATALOG[o.kind].family==='light'&&o.enabled!==false))errors.push({text:'Включите свет в комнате.',x:zone.cells[0].x,y:zone.cells[0].y});
   return {id:zone.id,tableId:table?.id??null,cells:zone.cells.map(c=>cellKey(c.x,c.y)),chairIds:ready.seats.reduce((ids,o)=>{ids[o.seat]=o.id;return ids;},[]),masterChairId:ready.master?.id??null,items:items.map(o=>o.id),valid:errors.length===0,errors};
  });
 }

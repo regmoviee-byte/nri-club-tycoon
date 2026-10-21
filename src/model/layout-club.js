@@ -76,14 +76,13 @@ export function validateClubLayout(club,{previousLayout=null}={}) {
 export function validateOccupiedLayout(before,nextLayout){
   for(const room of before.rooms??[]){
     if(!(room.tablePreparation?.endsAt>before.clock))continue;
-    if(!roomReadiness(nextLayout,room.id).ok||!nextLayout.objects.some(o=>o.roomId===room.id&&BUILD_CATALOG[o.kind]?.family==='light'&&o.enabled!==false))throw new Error('Дождитесь подготовки стола: управляющему нужны комната, свет и проходы.');
+    if(!roomReadiness(nextLayout,room.id).ok)throw new Error('Дождитесь подготовки стола: управляющему нужны комната, стол, места и проходы.');
   }
   for(const guest of before.guests??[]){
     if(!guest.roomId)continue;
     const old=before.layout.objects.find(o=>o.roomId===guest.roomId&&o.role==='guest'&&o.seat===guest.seat);
     const next=old&&nextLayout.objects.find(o=>o.id===old.id);
     if(!old||!next||['kind','x','y','rotation','roomId','role','seat'].some(k=>old[k]!==next[k]))throw new Error('Сначала пересадите гостя или верните его к стойке: занятый стул менять нельзя.');
-    if(!roomReadiness(nextLayout,guest.roomId).ok)throw new Error('Сначала освободите комнату: гостям нужны стол, места, свет и проходы.');
-    if(!nextLayout.objects.some(o=>o.roomId===guest.roomId&&BUILD_CATALOG[o.kind]?.family==='light'&&o.enabled!==false))throw new Error('В занятой комнате должен оставаться включённый свет.');
+    if(!roomReadiness(nextLayout,guest.roomId).ok)throw new Error('Сначала освободите комнату: гостям нужны стол, места и проходы.');
   }
 }

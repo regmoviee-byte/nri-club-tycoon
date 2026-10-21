@@ -31,7 +31,7 @@ export {guestFlowStatus};
 export const CLUB_KEY='nri-club-tycoon:club:v4';
 export const runningRooms=club=>club.rooms.filter(r=>r.status==='running');
 export const openRooms=club=>club.rooms.filter(r=>r.operational&&r.status==='seating');
-export const totalGuestSeats=club=>club.rooms.filter(r=>r.operational||r.status==='running').length*4;
+export const totalGuestSeats=club=>club.rooms.filter(r=>r.operational||r.status==='running').reduce((n,r)=>n+(r.capacity??0),0);
 export const targetGuestCount=club=>Math.ceil(totalGuestSeats(club)*1.5);
 export const waitingGuests=club=>club.guests.filter(g=>!g.roomId);
 export const readyRooms=club=>openRooms(club).filter(r=>{const limits=groupLimits(r),count=roomOccupants(club,r.id).length;return !zoneCleaning(club,r.id)&&roomPreparation(club,r.id).ready&&kitStatus(club,r.kitId).ok&&count>=limits.minimum&&count<=limits.maximum;});
@@ -214,7 +214,7 @@ export function waitForPreparation(club){
  return advanceCampaignTo(club,Math.min(...deadlines));
 }
 export function waitForOperation(club){
- const deadlines=[...(club.operations?.tasks??[]).filter(t=>['active','queued'].includes(t.state)).map(t=>t.dueAt),...(club.inventory?.orders??[]).filter(o=>o.state==='ordered').map(o=>o.dueAt)].filter(t=>Number.isFinite(t)&&t>club.clock);
+ const deadlines=[...(club.operations?.tasks??[]).filter(t=>['active','queued'].includes(t.state)).map(t=>t.dueAt),...(club.inventory?.orders??[]).filter(o=>o.state==='ordered').map(o=>o.dueAt),...club.staff.filter(m=>m.training).map(m=>m.training.endsAt),...runningRooms(club).map(r=>r.run.endsAt)].filter(t=>Number.isFinite(t)&&t>club.clock);
  if(!deadlines.length)return fail('Нет оплаченной работы или поставки, окончания которой нужно дождаться.');
  if(club.campaign.status==='bankrupt')return fail('Это прохождение завершено.');
  return advanceCampaignTo(club,Math.min(...deadlines));

@@ -1,0 +1,502 @@
+{
+  "version": "20261021-usability-v3",
+  "scope": "37 verified findings from the previous audit, plus camera shrink and early training eligibility discovered during correction",
+  "status": "local-verified-awaiting-public-check",
+  "modelChecks": 154,
+  "uiScenarios": 21,
+  "firstClub": {
+    "ordinaryBudget": true,
+    "manualWallsAndFurniture": true,
+    "completedParty": true,
+    "reload": {
+      "cashBefore": 5568,
+      "cashAfter": 5568,
+      "journalBefore": 1,
+      "journalAfter": 1
+    }
+  },
+  "runtime": {
+    "version": "20261021-usability-v3",
+    "matched": 103,
+    "total": 103
+  },
+  "capacity": {
+    "physicalSeats": 7,
+    "target": 11,
+    "flowCapacity": 11,
+    "maximumGuests": 11
+  },
+  "contrast": [
+    {
+      "text": "НАСТРОЙКИ И СОСТАВ СТОЛОВ",
+      "contrast": 5.201397180955538,
+      "size": "10px"
+    },
+    {
+      "text": "БИЛЕТ С ГОСТЯ",
+      "contrast": 4.83827955249531,
+      "size": "10px"
+    },
+    {
+      "text": "ПРИ ПОЛНОЙ ОПЛАТЕ",
+      "contrast": 4.83827955249531,
+      "size": "10px"
+    }
+  ],
+  "findings": [
+    {
+      "id": "UX-B01",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Снос называется удалением, показывает возврат и расход до нажатия; доступна отмена последнего изменения.",
+      "evidence": [
+        {
+          "report": "more",
+          "check": "UX-B01: demolition shows actual quote, frees area, undo restores property"
+        }
+      ]
+    },
+    {
+      "id": "UX-E01",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Площадь выделяется прямоугольником либо связной кистью по выбору игрока.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-E01 E02: rectangular land quote, cancel, commit once and undo"
+        }
+      ]
+    },
+    {
+      "id": "UX-E02",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "После выделения остаются общая цена, остаток кассы, Купить и Отмена. До Купить списаний нет.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-E03",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Разметка комнаты бесплатна и ничего не покупает.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-F01",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Решение находится в отдельной видимой части той же панели, независимо от её прокрутки.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-F01: dismissal decision remains visible at low height after scrolling"
+        }
+      ]
+    },
+    {
+      "id": "UX-V01",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Карта сохраняет рабочую высоту и ненулевой масштаб на 844×390.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-V01 V02 V03 V04: map area, unobstructed build tools and full panel after navigation"
+        }
+      ]
+    },
+    {
+      "id": "UX-V03",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Нижние кнопки строительства находятся в потоке панели и не перекрывают инструменты.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-A01",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Проверенные активные мелкие подписи имеют контраст 4,84–5,20:1; постоянная подсказка клавиш удалена.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-A01: active small labels meet measured contrast target"
+        }
+      ]
+    },
+    {
+      "id": "UX-C01",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Персонаж остаётся в отдельной видимой области во время прокрутки формы.",
+      "evidence": [
+        {
+          "report": "journey",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-G01",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Предел присутствующих рассчитывается по реальным местам. Для семи мест — 11 с очередью; седьмой посетитель действительно приходит.",
+      "evidence": [
+        {
+          "report": "capacity",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-L01",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Во всех трёх разделах библиотеки есть явное пустое состояние.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-M01",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Кнопка ожидания учитывает оплаченное обучение; недоступность курса видна до отправки.",
+      "evidence": [
+        {
+          "report": "more",
+          "check": "UX-M01: training can advance straight to its paid completion"
+        }
+      ]
+    },
+    {
+      "id": "UX-O01",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Запасы имеют русские названия; срок годности содержит игровой день.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-R01",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "При пустом результате поиска карточка прежней комнаты и её запуск скрыты.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-R01 R02 L01: empty searches clear actionable stale details"
+        }
+      ]
+    },
+    {
+      "id": "UX-R02",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Показывается фактическое число мест и недостающая мебель.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-S01",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Черновик персонажа сохраняется в текущей вкладке и восстанавливается после перезагрузки; статус обозначает черновик.",
+      "evidence": [
+        {
+          "report": "journey",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-V02",
+      "priority": "P3",
+      "status": "fixed-verified",
+      "change": "Кнопки времени помещаются на 320×568; кнопки камеры не обрезаются в низкой раскладке.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-B02",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Разметка не создаёт мебель, пол, стены, дверь или свет.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-B02 B03 B04 E03 P01: connected cell brush creates empty area, truthful checklist"
+        }
+      ]
+    },
+    {
+      "id": "UX-B03",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Готовность определяется наполнением и проходами. Проверена рабочая комната на 20 клеток с тремя стульями без обязательной лампы.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-B04",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Связную комнату можно рисовать клетками и расширять кистью; прямоугольник — отдельный режим.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-B05",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Окно выбирает существующую стену и показывает вертикальный предпросмотр; клетки пола не подсвечиваются как покупка.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-B05 E04: window vertical preview and wall replacement priced before commit"
+        }
+      ]
+    },
+    {
+      "id": "UX-B06",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Последний ресепшн защищён в расчёте и выполнении продажи. После установки второй стойки прежнюю можно убрать.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-B06 C05: last reception protected, two desks one administrator"
+        }
+      ]
+    },
+    {
+      "id": "UX-C02",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Мужской и женский варианты различаются пропорциями плеч, талии и челюсти.",
+      "evidence": [
+        {
+          "report": "more",
+          "check": "UX-C02 C03 C04: body, gender and clothing previews remain joined and visibly distinct"
+        }
+      ]
+    },
+    {
+      "id": "UX-C03",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Все пять телосложений имеют различную геометрию; компактная фигурка изменяется целиком без разрыва соединений.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-C04",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Жилет имеет отличающиеся рукава и крой; кардиган сохраняет собственный вид.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-C05",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "За рабочей стойкой отображается один администратор, даже при нескольких стойках.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-K01",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Меню предметов, стен, комнат, гостей, мастеров и библиотечных карточек используют реальные команды; Delete удаляет выбранный объект с теми же проверками.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-K01 K03: table context menu, R and Delete, undo"
+        },
+        {
+          "report": "more",
+          "check": "UX-K01: context menus on library descriptions, portraits and rooms"
+        }
+      ]
+    },
+    {
+      "id": "UX-S02",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Настройки отображения, переназначение клавиш, импорт, экспорт и архив вынесены в настройки игры.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-S02 K03: persistent remapping drives selected object rotation"
+        }
+      ]
+    },
+    {
+      "id": "UX-T01",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Убраны устаревшие правила, постоянный список клавиш и пояснение очевидного. Подробности общих бонусов раскрываются по запросу.",
+      "evidence": [
+        {
+          "report": "more",
+          "check": "UX-T01 A01: player copy and readable active controls across all panels"
+        }
+      ]
+    },
+    {
+      "id": "UX-N01",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Переходы и новый персонаж очищают ошибку предыдущего действия; продажа не называется постройкой.",
+      "evidence": [
+        {
+          "report": "more",
+          "check": "UX-N01: refused build error disappears on another screen and creator"
+        }
+      ]
+    },
+    {
+      "id": "UX-P01",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Подготовка первой комнаты оценивает реальную готовность; кнопка ведёт к её недостающим условиям и остаётся доступной.",
+      "evidence": [
+        {
+          "report": "journey",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-K02",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Escape полностью отменяет удерживаемого гостя: последующий отпуск мыши не рассаживает его.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-K02: Escape cancels held queue guest before mouse release"
+        }
+      ]
+    },
+    {
+      "id": "UX-K03",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Клавиша поворота действует на выбранный предмет так же, как кнопка; переназначение сохраняется.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-E04",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Заказ порций показывает цену в кнопке; замена стены показывает расход и остаток до подтверждения.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-E04 O01: service order price shown and stock names readable"
+        }
+      ]
+    },
+    {
+      "id": "UX-V04",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Переход сбрасывает режим большой карты; библиотека и настройки на телефоне используют полную рабочую область.",
+      "evidence": [
+        {
+          "report": "model",
+          "check": "Documented model or manual first-club evidence"
+        }
+      ]
+    },
+    {
+      "id": "UX-S03",
+      "priority": "P1",
+      "status": "fixed-verified",
+      "change": "Прежние клубы доступны в архиве. Восстановление можно отменить; при подтверждении текущий клуб также архивируется.",
+      "evidence": [
+        {
+          "report": "ui",
+          "check": "UX-S03 N01 V04: new club and archive restoration preserve both campaigns"
+        }
+      ]
+    },
+    {
+      "id": "UX-L02",
+      "priority": "P2",
+      "status": "fixed-verified",
+      "change": "Занятый комплект сразу недоступен для продажи, указана комната и есть переход к ней.",
+      "evidence": [
+        {
+          "report": "more",
+          "check": "UX-L02: occupied game kit cannot enter a misleading sell confirmation"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Scripted browser scenarios and visual review, not a novice user study.",
+    "Viewport checks use Chromium on Windows; no physical touch-device or screen-reader certification.",
+    "Undo covers the last construction action. Creator draft is retained in its tab; a committed club is saved durably.",
+    "This closes the listed reproductions; it is not a claim that no other usability defects can exist."
+  ]
+}

@@ -56,6 +56,15 @@ export async function createSaveStore({storage, key, decode, encode, now = Date.
     },
     raw: () => typeof raw === 'string' ? raw : expected ? JSON.stringify(expected) : null,
     close: () => db.close(),
+    async archives() {
+      const records=await new Promise((resolve,reject)=>{const tx=db.transaction('archives','readonly'),request=tx.objectStore('archives').getAll();tx.oncomplete=()=>resolve(request.result);tx.onabort=()=>reject(tx.error);});
+      return records.filter(r=>r.key===key).sort((a,b)=>b.createdAt-a.createdAt).map(r=>{try{const c=decode(r.raw);if(!c)throw Error();return {id:r.id,createdAt:r.createdAt,valid:true,title:(c.administrator?.name??'Клуб')+' · день '+(Math.floor(c.clock/24)+1)+' · '+c.finance.cash.toLocaleString('ru-RU')+' ₽'};}catch{return{id:r.id,createdAt:r.createdAt,valid:false,title:'Запись не удалось прочитать'};}});
+    },
+    async archive(id) {
+      const record=await new Promise((resolve,reject)=>{const tx=db.transaction('archives','readonly'),request=tx.objectStore('archives').get(id);tx.oncomplete=()=>resolve(request.result);tx.onabort=()=>reject(tx.error);});
+      if(!record||record.key!==key)throw Error('Клуб не найден в архиве.');
+      const club=decode(record.raw);if(!club)throw Error('Не удалось прочитать клуб из архива.');return club;
+    },
     async write(club, {archive = false} = {}) {
       if (busy) throw new Error('Предыдущее изменение ещё сохраняется.');
       busy = true;

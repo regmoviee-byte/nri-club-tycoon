@@ -41,6 +41,7 @@ export function build(club,action,args={}){
   edit=normalizeEdit(draft,edit);result=quoteEdit(draft.layout,edit,{lockedRoomIds});if(result.ok)draft.layout=result.next;
  }
  if(!result?.ok)return result;
+ if(club.layout.objects.some(o=>o.kind==='reception')&&!draft.layout.objects.some(o=>o.kind==='reception'))return fail('Нельзя удалить последнюю стойку ресепшна. Сначала поставьте новую.');
  const operations=operationsConstructionBlocker(structuredClone(club),draft);if(!operations.ok)return operations;
  try{validateOccupiedLayout(club,draft.layout);syncRooms(draft);retireStaffRoomLegacyCredit(draft);validateClubLayout(draft,{previousLayout:club.layout});}catch(error){return fail(error.message);}
  const paid=constructionBudgetAdapter().apply({id:`direct-${draft.layout.revision}-${draft.finance.nextId}`,cost:result.cost,refund:result.refund},draft);if(!paid.ok)return paid;

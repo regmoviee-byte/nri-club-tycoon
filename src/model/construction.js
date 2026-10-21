@@ -94,6 +94,7 @@ export function createConstructionService({getClub,replaceClub,persist,onChange=
       const edit=normalizeEdit(club,input);
       const result=quoteEdit(club.layout,edit,{lockedRoomIds:constructionLockedRoomIds(club)});
       if(!result.ok)return result;
+      if(club.layout.objects.some(o=>o.kind==='reception')&&!result.next.objects.some(o=>o.kind==='reception'))return failure('Нельзя удалить последнюю стойку ресепшна. Сначала поставьте новую.');
       validateOccupiedLayout(club,result.next);
       const draft=retireStaffRoomLegacyCredit(clone(club));draft.layout=result.next;
       const operations=operationsConstructionBlocker(clone(club),draft);if(!operations.ok)return operations;

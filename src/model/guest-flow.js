@@ -6,6 +6,7 @@ import {BEGINNER_DIRECTION} from './club-direction.js';
 // dismissal and loading cannot manufacture visits or advance this clock.
 export const GUEST_FLOW=Object.freeze({version:2,basePerHour:3,tickHours:.5,capacityPerRoom:6,recentHours:96,perHappyPerson:.16,organicKnee:30});
 const rooms=club=>(club.rooms??[]).filter(r=>r.operational||r.status==='running').length;
+const guestCapacity=club=>Math.ceil((club.rooms??[]).filter(r=>r.operational||r.status==='running').reduce((n,r)=>n+(r.capacity??4),0)*1.5);
 const round=value=>Math.round(value*1e8)/1e8;
 const fresh=club=>({version:1,demandVersion:2,adoptedAt:club.clock,nextAt:club.clock+GUEST_FLOW.tickHours,credits:0,issued:0,openingIssued:true});
 export function audienceDemand(club){
@@ -25,7 +26,7 @@ export function validateGuestFlow(club){
  return true;
 }
 export function accrueGuestFlow(club,from,to){
- const flow=ensureGuestFlow(club),count=rooms(club),capacity=count*GUEST_FLOW.capacityPerRoom;
+ const flow=ensureGuestFlow(club),count=rooms(club),capacity=guestCapacity(club);
  // No time or room means no new credit. A temporarily closed desk cannot
  // accumulate a hidden audience which appears as soon as it is switched on.
  if(to>from&&count&&receptionStatus(club).ready)flow.credits=round(Math.min(capacity,flow.credits+(to-from)*audienceDemand(club).rate));
@@ -48,7 +49,7 @@ export function issueGuestCredit(club){
 export function guestFlowStatus(club){
  const flow=club.guestFlow??fresh(club),count=rooms(club),ready=receptionStatus(club).ready;
  const nextAt=flow.nextAt>club.clock+1e-8?flow.nextAt:round(club.clock+GUEST_FLOW.tickHours),hoursUntil=nextAt-club.clock;
- const capacity=count*GUEST_FLOW.capacityPerRoom;
+ const capacity=guestCapacity(club);
  const presentAtArrival=club.guests.filter(guest=>{
   const run=club.rooms.find(r=>r.id===guest.roomId&&r.status==='running')?.run;
   return run?run.endsAt>nextAt+1e-8:guest.schedule.leaveAt>nextAt+1e-8;

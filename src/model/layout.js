@@ -237,13 +237,11 @@ export function roomReadiness(layout, roomId) {
   for (const cell of room.cells) for (const next of neighbors(cell)) if (!cells.has(keyOf(next))) {
     const edge = edgeBetween(cell, next); perimeter.set(edgeKey(edge), {edge, outside: next});
   }
-  if (room.cells.length < 25) reasons.push('Для игровой комнаты нужно не меньше 25 клеток.');
   if ([...perimeter.keys()].some(key => !nav.walls.has(key))) reasons.push('Замкните стены по границе комнаты.');
   if (![...perimeter.entries()].some(([key, value]) => ['door', 'wideDoor'].includes(nav.walls.get(key)?.kind) && nav.visited.has(keyOf(value.outside)))) reasons.push('Нужна дверь с проходом от входа.');
   if (!tables.length) reasons.push('Поставьте игровой стол.');
-  if (seats.length < 2) reasons.push('Поставьте гостевые стулья рядом со столом.');
+  if (seats.length < 2) reasons.push('Поставьте минимум два гостевых стула рядом со столом.');
   if (!master) reasons.push('Нужно отдельное место мастера.');
-  if (!objects.some(object => BUILD_CATALOG[object.kind].family === 'light')) reasons.push('Добавьте светильник.');
   const assignedChairs = objects.filter(object => BUILD_CATALOG[object.kind].family === 'chair' && object.role);
   const blocked = assignedChairs.filter(chair => !approaches(chair, nav).length).map(({x, y}) => ({x, y}));
   if (blocked.length) reasons.push('Оставьте проход к каждому игровому стулу.');
