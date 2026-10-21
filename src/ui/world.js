@@ -56,14 +56,14 @@ export function itemThumbnail(kind){
  const w=spec.width,h=spec.height,height=spec.family==='reception'?90:spec.family==='table'?30:['chair','staffSeat','waitingSeat'].includes(spec.family)?36:spec.family==='shelf'?56:spec.layer==='wall'?52:spec.layer==='ceiling'?105:kind==='plant'?64:kind==='hanger'?52:kind==='fridge'?58:kind==='fan'?58:spec.layer==='tabletop'?60:60,minY=(w+h)*9-height-7,view=[-h*36-8,minY,(w+h)*36+16,(w+h)*18+7-minY].join(' ');
  return '<svg class="item-art" data-item-icon="'+kind+'" viewBox="'+view+'" aria-hidden="true">'+furnitureArt({kind,id:'icon-'+kind,x:0,y:0,rotation:0,...(spec.layer==='tabletop'?{surface:{tableId:'icon',x:.5,y:.5,angle:0}}:{})},{objects:[]})+'</svg>';
 }
-export function furnitureArt(o,layout,{selected=false,ghost=false,occupied=false}={}){
+export function furnitureArt(o,layout,{selected=false,ghost=false,occupied=false,stock=null}={}){
  const item=BUILD_CATALOG[o.kind];if(!item)return '';if(item.layer==='tabletop')return standaloneTabletopArt(o,layout,{ghost});const cells=objectCells(o);if(!cells.length)return '';
  const w=Math.max(...cells.map(c=>c.x))-o.x+1,h=Math.max(...cells.map(c=>c.y))-o.y+1,p=project(o.x+w/2,o.y+h/2);
  const table=layout.objects.find(t=>BUILD_CATALOG[t.kind].family==='table'&&t.roomId===o.roomId),towards=table?project(table.x+1,table.y+1):null;
  const mirrored=towards&&towards.x<p.x?-1:1;
  const group=inner=>'<g data-object="'+esc(o.id??'preview')+'" class="world-object '+(selected?'selected':'')+'" opacity="'+(ghost?.6:1)+'"><title>'+esc(item.name)+'</title>'+inner+'</g>';
  const at=inner=>'<g transform="translate('+p.x+' '+p.y+')">'+inner+'</g>';
- const crafted=detailedFurnitureArt(o);if(crafted&&item.family!=='reception')return group(crafted);
+ const crafted=detailedFurnitureArt(o,{stock});if(crafted&&item.family!=='reception')return group(crafted);
  if(item.family==='reception'){
   const top=project(o.x+w/2,o.y+h/2,40);
   // The far edge of the solid counter occludes the legs, never the head.
@@ -117,10 +117,15 @@ export function createWorld(host,callbacks={}){
  const transform=()=>{cameraNode.setAttribute('transform','translate('+camera.x+' '+camera.y+') scale('+camera.zoom+')');svg.dataset.lod=camera.zoom<.7?'overview':'detail';renderMarkers();callbacks.onCamera?.(camera);};
  function renderMarkers(){
   const overview=camera.zoom<.7||width<450,placed=[];
-  markerLayer.innerHTML=markerData.map(m=>{
+  markerLayer.innerHTML=markerData.toSorted((a,b)=>Number(b.status.roomId===view.roomId)-Number(a.status.roomId===view.roomId)).map(m=>{
    const selected=!m.object&&m.status.roomId===view.roomId,compact=overview&&!selected;
    if(overview&&m.status.kind==='rest'&&!selected)return '';
    if(m.object&&!m.status.flag&&camera.zoom<.8)return '';
+   if(overview&&!m.object&&!selected&&!['problem','cleaning'].includes(m.status.kind)){
+    const x=camera.x+m.center.x*camera.zoom,y=camera.y+m.center.y*camera.zoom;if(x<0||x>width||y<0||y>height)return '';
+    const label=esc(m.status.name+' · '+m.status.status),color=({running:'#42675b',ready:'#5e7553',off:'#7c8880'})[m.status.kind]??'#617969';
+    return '<g data-room="'+esc(m.status.roomId)+'" data-marker-point="true" class="screen-state-marker room-overview-dot" role="button" tabindex="0" aria-label="'+label+'" transform="translate('+x+' '+y+')"><title>'+label+'</title><circle r="12" fill="transparent"/><circle r="4" fill="'+color+'" stroke="#f4e8c7" stroke-width="1.3"/></g>';
+   }
    const p={x:camera.x+m.x*camera.zoom,y:camera.y+m.y*camera.zoom};if(p.x<-80||p.x>width+80||p.y<-35||p.y>height+35)return '';
    const boxWidth=m.object?(compact?25:108):(compact?30:142),boxHeight=compact?27:39,x=Math.max(boxWidth/2+3,Math.min(width-boxWidth/2-3,p.x));let y=Math.max(boxHeight/2+3,Math.min(height-boxHeight/2-3,p.y));
    const clear=(cx,cy)=>!placed.some(b=>Math.abs(cx-b.x)<(boxWidth+b.w)/2+4&&Math.abs(cy-b.y)<(boxHeight+b.h)/2+3);let markerX=x;
@@ -145,7 +150,7 @@ export function createWorld(host,callbacks={}){
   const restingByObject=new Map(),mastersById=new Map(club.staff.map(m=>[m.id,m]));
   for(const {masterId,seat} of staffRoomStatus(club).assignments){const person=mastersById.get(masterId);if(!seat||!person||club.rooms.some(r=>r.status==='running'&&r.masterId===masterId))continue;const people=restingByObject.get(seat.objectId)??[];people.push({person,seat});restingByObject.set(seat.objectId,people);}
   for(let y=b.minY-margin;y<b.maxY+margin;y++)for(let x=b.minX-margin;x<b.maxX+margin;x++){
-   const key=tileKey(x,y),isOwned=owned.has(key),zone=zones.get(key);floor+=floorTileArt(x,y,floors.get(key),isOwned,zoneStates.get(zone?.id??'common'));
+   const key=tileKey(x,y),isOwned=owned.has(key),zone=zones.get(key);floor+=floorTileArt(x,y,floors.get(key),isOwned,zoneStates.get(zone?.id??'common'));if(zone?.id===state.roomId)floor+=polygon(diamond(x,y,1,1,.15),'#f3d17f','#d6b36c','data-selected-room="'+esc(zone.id)+'" opacity=".28" pointer-events="none"');
   }
   for(const object of layout.objects)floor+=objectContactArt(object);
   for(const light of layout.objects.filter(o=>BUILD_CATALOG[o.kind]?.layer==='ceiling'&&o.enabled!==false)){
@@ -164,7 +169,7 @@ export function createWorld(host,callbacks={}){
    const spec=BUILD_CATALOG[object.kind];if(spec.layer==='tabletop')continue;
    if(spec.family==='table'){const room=club.rooms.find(r=>r.id===object.roomId);entities.push(...tableGroups(object,layout,{...state,tableRoom:room}));continue;}
    const cells=objectCells(object),w=spec.width,h=spec.height,depth=object.x+object.y+(w+h)/2;
-   let art=furnitureArt(object,layout,{selected:state.objectId===object.id});
+   const status=objectVisualStatus(club,object);let art=furnitureArt(object,layout,{selected:state.objectId===object.id,stock:status?.stock??null});
    const room=club.rooms.find(r=>r.id===object.roomId),guest=object.role==='guest'?club.guests.find(g=>g.roomId===object.roomId&&g.seat===object.seat):null;
    const master=object.role==='master'&&room?.status==='running'?club.staff.find(m=>m.id===room.masterId):null;
    const people=[];if(guest)people.push({person:guest,master:false,x:object.x+.5,y:object.y+.5});if(master)people.push({person:master,master:true,x:object.x+.5,y:object.y+.5});
@@ -178,7 +183,7 @@ export function createWorld(host,callbacks={}){
    for(const actor of people)if(actor.seatOptions.atTable){const table=layout.objects.find(o=>BUILD_CATALOG[o.kind]?.family==='table'&&o.roomId===object.roomId);if(table)entities.push({depth:table.x+table.y+2.005,art:seatedTableArmArt(actor.person,object,layout,actor.key,actor.seatOptions)});}
    if(people.length)art+=seatForeground(object);
    if(spec.family==='chair'&&object.role==='guest'&&!guest&&room?.status!=='running'){const p=project(object.x+.5,object.y+.5,19),armed=Boolean(state.placingGuest);art+='<g data-seat="'+esc(object.id)+'" data-seating-target="'+armed+'" class="empty-seat"><circle cx="'+p.x+'" cy="'+p.y+'" r="'+(armed?9:7)+'" fill="'+(armed?'#e4f0cd':'#f4e9cc')+'" stroke="'+(armed?'#4b7955':'#a28c64')+'" stroke-width="'+(armed?1.8:1)+'"/><path d="M'+(p.x-3)+' '+p.y+'h6M'+p.x+' '+(p.y-3)+'v6" stroke="'+(armed?'#386546':'#9a805c')+'"/></g>';}
-   const status=objectVisualStatus(club,object);if(status){const p=project(object.x+(object.rotation%2?spec.height:spec.width)/2,object.y+(object.rotation%2?spec.width:spec.height)/2,57);markerData.push({x:p.x,y:p.y,status,object:true});art+=equipmentOverlayArt(object,status);}
+   if(status){const p=project(object.x+(object.rotation%2?spec.height:spec.width)/2,object.y+(object.rotation%2?spec.width:spec.height)/2,57);markerData.push({x:p.x,y:p.y,status,object:true});art+=equipmentOverlayArt(object,status);}
    entities.push({depth,art});
   }
   const waiting=club.guests.filter(g=>!g.roomId),desk=receptionStatus(club).desk;
@@ -186,7 +191,7 @@ export function createWorld(host,callbacks={}){
    const x=selected&&desk?desk.x+1:seat?seat.x+.5:layout.entry.x+.3+(i%3)*.38,y=selected&&desk?desk.y+1.45:seat?seat.y+.5:layout.entry.y+.25+Math.floor(i/3)*.36;
    const actor={key:'g:'+g.id,person:g,x,y,seated:Boolean(seat&&!selected),back:false,master:false,scale:.56,target:seat?layout.objects.find(o=>o.id===seat.objectId):null};actors.push(actor);
    const p=project(x,y,0);entities.push({depth:x+y+.1,art:'<g data-actor="'+esc(actor.key)+'" data-guest-id="'+esc(g.id)+'" class="map-person waiting-person" transform="translate('+p.x+' '+p.y+') scale('+actor.scale+')"><title>'+esc(g.profile.name)+'</title>'+personArt(g,{seated:actor.seated})+'</g>'});});
-  for(const zone of layout.rooms){const frontCell=zone.cells.toSorted((a,b)=>(b.x+b.y)-(a.x+a.y))[0];if(!frontCell)continue;const p=project(frontCell.x+.5,frontCell.y+.5,-34);markerData.unshift({x:p.x,y:p.y,status:roomVisualStatus(club,zone),object:false});}
+  for(const zone of layout.rooms){const frontCell=zone.cells.toSorted((a,b)=>(b.x+b.y)-(a.x+a.y))[0];if(!frontCell)continue;const p=project(frontCell.x+.5,frontCell.y+.5,-34),center=project(zone.cells.reduce((s,c)=>s+c.x+.5,0)/zone.cells.length,zone.cells.reduce((s,c)=>s+c.y+.5,0)/zone.cells.length,1);markerData.unshift({x:p.x,y:p.y,center,status:roomVisualStatus(club,zone),object:false});}
   scene.innerHTML='<ellipse cx="0" cy="'+((b.w+b.h)*10)+'" rx="'+(b.w*36)+'" ry="'+(b.h*20)+'" fill="#667e75" opacity=".13"/><g filter="url(#club-shadow)">'+floor+entities.sort((a,b)=>a.depth-b.depth).map(e=>e.art).join('')+'</g>';drawPreview(state.cells??[],state.preview);if(!camera.x&&!camera.y)fit();transform();animateActors(actors);
  }
  function animateActors(actors){

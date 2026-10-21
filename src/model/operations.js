@@ -30,6 +30,8 @@ export function ensureOperations(club){
  ensureInventory(club);
  for(const item of club.layout.objects)if(maintained(item))club.operations.equipment[item.id]??={condition:100,broken:false};
  for(const id of ['common',...club.layout.rooms.map(r=>r.id)])club.operations.zones[id]??={cleanliness:100};
+ const policy=club.operations.cleaningPolicy,live=new Set(['common',...club.layout.rooms.map(r=>r.id)]);
+ if(policy?.zoneIds?.some(id=>!live.has(id))){policy.zoneIds=policy.zoneIds.filter(id=>live.has(id));if(!policy.zoneIds.length){policy.enabled=false;policy.pausedReason='Зоны поручения удалены. Выберите новые зоны и сохраните поручение.';}}
  return club.operations;
 }
 export function serviceAvailability(club,item){
@@ -132,12 +134,13 @@ const defaultCleaningPolicy=()=>({version:1,enabled:false,zoneIds:[],cleanliness
 export function cleaningPolicyStatus(club){
  const policy=club.operations?.cleaningPolicy??defaultCleaningPolicy(),spent=Math.round(policy.orders.filter(row=>row.at>club.clock-policy.windowHours).reduce((sum,row)=>sum+row.reserved,0)*100)/100;
  const person=club.serviceStaff?.find(p=>p.onShift),busy=person&&club.operations?.tasks.some(t=>t.helperId===person.id&&['active','queued'].includes(t.state));
- return {...policy,orders:undefined,spent,remaining:Math.max(0,policy.maxSpend-spent),reason:!policy.enabled?'Поручение выключено.':!person?'Нужен помощник на явно начатой смене.':busy?'Помощник выполняет порученную работу.':spent>=policy.maxSpend?'Лимит поручений израсходован.':'Проверяет выбранные свободные зоны при продвижении времени.',budgetNote:'Лимит резервирует материалы и зарплату самой уборки. Обычный простой смены оплачивается отдельно.'};
+ const hasZone=policy.zoneIds.some(id=>id==='common'||club.layout.rooms.some(r=>r.id===id));
+ return {...policy,orders:undefined,spent,remaining:Math.max(0,policy.maxSpend-spent),reason:policy.pausedReason??(!hasZone&&policy.enabled?'Зоны поручения удалены. Выберите новые зоны.':!policy.enabled?'Поручение выключено.':!person?'Нужен помощник на явно начатой смене.':busy?'Помощник выполняет порученную работу.':spent>=policy.maxSpend?'Лимит поручений израсходован.':'Проверяет выбранные свободные зоны при продвижении времени.'),budgetNote:'Лимит резервирует материалы и зарплату самой уборки. Обычный простой смены оплачивается отдельно.'};
 }
 export function setCleaningPolicy(club,settings){
- ensureOperations(club);const old=club.operations.cleaningPolicy??defaultCleaningPolicy(),policy={...old,...settings,version:1,orders:old.orders};
+ ensureOperations(club);const old=club.operations.cleaningPolicy??defaultCleaningPolicy(),policy={...old,...settings,version:1,orders:old.orders,pausedReason:null},live=new Set(['common',...club.layout.rooms.map(r=>r.id)]);
  if(typeof policy.enabled!=='boolean'||!Array.isArray(policy.zoneIds)||new Set(policy.zoneIds).size!==policy.zoneIds.length||policy.zoneIds.some(id=>!club.operations.zones[id])||!Number.isFinite(policy.cleanlinessBelow)||policy.cleanlinessBelow<20||policy.cleanlinessBelow>80||!Number.isFinite(policy.maxSpend)||policy.maxSpend<0||policy.maxSpend>2000||!Number.isFinite(policy.windowHours)||policy.windowHours<1||policy.windowHours>24)return fail('Укажите зоны, чистоту 20–80%, лимит 0–2 000 ₽ и период 1–24 ч.');
- if(policy.enabled&&!policy.zoneIds.length)return fail('Выберите хотя бы одну зону для поручения.');
+ if(policy.zoneIds.some(id=>!live.has(id))||policy.enabled&&!policy.zoneIds.length)return fail('Выберите хотя бы одну существующую зону для поручения.');
  club.operations.cleaningPolicy=policy;processCleaningPolicy(club);return{ok:true,policy:cleaningPolicyStatus(club)};
 }
 export function processCleaningPolicy(club){

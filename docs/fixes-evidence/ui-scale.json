@@ -1,0 +1,91 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    {
+      "text": "Explicit guest swap and Escape still work"
+    },
+    {
+      "text": "Cleaning draft survives map controls and saves its actual values"
+    },
+    {
+      "text": "Cancellation and rotation remove old approval; changed purchase requires a new accurate confirmation"
+    },
+    {
+      "text": "Settling the actual party invalidates reserve approval without buying"
+    },
+    {
+      "text": "Expanded mobile budget retains at least120px of map at390×844 and360×740 with accessible Apply and no horizontal overflow",
+      "mobile": [
+        {
+          "width": 390,
+          "height": 844,
+          "world": {
+            "x": 51,
+            "y": 125,
+            "width": 339,
+            "height": 120
+          },
+          "preview": {
+            "x": 51,
+            "y": 245,
+            "width": 339,
+            "height": 160.609375
+          },
+          "apply": {
+            "x": 242,
+            "y": 254,
+            "width": 68,
+            "height": 41.5
+          },
+          "bodyWidth": 390,
+          "viewport": 390
+        },
+        {
+          "width": 360,
+          "height": 740,
+          "world": {
+            "x": 51,
+            "y": 125,
+            "width": 309,
+            "height": 120
+          },
+          "preview": {
+            "x": 51,
+            "y": 245,
+            "width": 309,
+            "height": 100.28125
+          },
+          "apply": {
+            "x": 220.15625,
+            "y": 254,
+            "width": 63.921875,
+            "height": 41.5
+          },
+          "bodyWidth": 360,
+          "viewport": 360
+        }
+      ]
+    },
+    {
+      "text": "Twenty paid-fixture rooms use small physical-location points in mobile overview, remain searchable, focusable and persistent",
+      "markers": {
+        "points": 20,
+        "boxes": 0
+      }
+    }
+  ],
+  "errors": [],
+  "screenshots": [
+    "cleaning-draft-preserved.png",
+    "fresh-confirmation-current-decor.png",
+    "mobile-budget-390.png",
+    "mobile-budget-360.png",
+    "twenty-rooms-mobile-points.png",
+    "twentieth-room-focused.png"
+  ],
+  "audio": "-noaudio; ReviewAudioSilence; --mute-audio; chromiumSandbox:true; isolated storage",
+  "url": "http://127.0.0.1:62211/",
+  "fixture": "Paid technical construction fixture, active trio; cash deliberately reduced to650 for reserve confirmation stress, not earned progression",
+  "elapsedMs": 111604
+}

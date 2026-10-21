@@ -8,6 +8,7 @@ const paint=(value,fallback)=>/^#[\da-f]{6}$/i.test(value??'')?value:fallback;
 const shade=(hex,n)=>'#'+[1,3,5].map(i=>Math.max(0,Math.min(255,parseInt(hex.slice(i,i+2),16)+n)).toString(16).padStart(2,'0')).join('');
 const points=ps=>ps.map(p=>p.x+','+p.y).join(' ');
 const polygon=(ps,fill)=>'<polygon points="'+points(ps)+'" fill="'+fill+'"/>';
+const bodyWidth=shape=>({broad:1.1,lean:.91,soft:1.06,compact:.94})[shape]??1;
 const stroke=(ps,color,width)=>'<polyline points="'+points(ps)+'" fill="none" stroke="'+color+'" stroke-width="'+width+'" stroke-linecap="round" stroke-linejoin="round"/>';
 
 export function seatedLegFaces(rotation=0,pants='#40515c',shoes='#303b42'){
@@ -23,7 +24,7 @@ export function seatedLegFaces(rotation=0,pants='#40515c',shoes='#303b42'){
 
 export function seatedArmFaces(person,{rotation=0,atTable=false,forearmsOnly=false,actionFrame=0,playing=false,master=false,blockedSides=[]}={}){
  const identity=person?.identity??person??{},look=identity.portrait??{},frame=seatFrame(rotation),coat=paint(look.coat,'#6c7e80'),skin=paint(look.skin,'#e3b79e'),accent=paint(look.accent,'#d8cab2'),faces=[];
- const variant=[...(identity.name??person?.profile?.name??person?.name??'Гость')].reduce((n,c)=>n+c.charCodeAt(0),0)%3,size=look.bodyShape==='broad'?1.1:look.bodyShape==='lean'?.91:look.bodyShape==='soft'?1.06:1;
+ const variant=[...(identity.name??person?.profile?.name??person?.name??'Гость')].reduce((n,c)=>n+c.charCodeAt(0),0)%3,size=bodyWidth(look.bodyShape);
  for(const side of [-1,1]){
   const gesture=atTable&&playing&&actionFrame===1&&side===(master?1:variant===1?1:-1)&&!blockedSides.includes(side),tableSide=atTable&&!blockedSides.includes(side)&&(variant===0||side===(variant===1?1:-1)||master);
   if(forearmsOnly&&!tableSide&&!gesture)continue;
@@ -46,8 +47,8 @@ function renderSeatedPerson(person,{rotation=0,kind='chair',width=1,height=1,off
  const identity=person?.identity??person??{},look=identity.portrait??{},frame=seatFrame(rotation),P=frame.point,coat=paint(look.coat,'#6c7e80'),pants=paint(look.trousers,'#40515c'),shoes=paint(look.shoes,'#303b42'),skin=paint(look.skin,'#e3b79e'),accent=paint(look.accent,'#d8cab2');
  const chair=chairBaseFaces(width,height,kind,rotation).map(f=>({...f,points:f.points.map(p=>({...p,x:p.x+offsetX,y:p.y+offsetY}))})),legs='<g class="seated-legs" data-chair-occlusion="solid-depth">'+solidArt(seatedLegFaces(rotation,pants,shoes),chair)+'</g>';
  const rightNear=frame.right[0]+frame.right[1]>0,nearSide=rightNear?1:-1,armFrames=[0,...(playing&&atTable?[1]:[])].map(actionFrame=>seatedArmFaces(person,{rotation,atTable,playing,master,blockedSides,actionFrame})),arm=side=>poseFrames(actionFrame=>{const faces=armFrames[actionFrame];return '<g class="seated-arm" data-pose="'+(atTable?(master?'explaining':'listening'):'rest')+'" data-blocked-sides="'+blockedSides.join(',')+'">'+solidArt(faces.filter(f=>f.part.endsWith('-'+side)),chair)+'</g>';},{playing:playing&&atTable,person});
- const size=look.bodyShape==='broad'?1.1:look.bodyShape==='lean'?.91:look.bodyShape==='soft'?1.06:1,screenRight=P(1,0,0).x>0?1:-1;
- const T=(u,z)=>P(u*size*1.14*screenRight,(frame.backNear?-.055:.065)+(z-36)*.006+(atTable?.08:0),z),p=(u,z)=>{const q=T(u,z);return q.x+' '+q.y;};
+ const size=bodyWidth(look.bodyShape),screenRight=P(1,0,0).x>0?1:-1,torsoHeight=look.bodyShape==='compact'?.97:1;
+ const T=(u,z)=>P(u*size*1.14*screenRight,(frame.backNear?-.055:.065)+(z-36)*.006+(atTable?.08:0),17+(z-17)*torsoHeight),p=(u,z)=>{const q=T(u,z);return q.x+' '+q.y;};
  // Continuous cloth silhouette: sloping shoulders, a curved rib cage and a
  // rounded waist seated into the pelvis. There are no planar torso panels.
  let torso='<g class="seated-torso"><path d="M'+p(-.065,38)+'C'+p(-.13,37.8)+' '+p(-.225,37)+' '+p(-.24,34.5)+'C'+p(-.25,31)+' '+p(-.205,27)+' '+p(-.185,23)+'C'+p(-.18,20)+' '+p(-.19,18)+' '+p(-.18,17)+'Q'+p(0,15.5)+' '+p(.18,17)+'C'+p(.19,18)+' '+p(.18,20)+' '+p(.185,23)+'C'+p(.205,27)+' '+p(.25,31)+' '+p(.24,34.5)+'C'+p(.225,37)+' '+p(.13,37.8)+' '+p(.065,38)+'Q'+p(0,36.4)+' '+p(-.065,38)+'Z" fill="'+coat+'"/>';

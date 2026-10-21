@@ -1,0 +1,356 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    "Eight scenes: both tables, four table rotations, accessories at 15/45/75/135 degrees, mat support and four occupied chairs; all placements accepted by production collision and edge rules",
+    "Recorded full/empty stock labels and direct body equality for cookies, water and fridge; this is evidence, not a visual-quality pass assertion",
+    "Regular and compact bodies differ in all four seat directions; new body gallery generated for visual inspection"
+  ],
+  "errors": [],
+  "screenshots": [
+    "rotated-accessories-four-seats.png",
+    "stock-models.png",
+    "compact-and-regular.png"
+  ],
+  "audio": "-noaudio; ReviewAudioSilence; --mute-audio; Chromium sandbox enabled",
+  "limitations": [
+    "Production renderers in labelled visual fixtures; not earned gameplay or full map integration. Visual observations are separate from geometric assertions."
+  ],
+  "url": "http://127.0.0.1:53017/",
+  "angles": [
+    {
+      "kind": "table",
+      "tableRotation": 0,
+      "screenAngle": 15,
+      "lampAngle": 15,
+      "matAngle": 15,
+      "surfaceIssues": [],
+      "moved": [
+        {
+          "id": "prop-0",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-1",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-2",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-3",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        }
+      ]
+    },
+    {
+      "kind": "table",
+      "tableRotation": 90,
+      "screenAngle": 45,
+      "lampAngle": 45,
+      "matAngle": 45,
+      "surfaceIssues": [],
+      "moved": [
+        {
+          "id": "prop-0",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-1",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-2",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-3",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        }
+      ]
+    },
+    {
+      "kind": "table",
+      "tableRotation": 180,
+      "screenAngle": 75,
+      "lampAngle": 75,
+      "matAngle": 75,
+      "surfaceIssues": [],
+      "moved": [
+        {
+          "id": "prop-0",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-1",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-2",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-3",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        }
+      ]
+    },
+    {
+      "kind": "table",
+      "tableRotation": 270,
+      "screenAngle": 135,
+      "lampAngle": 135,
+      "matAngle": 135,
+      "surfaceIssues": [],
+      "moved": [
+        {
+          "id": "prop-0",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-1",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-2",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-3",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        }
+      ]
+    },
+    {
+      "kind": "tableComfort",
+      "tableRotation": 0,
+      "screenAngle": 15,
+      "lampAngle": 15,
+      "matAngle": 15,
+      "surfaceIssues": [],
+      "moved": [
+        {
+          "id": "prop-0",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-1",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-2",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-3",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        }
+      ]
+    },
+    {
+      "kind": "tableComfort",
+      "tableRotation": 90,
+      "screenAngle": 45,
+      "lampAngle": 45,
+      "matAngle": 45,
+      "surfaceIssues": [],
+      "moved": [
+        {
+          "id": "prop-0",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-1",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-2",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-3",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        }
+      ]
+    },
+    {
+      "kind": "tableComfort",
+      "tableRotation": 180,
+      "screenAngle": 75,
+      "lampAngle": 75,
+      "matAngle": 75,
+      "surfaceIssues": [],
+      "moved": [
+        {
+          "id": "prop-0",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-1",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-2",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-3",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        }
+      ]
+    },
+    {
+      "kind": "tableComfort",
+      "tableRotation": 270,
+      "screenAngle": 135,
+      "lampAngle": 135,
+      "matAngle": 135,
+      "surfaceIssues": [],
+      "moved": [
+        {
+          "id": "prop-0",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-1",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-2",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        },
+        {
+          "id": "prop-3",
+          "localPreserved": true,
+          "rotatedPosition": true,
+          "issue": null
+        }
+      ]
+    }
+  ],
+  "stock": [
+    {
+      "kind": "cookies",
+      "empty": false,
+      "label": "12 порц.",
+      "stock": 12,
+      "sameBodyAsOtherState": false
+    },
+    {
+      "kind": "cookies",
+      "empty": true,
+      "label": "Нет пригодного запаса",
+      "stock": 0,
+      "sameBodyAsOtherState": false
+    },
+    {
+      "kind": "water",
+      "empty": false,
+      "label": "12 порц.",
+      "stock": 12,
+      "sameBodyAsOtherState": false
+    },
+    {
+      "kind": "water",
+      "empty": true,
+      "label": "Нет пригодного запаса",
+      "stock": 0,
+      "sameBodyAsOtherState": false
+    },
+    {
+      "kind": "fridge",
+      "empty": false,
+      "label": "12 порц.",
+      "stock": 12,
+      "sameBodyAsOtherState": false
+    },
+    {
+      "kind": "fridge",
+      "empty": true,
+      "label": "Нет пригодного запаса",
+      "stock": 0,
+      "sameBodyAsOtherState": false
+    }
+  ],
+  "bodyComparisons": [
+    {
+      "rotation": 0,
+      "different": true
+    },
+    {
+      "rotation": 1,
+      "different": true
+    },
+    {
+      "rotation": 2,
+      "different": true
+    },
+    {
+      "rotation": 3,
+      "different": true
+    }
+  ]
+}

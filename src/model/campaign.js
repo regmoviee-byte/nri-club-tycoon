@@ -352,8 +352,9 @@ export function executeCampaignAction(club,action){
   const direction=action.direction;if(!['general','beginners'].includes(direction))return fail('Выберите открытый клуб или школу новичков.');
   const current=ensureClubDirection(draft);if(current.id===direction){result={ok:true,unchanged:true};break;}
   const cost=direction==='beginners'?BEGINNER_DIRECTION.activationCost:0;
-  if(draft.finance.cash-reserveRequired(draft)<cost)return fail(`Для запуска направления нужны ${cost} ₽ сверх принятых обязательств.`);
-  if(cost)recordMoney(draft,-cost,'direction','Объявление школы новичков');draft.clubDirection={version:1,id:direction,chosenAt:draft.clock};result={ok:true,cost,direction};break;
+  draft.clubDirection={version:1,id:direction,chosenAt:draft.clock};
+  if(cost&&draft.finance.cash-cost<reserveRequired(draft))return fail(`Для запуска направления нужны ${cost} ₽ и резерв с учётом его содержания. Свободных денег недостаточно.`);
+  if(cost)recordMoney(draft,-cost,'direction','Объявление школы новичков');result={ok:true,cost,direction};break;
  }
  case 'setServiceShift':result=setServiceShift(draft,action.active);break;
  case 'purchaseGame':result=buyGame(draft,action.systemId);break;

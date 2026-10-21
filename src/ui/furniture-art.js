@@ -8,7 +8,7 @@ const line=(d,color,width=1)=>path(d,'none',color,width);
 const rect=(x,y,w,h,color,r=0,stroke='')=>'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+r+'" fill="'+color+'"'+(stroke?' stroke="'+stroke+'" stroke-width=".65"':'')+'/>';
 const text=(s,x,y,size=3.5,color='#e8dcc0')=>'<text x="'+x+'" y="'+y+'" font-family="Segoe UI,sans-serif" font-size="'+size+'" text-anchor="middle" fill="'+color+'">'+s+'</text>';
 
-function model(kind,rotation){
+function model(kind,rotation,stockLevel='normal'){
  const spec=BUILD_CATALOG[kind],w=spec.width,d=spec.height,faces=[],decals=[];
  const add=(...f)=>faces.push(...f),P=(x,y,z)=>{const a=rotation*Math.PI/2;return project(x*Math.cos(a)-y*Math.sin(a),x*Math.sin(a)+y*Math.cos(a),z);};
  function front(art,depth=.34,width=.8,back=false){const a=rotation*Math.PI/2,normal={x:(back?1:-1)*Math.sin(a),y:(back?-1:1)*Math.cos(a)};if(normal.x+normal.y<.5)return;const p=P(0,depth*(back?-1:1),0),q=P(width/32,0,0);decals.push('<g transform="matrix('+q.x+' '+q.y+' 0 1 '+p.x+' '+p.y+')">'+art+'</g>');}
@@ -37,7 +37,7 @@ function model(kind,rotation){
   front(line('M9-37v-7M10.5-37v-9M11.5-37v-6','#c5c6a8',.8),.245,1.8);
  }else if(kind==='water'){
   foot(.42,.38);add(...tapered(0,0,2,.58,.5,.55,.46,30,'#d2d6bf','cooler-body'),...block(0,0,31.8,.57,.48,2,'#8b9f98','cooler-top'));
-  add(...lathe(0,0,33,[[.07,0],[.11,1],[.165,3],[.175,5],[.17,14],[.15,16],[.09,19],[.065,19.7]],'#a4c7c5','water-bottle'),...cylinder(0,0,52.7,.068,.068,1.2,'#648d8c',20,'bottle-cap'));front(line('M-5-38v10M-6-45v5','#d6e3d6',1.3)+line('M-7-34h14','#7fafa9',.6),.14,.75);
+  add(...lathe(0,0,33,[[.07,0],[.11,1],[.165,3],[.175,5],[.17,14],[.15,16],[.09,19],[.065,19.7]],stockLevel==='empty'?'#d7dfcd':stockLevel==='low'?'#bfd3c9':'#a4c7c5','water-bottle'),...cylinder(0,0,52.7,.068,.068,1.2,'#648d8c',20,'bottle-cap'));front((stockLevel==='empty'?'':rect(-4,stockLevel==='low'?-38:-46,8,stockLevel==='low'?3:11,'#7faeac',1))+line('M-5-38v10M-6-45v5','#d6e3d6',1.3)+line('M-7-34h14','#7fafa9',.6),.14,.75);
   front(rect(-12,-28,24,12,'#617c78',2)+rect(-8,-23,5,3,'#8aaeb2',.7)+rect(3,-23,5,3,'#bc7765',.7)+line('M-5-20v3M5-20v3','#dce0c9',1.2)+rect(-9,-14,18,2,'#657f79',.6)+line('M-8-8h16M-8-6h16','#8c9f95',.6),.251,.58);
  }else if(['kettle','coffee','coffeeAuto','cookies'].includes(kind)){
   cabinet(.78,.62,27,'#9eafa4');
@@ -53,7 +53,7 @@ function model(kind,rotation){
    for(const x of [-.12,.12])add(...cylinder(x,.18,29,.061,.072,5,'#e6d9ba',10,'espresso-cup'));
    front(rect(-12,-48,24,8,'#253f3b',1)+rect(-9,-46,11,3,'#a4c7b2',.4)+rect(6,-46,3,3,'#c5c8a3',1)+rect(-9,-38,18,1.7,'#c3c9b6',.6)+line('M-4-36v3M4-36v3','#d9d6b9',1.3)+text('ЭСПРЕССО',0,-6,2.8),.153,.62);
   }else{
-   add(...cylinder(0,0,28.8,.23,.23,1.8,'#b8a173',16,'jar-base'));for(const [x,y,z]of [[-.08,-.04,31],[.07,.05,33],[-.05,.08,37],[.06,-.05,40],[-.03,.01,44]]){add(...cylinder(x,y,z,.09,.09,1.8,'#c49a5e',10,'biscuit'));for(const [dx,dy]of [[-.025,-.02],[.03,.02]])add(disk(x+dx,y+dy,z+1.83,.012,.012,'#886240','chocolate-chip',6));}
+   add(...cylinder(0,0,28.8,.23,.23,1.8,'#b8a173',16,'jar-base'));for(const [x,y,z]of [[-.08,-.04,31],[.07,.05,33],[-.05,.08,37],[.06,-.05,40],[-.03,.01,44]].slice(0,stockLevel==='empty'?0:stockLevel==='low'?2:5)){add(...cylinder(x,y,z,.09,.09,1.8,'#c49a5e',10,'biscuit'));for(const [dx,dy]of [[-.025,-.02],[.03,.02]])add(disk(x+dx,y+dy,z+1.83,.012,.012,'#886240','chocolate-chip',6));}
    add(...cylinder(0,0,46,.24,.24,1.5,'#ab8d5e',16,'jar-lid'),...cylinder(0,0,47.5,.04,.035,2,'#b99b66',8,'jar-knob'));
    // Glass remains transparent, so it cannot hide the biscuits like a solid.
    decals.push('<g class="cookie-jar-glass"><path d="M-11.7-46a11.7 5.85 0 0 1 23.4 0v16a11.7 5.85 0 0 1-23.4 0Z" fill="#c6dcca" fill-opacity=".18" stroke="#9fb8a7" stroke-width=".7"/>'+line('M-8-43v12','#e0e8d0',1.1)+'</g>');
@@ -62,7 +62,7 @@ function model(kind,rotation){
  }else if(kind==='fridge'){
   foot(.65,.6);add(...tapered(0,0,2,.83,.73,.80,.70,53,'#bdcbbb','fridge-body'),...block(0,0,55,.79,.69,1.4,'#d4dbc4','fridge-cap'));
   front(rect(-14,-53,28,49,'#d8dcc4',1.8,'#8da396')+line('M-13-40h26','#8ca195',.7)+rect(-11,-37,22,27,'#87aba4',1.2,'#708f88')+line('M11-46v7M11-29v9','#8a9c82',1.4)+line('M-4-47h8M0-51v8M-3-50l6 6M3-50l-6 6','#91b0a5',.7)+rect(-8,-7,16,1.5,'#91a18d',.4),.367,.83);
-  front([[-6,'#c8a56f'],[0,'#a9c5af'],[6,'#c09169']].map(([x,c])=>rect(x-2.1,-28,4.2,14,c,1)+rect(x-1.1,-32,2.2,5,c,.4)+rect(x-1.2,-24,2.4,4,'#e1dabc',.2)).join('')+line('M-10-35L9-12','#c9d8c3',.6),.371,.83);
+  front([[-6,'#c8a56f'],[0,'#a9c5af'],[6,'#c09169']].slice(0,stockLevel==='empty'?0:stockLevel==='low'?1:3).map(([x,c])=>rect(x-2.1,-28,4.2,14,c,1)+rect(x-1.1,-32,2.2,5,c,.4)+rect(x-1.2,-24,2.4,4,'#e1dabc',.2)).join('')+line('M-10-35L9-12','#c9d8c3',.6),.371,.83);
   front(rect(-12,-50,24,42,'#a1b4a5',.6)+line('M-11-12h22M-11-15h22M-11-18h22M-11-21h22','#6f8a7b',.6),.367,.83,true);
  }else if(kind==='fan'){
   add(...cylinder(0,0,0,.23,.22,2,'#526f64',16,'fan-base'),...cylinder(0,0,2,.03,.026,31,'#9daea0',10,'fan-pole'));
@@ -107,8 +107,8 @@ function model(kind,rotation){
  return {faces:transformFaces(faces,{angle:rotation*90}),decals:decals.join('')};
 }
 
-export function detailedFurnitureArt(object){
+export function detailedFurnitureArt(object,{stock=null}={}){
  const spec=BUILD_CATALOG[object.kind];if(!spec)return null;
- const key=object.kind+':'+object.rotation;if(!cache.has(key)){const data=model(object.kind,object.rotation);if(!data.faces.length&&!data.decals)return null;cache.set(key,solidArt(data.faces)+data.decals);}
- const width=object.rotation%2?spec.height:spec.width,depth=object.rotation%2?spec.width:spec.height,p=project(object.x+width/2,object.y+depth/2);let art=cache.get(key);if(object.enabled===false&&spec.family==='light')art=art.replaceAll('#f6e2a1','#9e9e82');return '<g class="crafted-furniture" data-powered="'+(object.enabled!==false)+'" transform="translate('+p.x+' '+p.y+')">'+art+'</g>';
+ const stockLevel=stock===null?'normal':stock<=0?'empty':stock<=3?'low':'normal',key=object.kind+':'+object.rotation+':'+stockLevel;if(!cache.has(key)){const data=model(object.kind,object.rotation,stockLevel);if(!data.faces.length&&!data.decals)return null;cache.set(key,solidArt(data.faces)+data.decals);}
+ const width=object.rotation%2?spec.height:spec.width,depth=object.rotation%2?spec.width:spec.height,p=project(object.x+width/2,object.y+depth/2);let art=cache.get(key);if(object.enabled===false&&spec.family==='light')art=art.replaceAll('#f6e2a1','#9e9e82');return '<g class="crafted-furniture" data-stock-level="'+(stock===null?'display':stockLevel)+'" data-powered="'+(object.enabled!==false)+'" transform="translate('+p.x+' '+p.y+')">'+art+'</g>';
 }

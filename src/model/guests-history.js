@@ -120,7 +120,7 @@ export function recordGuestOutcome(club,run,reviews){
   const delay=review.score>=8?8:review.score>=6?16:32+Math.min(2,program.disappointments-1)*16;
   person.availableAfter=run.endsAt+delay;
   const served=review.workload?.servedById?.[guest.id]??review.workload?.served??0,current=person.preferences.knowledge[system]??0;
-  if(current<2&&review.score>=6&&served>=.9){person.preferences.knowledge[system]=current+1;if(current===0)(person.introductions??={})[system]??={at:run.endsAt,title:session.title};}
+  if(current<2&&review.score>=6&&served>=.9){person.preferences.knowledge[system]=current+1;if(current===0)(person.introductions??={})[system]??={at:run.endsAt,visitId:guest.visitId,title:session.title};}
   if(person.initialExperience==='new')person.profile.experience=copy(experiences.find(e=>e.id==='some'));
   const visit=registry.visits[guest.visitId];visit.status='completed';visit.closedAt=run.endsAt;visit.reviewId=review.reviewId;
   recorded++;

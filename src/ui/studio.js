@@ -55,6 +55,19 @@ function note(message,error=false){ui.message=message??'';ui.error=error;const n
 function nav(tab){ui.tab=tab;ui.pending=null;if(tab==='guests'||tab==='rooms')ui.expandedMap=false;if(tab!=='guests')ui.seatArmed=false;if(tab!=='build'){ui.tool='select';ui.preview=null;ui.cells.clear();}render(true);}
 function stateView(){return {tool:ui.tab==='build'?(ui.tool==='erase'?'select':ui.tool):null,kind:ui.kind,walls:ui.walls,objectId:ui.object,roomId:ui.tab==='rooms'?ui.room:ui.tab==='build'?ui.buildRoom:null,selectedGuest:ui.guest,placingGuest:ui.seatArmed?ui.guest:null,cells:[...ui.cells.values()]};}
 const panelMemory=new Map();let renderedPanelKey=null;
+const formDrafts=new Map();
+function draftKey(form){return form&&(form.id==='cleaning-policy-form'||form.id==='room-inspector-form'||form.id==='demolish-room-form'||form.classList.contains('service-policy'))?[renderedPanelKey,form.id||'service-policy',form.dataset.id??''].join('|'):null;}
+function rememberFormDraft(target){
+ const form=target.closest('form'),key=draftKey(form);if(!key)return;
+ formDrafts.set(key,[...form.elements].filter(n=>n.name&&n.type!=='file').map(n=>({name:n.name,type:n.type,value:n.value,checked:n.checked})));
+}
+function restoreFormDrafts(panel){
+ for(const form of panel.querySelectorAll('form')){const rows=formDrafts.get(draftKey(form));if(!rows)continue;
+  for(const node of form.elements){if(!node.name||node.type==='file')continue;const row=rows.find(r=>r.name===node.name&&r.type===node.type&&(!['checkbox','radio'].includes(node.type)||r.value===node.value));if(!row)continue;
+   if(['checkbox','radio'].includes(node.type))node.checked=row.checked;else if(node.tagName!=='SELECT'||[...node.options].some(o=>o.value===row.value))node.value=row.value;
+  }
+ }
+}
 function panelKey(){return [ui.tab,ui.tab==='guests'?[ui.guest,ui.guestTab].join(':'):ui.tab==='rooms'?ui.room:ui.tab==='build'?[ui.object,ui.wall,ui.buildRoom].join(':'):''].join('|');}
 function focusToken(node){if(!node||node===document.body)return null;return {id:node.id,action:node.dataset?.action,data:node.dataset?JSON.stringify({...node.dataset}):'',name:node.name,tag:node.tagName,text:node.textContent?.trim().slice(0,80),start:node.selectionStart,end:node.selectionEnd};}
 function matchingFocus(token){if(!token)return null;if(token.id)return document.getElementById(token.id);return [...root.querySelectorAll('button,select,input,summary,a')].find(n=>n.tagName===token.tag&&(token.name?n.name===token.name:token.action?n.dataset.action===token.action&&JSON.stringify({...n.dataset})===token.data:n.textContent.trim().slice(0,80)===token.text));}
@@ -67,7 +80,7 @@ function render(resetScroll=false){
  const panel=root.querySelector('#panel-content'),focus=focusToken(document.activeElement),wasPanel=panel.contains(document.activeElement),nextKey=panelKey();
  if(renderedPanelKey)panelMemory.set(renderedPanelKey,{scroll:panel.scrollTop,details:[...panel.querySelectorAll('details')].map(n=>[n.dataset.detailKey??n.querySelector('summary')?.textContent.trim(),n.open])});
  const remembered=panelMemory.get(nextKey),scroll=resetScroll?(remembered?.scroll??0):nextKey===renderedPanelKey?panel.scrollTop:remembered?.scroll??0;
- panel.innerHTML=panelHTML();fitItemIcons(panel);
+ panel.innerHTML=panelHTML();renderedPanelKey=nextKey;restoreFormDrafts(panel);fitItemIcons(panel);
  for(const detail of panel.querySelectorAll('details')){const key=detail.dataset.detailKey??detail.querySelector('summary')?.textContent.trim(),old=remembered?.details.find(([id])=>id===key);if(old)detail.open=old[1];}
  panel.scrollTop=scroll;renderedPanelKey=nextKey;
  for(const n of root.querySelectorAll('[data-action="tool"],[data-action="build-item"],[data-action="library-tab"],[data-action="guest-tab"],[data-action="room-filter"]'))n.setAttribute('aria-pressed',String(n.classList.contains('active')));
@@ -305,11 +318,11 @@ async function perform(fn,{archive=false,keepUndo=false,message='Сохране�
  if(busy)return {ok:false};if(readOnly){note(writer?.reason??'Клуб открыт для просмотра.',true);return {ok:false};}
  busy=true;root.setAttribute('aria-busy','true');root.classList.add('busy');
  try{const draft=structuredClone(club),result=fn(draft);if(!result?.ok){note(result?.reason??'Действие недоступно.',true);return result;}
-  syncGuestWaiting(draft);updateCampaign(draft);await store.write(draft,{archive});club=draft;if(!keepUndo)undo=null;note(result.report?(result.report.completed?.length?'Партия завершилась. Отзывы и полный расчёт — в кассе.':result.report.reason??'Прошло игровое время. Проверьте события клуба.'):message);return result;
+  syncGuestWaiting(draft);updateCampaign(draft);await store.write(draft,{archive});club=draft;if(archive)formDrafts.clear();if(!keepUndo)undo=null;note(result.report?(result.report.completed?.length?'Партия завершилась. Отзывы и полный расчёт — в кассе.':result.report.reason??'Прошло игровое время. Проверьте события клуба.'):message);return result;
  }catch(e){note(e.message,true);return {ok:false,reason:e.message};}finally{busy=false;render();}
 }
-async function command(action,message){
- const transactionId=uid(),run=()=>perform(draft=>executeCampaignAction(draft,{...action,transactionId}),{message});
+async function command(action,message,{formKey=null}={}){
+ const transactionId=uid(),run=async()=>{const result=await perform(draft=>executeCampaignAction(draft,{...action,transactionId}),{message});if(result?.ok&&formKey){formDrafts.delete(formKey);render();}return result;};
  if(['hireMaster','purchaseGame','buyAdventure','repairKit','restock','maintainEquipment','hireServiceStaff','trainMaster','cleanZone','setClubDirection'].includes(action.type)){
   try{const after=structuredClone(club),result=executeCampaignAction(after,{...action,transactionId});if(result?.ok){const cost=Math.max(0,club.finance.cash-after.finance.cash),quote=investmentQuote(club,{cost,afterClub:after});if(cost>0&&quote.shortfall>0){ui.pending={title:'Покупка затронет обязательный резерв',text:'Расход '+money(cost)+'. В кассе после: '+money(quote.balanceAfter)+', обязательства '+money(quote.reserveAfter)+', свободно '+money(quote.freeAfter)+'. Не хватает резерва '+money(quote.shortfall)+'. Содержание после '+money(quote.hourlyAfter)+'/ч. Продолжить с этим риском?',run};render(true);return{ok:false,pending:true};}}}catch{}
  }
@@ -344,7 +357,8 @@ function dragPerson(id,x,y,moved){
 }
 function hideDrag(){root.querySelector('#drag-person').hidden=true;}
 function dropGuest(id,seatId){hideDrag();const o=club.layout.objects.find(o=>o.id===seatId);if(o?.role==='guest')seatGuest(id,o.roomId,o.seat);else note('Перетащите гостя на конкретный игровой стул. Место сохранено.');}
-function clearSelection(){ui.cells.clear();ui.edges.clear();ui.preview=null;ui.hover=null;}
+function clearBuildConfirmation(){if(ui.pending?.kind==='build'){ui.pending=null;root.querySelector('.inline-confirm')?.remove();}}
+function clearSelection(){clearBuildConfirmation();ui.cells.clear();ui.edges.clear();ui.preview=null;ui.hover=null;}
 let objectGesture=null;
 function cancelBuild(){objectGesture=null;clearSelection();if(world)world.drawPreview([]);renderPreview();}
 function dragObject(id,p,start,finished){
@@ -395,16 +409,19 @@ function duplicateBenefitHTML(quote){
 function renderPreview(quote=null,locked=Boolean(ui.preview)){
  const n=root.querySelector('#build-preview');if(ui.tab!=='build'||(!ui.preview&&!ui.hover&&!quote)){n.innerHTML='';n.hidden=true;return;}n.hidden=false;
  const q=quote??buildService.quote(ui.preview??ui.hover),net=(q.cost??0)-(q.refund??0),canPay=club.finance.cash>=net,valid=q.ok&&canPay,investment=q.ok?(q.investment??investmentQuote(club,{cost:q.cost,refund:q.refund,afterClub:{...club,layout:q.next}})):null;
+ if(ui.pending?.kind==='build'&&(!q.ok||ui.pending.approval!==buildApproval(q)))clearBuildConfirmation();
  const delta=q.ok?Math.round((clubPrestige({...club,layout:q.next}).value-clubPrestige(club).value)*100)/100:0,removed=q.ok?club.layout.objects.filter(o=>!q.next.objects.some(next=>next.id===o.id)).length:0,rotatable=['item','move'].includes(ui.tool)&&(ui.preview??ui.hover)?.type!=='upgrade';
  n.classList.toggle('invalid',!valid);n.innerHTML='<div class="preview-main"><small>'+(locked?'СМЕТА ИЗМЕНЕНИЯ':'ПРЕДПРОСМОТР')+'</small><b>'+(q.ok?(net<0?'Возврат '+money(-net):money(net)):esc(q.reason))+'</b><span>'+(q.ok?(canPay?(removed?'Продаётся предметов '+removed:'Готово к подтверждению'):'Не хватает '+money(net-club.finance.cash)):'Изменение не применено')+'</span>'+(q.ok?'<p class="purchase-context" data-prestige-delta="'+delta+'">Изменение престижа: '+(delta>0?'+':'')+delta.toLocaleString('ru-RU',{maximumFractionDigits:2})+'. Это фактический вклад этой установки с учётом доступности и пределов.</p>'+duplicateBenefitHTML(q):'')+(investment?'<details data-detail-key="investment"><summary>Касса '+money(investment.balanceAfter)+' · свободно '+money(investment.freeAfter)+'</summary>'+investmentHTML(investment)+'</details>':'')+(investment?.shortfall?'<p class="reserve-alert">Затрагивает резерв: не хватает '+money(investment.shortfall)+'</p>':'')+'</div><div class="button-row">'+(locked?button('Применить','apply-build',!valid||busy?'disabled':'','primary'):'')+(rotatable?button(BUILD_CATALOG[ui.kind]?.layer==='tabletop'?'R · '+(ui.surfaceAngle??0)+'°':'Поворот R','rotate'):'')+button('Отмена','cancel-build')+'</div>';
 }
-async function applyBuild(acceptReserve=false){
+function buildApproval(q){return JSON.stringify({edit:q.edit,revision:q.baseRevision,cost:q.cost,refund:q.refund,investment:q.investment??investmentQuote(club,{cost:q.cost,refund:q.refund}),clock:club.clock});}
+async function applyBuild(approval=null){
  if(!ui.preview||busy||readOnly)return;const before=structuredClone(club),q=buildService.quote(ui.preview);if(!q.ok){note(q.reason,true);return;}
  const investment=q.investment??investmentQuote(club,{cost:q.cost,refund:q.refund});
- if(!acceptReserve&&investment.shortfall>0&&q.cost>q.refund){ui.pending={title:'Строительство затронет обязательства',text:'Касса после '+money(investment.balanceAfter)+', резерв '+money(investment.reserveAfter)+', свободно '+money(investment.freeAfter)+'. Не хватает '+money(investment.shortfall)+'. Содержание '+money(investment.hourlyAfter)+'/ч. Продолжить с этим риском?',run:()=>applyBuild(true)};render(true);return;}
+ const currentApproval=buildApproval(q);if(approval&&approval!==currentApproval){note('Смета или обязательства изменились. Проверьте расчёт и подтвердите покупку заново.',true);render();return;}
+ if(!approval&&investment.shortfall>0&&q.cost>q.refund){ui.pending={kind:'build',approval:currentApproval,title:'Строительство затронет обязательства',text:'Касса после '+money(investment.balanceAfter)+', резерв '+money(investment.reserveAfter)+', свободно '+money(investment.freeAfter)+'. Не хватает '+money(investment.shortfall)+'. Содержание '+money(investment.hourlyAfter)+'/ч. Продолжить с этим риском?',run:()=>applyBuild(currentApproval)};render(true);return;}
  busy=true;root.classList.add('busy');root.setAttribute('aria-busy','true');let result;
  try{result=await buildService.commit(q.edit,{baseRevision:q.baseRevision,transactionId:uid()});}catch(error){result={ok:false,reason:error.message};}finally{busy=false;}
- if(result.ok){undo=before;clearSelection();ui.tool=ui.tool==='item'?'item':'select';if(!club.layout.rooms.some(z=>z.id===ui.buildRoom))ui.buildRoom=null;if(!club.layout.walls.some(w=>w.id===ui.wall))ui.wall=null;if(!club.layout.objects.some(o=>o.id===ui.object))ui.object=null;note('Построено. '+(result.cost?'Расход '+money(result.cost)+'. ':'')+(result.refund?'Возврат '+money(result.refund)+'.':''));}else note(result.reason,true);render();
+ if(result.ok){undo=before;for(const key of formDrafts.keys())if(key.startsWith(renderedPanelKey+'|'))formDrafts.delete(key);clearSelection();ui.tool=ui.tool==='item'?'item':'select';if(!club.layout.rooms.some(z=>z.id===ui.buildRoom))ui.buildRoom=null;if(!club.layout.walls.some(w=>w.id===ui.wall))ui.wall=null;if(!club.layout.objects.some(o=>o.id===ui.object))ui.object=null;note('Построено. '+(result.cost?'Расход '+money(result.cost)+'. ':'')+(result.refund?'Возврат '+money(result.refund)+'.':''));}else note(result.reason,true);render();
 }
 function requestStart(id){
  const room=club.rooms.find(r=>r.id===id),guests=roomOccupants(club,id),end=club.clock+room.hours,late=guests.filter(g=>g.asked.includes('time')&&g.schedule.leaveAt<end),unknown=guests.filter(g=>!g.asked.includes('time')),status=campaignStatus(club),wages=room.master.hourlyWage*room.hours;
@@ -464,13 +481,15 @@ async function handle(action,d){
  if(actions[action])await command(actions[action],action==='restock'?'Заказ оплачен. Поставка прибудет через один игровой час.':undefined);
 }
 root.addEventListener('click',e=>{const n=e.target.closest('[data-action]');if(n){e.preventDefault();handle(n.dataset.action,n.dataset).catch(error=>note(error.message,true));}});
+root.addEventListener('input',e=>rememberFormDraft(e.target),true);
+root.addEventListener('change',e=>rememberFormDraft(e.target),true);
 root.addEventListener('submit',e=>{
  e.preventDefault();const data=new FormData(e.target);
- if(e.target.id==='cleaning-policy-form'){command({type:'setCleaningPolicy',policy:{enabled:data.has('enabled'),zoneIds:data.getAll('zoneIds'),cleanlinessBelow:Number(data.get('cleanlinessBelow')),maxSpend:Number(data.get('maxSpend')),windowHours:Number(data.get('windowHours'))}},'Поручение сохранено.');return;}
+ if(e.target.id==='cleaning-policy-form'){command({type:'setCleaningPolicy',policy:{enabled:data.has('enabled'),zoneIds:data.getAll('zoneIds'),cleanlinessBelow:Number(data.get('cleanlinessBelow')),maxSpend:Number(data.get('maxSpend')),windowHours:Number(data.get('windowHours'))}},'Поручение сохранено.',{formKey:draftKey(e.target)});return;}
  if(e.target.id==='room-inspector-form'){const zone=club.layout.rooms.find(z=>z.id===ui.buildRoom);ui.preview={type:'room',id:zone.id,cells:zone.cells,name:String(data.get('name')).trim(),purpose:data.get('purpose')};renderPreview();return;}
  if(e.target.id==='demolish-room-form'){try{ui.preview=demolishRoomEdit(club.layout,ui.buildRoom,{sellContents:data.has('sellContents'),removeFinishes:data.has('removeFinishes'),removeBoundary:data.has('removeBoundary')});renderPreview();}catch(error){note(error.message,true);render();}return;}
  if(e.target.id==='room-form')command({type:'assignRoom',roomId:ui.room,gameId:data.get('game'),masterId:data.get('master'),adventureId:data.get('adventure')});
- if(e.target.classList.contains('service-policy'))command({type:'configureAutoPurchase',itemId:e.target.dataset.id,settings:{target:Number(data.get('target')),budget:Number(data.get('budget')),threshold:0,maxOrder:Math.min(10,Number(data.get('target')))}});
+ if(e.target.classList.contains('service-policy'))command({type:'configureAutoPurchase',itemId:e.target.dataset.id,settings:{target:Number(data.get('target')),budget:Number(data.get('budget')),threshold:0,maxOrder:Math.min(10,Number(data.get('target')))}},'Поручение сохранено.',{formKey:draftKey(e.target)});
  if(e.target.classList.contains('training-form'))command({type:'trainMaster',masterId:e.target.dataset.id,systemId:data.get('course')});
 });
 root.addEventListener('input',e=>{
