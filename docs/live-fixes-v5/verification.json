@@ -1,0 +1,104 @@
+{
+  "version": "20261021-live-fixes-v5",
+  "parent": "eaf3e37b2d838a051586fbaa248a42f3bcd27745",
+  "scope": [
+    "LIVE-01",
+    "LIVE-02",
+    "LIVE-03",
+    "LIVE-04",
+    "LIVE-05",
+    "LIVE-06",
+    "LIVE-07",
+    "LIVE-08"
+  ],
+  "candidateChecks": [
+    {
+      "name": "model-1",
+      "sha256": "2dfe40ca8bf3cedf50d95eb36024a61b106a929e40242af4491a30a017182af4",
+      "finished": true,
+      "passed": true,
+      "checks": 157,
+      "screenshots": 0,
+      "source": null,
+      "runnerExitCode": 0,
+      "errors": [],
+      "runtimeErrors": []
+    },
+    {
+      "name": "local-final",
+      "sha256": "93be469c123ed8b1835eec3f7333562385575fca750e3038fce2a1e5e489e747",
+      "finished": true,
+      "passed": true,
+      "checks": 8,
+      "screenshots": 18,
+      "source": {
+        "version": "20261021-live-fixes-v5",
+        "matched": 106,
+        "total": 106
+      },
+      "runnerExitCode": 0,
+      "errors": [],
+      "runtimeErrors": []
+    },
+    {
+      "name": "layout-final",
+      "sha256": "f1130bc95f15daa920e117f1f245ad72a44a9beb08e77b496f5e1091bcbbff9e",
+      "finished": true,
+      "passed": true,
+      "checks": 1,
+      "screenshots": 17,
+      "source": {
+        "version": "20261021-live-fixes-v5",
+        "matched": 106,
+        "total": 106
+      },
+      "runnerExitCode": 0,
+      "errors": [],
+      "runtimeErrors": []
+    },
+    {
+      "name": "regression-final",
+      "sha256": "6c51b63a148d0050c4b21a7f5c33759ec3c63cdad828ab268f6387fbdf8342da",
+      "finished": true,
+      "passed": true,
+      "checks": 13,
+      "screenshots": 22,
+      "source": {
+        "version": "20261021-live-fixes-v5",
+        "matched": 106,
+        "total": 106
+      },
+      "runnerExitCode": 0,
+      "errors": [],
+      "runtimeErrors": []
+    }
+  ],
+  "runtimeFiles": 106,
+  "sourceManifestSha256": "8ef638d6f2b7528b96f2369bbf330e181f8f093a1ac8ec24923d38ad3fafe13c",
+  "checkpoint": {
+    "path": "local-only; supplied explicitly with --checkpoint",
+    "sha256": "bfd17613cd1444939248ef27cbf4e963351e575a9e1b476091a170de9eac7896",
+    "cash": 1709,
+    "clock": 25,
+    "completedParties": 4,
+    "extraFunds": 0,
+    "published": false
+  },
+  "visuallyReviewedCandidateScreens": [
+    "local-final/02-adventure-decision-data.png",
+    "local-final/03-assigned-adventure-data.png",
+    "local-final/05-conversation-844-390.png",
+    "local-2/05-conversation-1366-768.png",
+    "local-2/05-conversation-390-844.png",
+    "local-2/09-window-frame-and-sill.png",
+    "local-final/06-single-context-390.png",
+    "layout-final/rooms-844.png"
+  ],
+  "silence": "-noaudio; ReviewAudioSilence; --mute-audio; chromiumSandbox:true; isolated storage; owned process runner",
+  "publicChecks": "pending; recorded separately in release receipt after publication",
+  "limitations": [
+    "Scoped to eight verified findings from the previous live session.",
+    "Controlled browser checks are not a novice user study or a physical-device check.",
+    "No economy or satisfaction rebalance."
+  ]
+}

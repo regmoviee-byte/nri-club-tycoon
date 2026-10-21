@@ -1,3 +1,4 @@
+import {windowArt} from './window-art.js';
 import {doorArt,doorLeafArt,doorKey,doorCrossings} from './door-art.js';
 import {preferences,isControl} from './preferences.js';
 import {BUILD_CATALOG} from '../data/build-catalog.js';
@@ -165,8 +166,9 @@ export function createWorld(host,callbacks={}){
   for(const wall of layout.walls){
    const room=layout.rooms.find(r=>r.cells.some(c=>wall.axis==='h'?c.x===wall.x&&(c.y===wall.y||c.y+1===wall.y):c.y===wall.y&&(c.x===wall.x||c.x+1===wall.x))),running=club.rooms.some(r=>r.id===room?.id&&r.status==='running'),door=['door','wideDoor'].includes(wall.kind),front=room&&room.cells.some(c=>wall.axis==='h'?c.x===wall.x&&c.y+1===wall.y:c.y===wall.y&&c.x+1===wall.x),cut=state.walls==='hidden'?0:state.walls==='full'?52:front?10:52,high=door?(state.walls==='hidden'?8:state.walls==='full'||!front?42:18):cut;
    if(!high)continue;const a=project(wall.x,wall.y),end=wall.axis==='h'?{x:wall.x+1,y:wall.y}:{x:wall.x,y:wall.y+1},d=project(end.x,end.y),aTop={x:a.x,y:a.y-high},dTop={x:d.x,y:d.y-high};
-   let art=polygon([a,aTop,dTop,d],door?'#997251':wall.kind==='window'?'#b2c9c2':'#e0d6b8','#a69c83','class="world-wall" data-wall="'+esc(wall.id??wall.axis+':'+wall.x+','+wall.y)+'" data-edge-axis="'+wall.axis+'" data-edge-x="'+wall.x+'" data-edge-y="'+wall.y+'"');
+   let art=polygon([a,aTop,dTop,d],door?'#997251':'#e0d6b8','#a69c83','class="world-wall" data-wall="'+esc(wall.id??wall.axis+':'+wall.x+','+wall.y)+'" data-edge-axis="'+wall.axis+'" data-edge-x="'+wall.x+'" data-edge-y="'+wall.y+'"');
    art+='<path d="M'+aTop.x+' '+aTop.y+'L'+dTop.x+' '+dTop.y+'" stroke="#f4ecd3" stroke-width="2"/>';
+   if(wall.kind==='window')art+=windowArt(wall,high);
    if(door&&running)art+='<circle cx="'+((a.x+d.x)/2)+'" cy="'+((a.y+d.y)/2-17)+'" r="1.4" fill="#e6c47d"/>';
    if(door){const id=doorKey(wall),previous=doors.get(id),inside=room?.cells.some(c=>wall.axis==='h'?c.y>=wall.y:c.x>=wall.x),swing=(inside?1:-1)*(wall.axis==='h'?1:-1),state={wall,height:high,swing,open:previous?.open??0,holdUntil:previous?.holdUntil??0};doors.set(id,state);art=doorArt(wall,high,state.open,swing);}
    entities.push({depth:wall.x+wall.y+(front?1.1:-.05),art:'<g data-wall="'+esc(wall.id??wall.axis+':'+wall.x+','+wall.y)+'" data-edge-axis="'+wall.axis+'" data-edge-x="'+wall.x+'" data-edge-y="'+wall.y+'">'+art+'</g>'});

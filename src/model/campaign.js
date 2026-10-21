@@ -310,7 +310,6 @@ export function progressStaff(club,from,to){
  }
 }
 export function advanceIdle(club,hours=1){
- if(runningRooms(club).length)return fail('Пока гости играют, используйте «Проверить»: время перейдёт к ближайшему окончанию.');
  if(club.campaign.status==='bankrupt')return fail('Это прохождение завершено.');
  if(hours!==1)return fail('Можно подождать один час.');
  return advanceCampaignTo(club,club.clock+1);

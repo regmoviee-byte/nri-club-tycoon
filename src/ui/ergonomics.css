@@ -276,3 +276,71 @@
 @media(max-width:640px){.policy-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.policy-fields label{font-size:9px}.policy-fields input{padding:5px;font-size:11px}}
 .restock-choice{min-width:0;flex:1}.restock-choice>button{width:100%}.order-blocked{display:block;font-size:10px;line-height:1.4;margin-top:6px;color:#74583e}.object-service .order-blocked{font-size:10px}.delete-lock{font-size:10px!important;color:#74583e}
 .mode-build .catalog-item.active{background:#dce3c4;border-color:#7b9369;color:#294d3c}.mode-build .catalog-item.active b,.mode-build .catalog-item.active strong{color:#294d3c}
+
+/* A conversation has one page scroll, with an unconstrained, readable answer. */
+#game.mode-talk .panel-heading{display:none}
+#game.mode-talk .panel-content{display:block;overflow-y:auto;overscroll-behavior:auto;padding:14px 24px;scrollbar-gutter:stable}
+.mode-talk .guest-intro.compact{margin:0 0 8px;gap:12px}
+.mode-talk .guest-intro.compact .guest-portrait{width:45px;height:53px}
+.mode-talk .guest-intro.compact h2{font-size:23px;margin:0}
+.mode-talk .guest-intro.compact p{margin:3px 0;font-size:11px}
+.mode-talk .guest-intro.compact .badge{display:none}
+.mode-talk .guest-views{max-width:470px;margin:0 0 14px}
+.mode-talk .guest-conversation{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:auto auto;gap:14px 22px;min-height:0;align-items:start}
+.mode-talk .conversation-answer{overflow:visible;overscroll-behavior:auto;padding:17px 20px;height:auto;max-height:none;min-height:190px}
+.mode-talk .conversation-answer p{font-size:19px;line-height:1.65;margin-bottom:0}
+.mode-talk .conversation-topics{min-height:auto}
+.mode-talk .conversation-questions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;min-height:auto;padding:0;gap:7px;overscroll-behavior:auto}
+.mode-talk .conversation-questions button{min-height:52px;padding:9px 10px;align-items:center}
+.mode-talk .conversation-questions button>small{font-size:9px}
+.mode-talk .conversation-actions{grid-column:1/-1;justify-content:flex-end;margin-top:4px;padding:9px 0;background:#eee7d4}
+.mode-talk .conversation-actions button{min-width:145px}
+.mode-talk #task-actions{padding:0 24px}
+.mode-talk #task-actions .conversation-actions{margin:0;border:0}
+.mode-talk .conversation-actions>small{margin-right:auto;font-size:11px}
+.story-genres{display:flex;gap:4px;flex-wrap:wrap;margin:7px 0 5px}
+.story-genres>span{font-size:10px;background:#e0e5cf;color:#365747;padding:3px 5px;border-radius:2px}
+.story-risk{font-size:11px;color:#675032;line-height:1.45;margin:4px 0 9px}
+.story-information{font-size:12px;line-height:1.5}
+.story-information>p{margin:8px 0 12px}
+.story-card .story-information{margin-left:-60px;width:calc(100% + 60px)}
+.story-information>.story-premise{border-top:1px solid #c4c7af;padding-top:10px}
+.story-information .story-genres{margin-top:8px}
+.story-characteristics{margin:9px 0;display:grid;gap:5px}
+.story-characteristics>div{display:flex;justify-content:space-between;gap:8px}
+.story-characteristics dt{color:#65705c}.story-characteristics dd{margin:0;text-align:right;font-weight:550}
+.story-scenes{display:grid;gap:7px;margin:12px 0}
+.story-scene{display:grid;grid-template-columns:minmax(95px,1fr) minmax(35px,.7fr) 45px;gap:7px;align-items:center;font-size:10px}
+.story-scene>b{font-size:10px;font-weight:500;text-align:right}
+.scene-track{display:block;height:5px;border-radius:3px;background:#d6d7bf;overflow:hidden}
+.scene-track>i{display:block;background:#66816b;height:100%;border-radius:3px}
+.story-boundaries{border-left:2px solid #a9b392;padding-left:8px;font-size:11px}
+.adventure-details>summary,.room-story-details>summary{font-size:11px;cursor:pointer}
+.adventure-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;min-width:0;align-self:start}
+.adventure-actions:has(details[open]){grid-column:1/-1;flex-wrap:wrap;justify-content:flex-start}
+.adventure-actions>.adventure-shop{width:auto;min-height:32px;white-space:nowrap;margin:0}
+.room-story-details{margin:0}
+.room-story-details>summary{min-height:32px;display:flex;align-items:center;white-space:nowrap;padding:4px}
+.room-story-details>summary::before{content:'▸';margin-right:4px}
+.room-story-details[open]>summary::before{content:'▾'}
+.adventure-actions .room-story-details[open]{flex:1 0 100%;order:2}
+.room-story-details[open]{padding:9px 12px;border:1px solid #bdc5aa;background:#f4efdf}
+@media(max-height:600px) and (min-width:641px){.adventure-actions{grid-column:1/-1}.adventure-actions>.adventure-shop,.room-story-details>summary{min-height:25px}}
+.storage-help{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 14px;padding:10px 12px;border:1px solid #c1b08a;background:#efe4ca}
+.storage-help>p{font-size:12px;margin:0;flex:1 1 280px}
+.storage-help button{font-size:11px;min-height:34px}
+.book-row .blocked-reason{font-size:10px;line-height:1.5;margin:7px 0 0}
+.shelf-access{border-left:3px solid #ba865d;padding-left:8px;margin:8px 0;font-size:11px}
+@media(max-width:900px){
+ #game.mode-talk .panel-content{padding:10px 14px}
+ .mode-talk .guest-conversation{grid-template-columns:minmax(0,1fr);gap:12px}
+ .mode-talk .conversation-answer{min-height:0;padding:13px 15px}
+ .mode-talk .conversation-answer p{font-size:17px;line-height:1.5}
+ .mode-talk .conversation-actions{grid-column:1;position:sticky;bottom:-10px}
+}
+@media(max-width:640px){
+ .mode-talk .conversation-questions{grid-template-columns:minmax(0,1fr)}
+ .mode-talk .conversation-actions{gap:8px;justify-content:space-between}
+ .mode-talk .conversation-actions button{min-width:0;flex:1;font-size:10px}
+ .mode-talk .guest-intro.compact h2{font-size:20px}
+}
