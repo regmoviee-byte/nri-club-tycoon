@@ -43,17 +43,22 @@ export function seatedPersonArt(person,options={}){
  const identity=person?.identity??person??{},key=JSON.stringify([identity.name??person?.profile?.name,identity.age,identity.portrait,options]);
  if(!seatedCache.has(key)){if(seatedCache.size>320)seatedCache.clear();seatedCache.set(key,renderSeatedPerson(person,options));}return seatedCache.get(key);
 }
+const torsoProfile=[[16,.17,.12],[18,.195,.14],[23,.185,.135],[29,.225,.155],[34,.25,.15],[36.3,.20,.115],[38,.065,.065]];
+function torsoSection(z){let a=torsoProfile[0],b=torsoProfile.at(-1);for(let i=1;i<torsoProfile.length;i++)if(z<=torsoProfile[i][0]){a=torsoProfile[i-1];b=torsoProfile[i];break;}const t=Math.max(0,Math.min(1,(z-a[0])/(b[0]-a[0])));return {rx:a[1]+(b[1]-a[1])*t,ry:a[2]+(b[2]-a[2])*t};}
+const torsoLean=(z,atTable)=>.035+(z-36.3)*.005+(atTable?.08:0);
+export function seatedTorsoFaces(person,{rotation=0,atTable=false}={}){
+ const look=(person?.identity??person??{}).portrait??{},coat=paint(look.coat,'#6c7e80'),frame=seatFrame(rotation),size=bodyWidth(look.bodyShape),height=look.bodyShape==='compact'?.97:1,segments=16;
+ const rings=torsoProfile.map(([z,rx,ry])=>Array.from({length:segments},(_,i)=>{const a=i*Math.PI*2/segments;return frame.world(Math.cos(a)*rx*size*1.14,torsoLean(z,atTable)+Math.sin(a)*ry,17+(z-17)*height);})),faces=[flat([...rings[0]].reverse(),shade(coat,-14),'torso-cloth'),flat(rings.at(-1),shade(coat,12),'torso-cloth')];
+ for(let k=1;k<rings.length;k++)for(let i=0;i<segments;i++){const j=(i+1)%segments,a=(i+.5)*Math.PI*2/segments,n=frame.world(Math.cos(a),Math.sin(a),0),light=Math.round(-5+18*(n.x*.55-n.y*.7));faces.push(flat([rings[k-1][i],rings[k-1][j],rings[k][j],rings[k][i]],shade(coat,light),'torso-cloth'));}
+ return faces.map(face=>({...face,closed:true}));
+}
 function renderSeatedPerson(person,{rotation=0,kind='chair',width=1,height=1,offsetX=0,offsetY=0,atTable=false,playing=false,master=false,blockedSides=[]}={}){
  const identity=person?.identity??person??{},look=identity.portrait??{},frame=seatFrame(rotation),P=frame.point,coat=paint(look.coat,'#6c7e80'),pants=paint(look.trousers,'#40515c'),shoes=paint(look.shoes,'#303b42'),skin=paint(look.skin,'#e3b79e'),accent=paint(look.accent,'#d8cab2');
  const chair=chairBaseFaces(width,height,kind,rotation).map(f=>({...f,points:f.points.map(p=>({...p,x:p.x+offsetX,y:p.y+offsetY}))})),legs='<g class="seated-legs" data-chair-occlusion="solid-depth">'+solidArt(seatedLegFaces(rotation,pants,shoes),chair)+'</g>';
  const rightNear=frame.right[0]+frame.right[1]>0,nearSide=rightNear?1:-1,armFrames=[0,...(playing&&atTable?[1]:[])].map(actionFrame=>seatedArmFaces(person,{rotation,atTable,playing,master,blockedSides,actionFrame})),arm=side=>poseFrames(actionFrame=>{const faces=armFrames[actionFrame];return '<g class="seated-arm" data-pose="'+(atTable?(master?'explaining':'listening'):'rest')+'" data-blocked-sides="'+blockedSides.join(',')+'">'+solidArt(faces.filter(f=>f.part.endsWith('-'+side)),chair)+'</g>';},{playing:playing&&atTable,person});
  const size=bodyWidth(look.bodyShape),screenRight=P(1,0,0).x>0?1:-1,torsoHeight=look.bodyShape==='compact'?.97:1;
- const T=(u,z)=>P(u*size*1.14*screenRight,(frame.backNear?-.055:.065)+(z-36)*.006+(atTable?.08:0),17+(z-17)*torsoHeight),p=(u,z)=>{const q=T(u,z);return q.x+' '+q.y;};
- // Continuous cloth silhouette: sloping shoulders, a curved rib cage and a
- // rounded waist seated into the pelvis. There are no planar torso panels.
- let torso='<g class="seated-torso"><path d="M'+p(-.065,38)+'C'+p(-.13,37.8)+' '+p(-.225,37)+' '+p(-.24,34.5)+'C'+p(-.25,31)+' '+p(-.205,27)+' '+p(-.185,23)+'C'+p(-.18,20)+' '+p(-.19,18)+' '+p(-.18,17)+'Q'+p(0,15.5)+' '+p(.18,17)+'C'+p(.19,18)+' '+p(.18,20)+' '+p(.185,23)+'C'+p(.205,27)+' '+p(.25,31)+' '+p(.24,34.5)+'C'+p(.225,37)+' '+p(.13,37.8)+' '+p(.065,38)+'Q'+p(0,36.4)+' '+p(-.065,38)+'Z" fill="'+coat+'"/>';
- torso+='<path d="M'+p(.15,35.5)+'C'+p(.19,32)+' '+p(.16,28)+' '+p(.13,24)+'Q'+p(.09,20)+' '+p(.145,17.3)+'Q'+p(.185,18)+' '+p(.185,23)+'C'+p(.205,27)+' '+p(.25,31)+' '+p(.24,34.5)+'Q'+p(.21,37)+' '+p(.15,35.5)+'Z" fill="'+shade(coat,-14)+'"/>';
- torso+='<path d="M'+p(-.145,35.3)+'Q'+p(-.18,32)+' '+p(-.13,28)+'Q'+p(-.11,31)+' '+p(-.09,35.4)+'Z" fill="'+shade(coat,13)+'" opacity=".6"/>';
+ const T=(u,z)=>{const {rx,ry}=torsoSection(z),x=u*size*1.14*screenRight,depth=ry*Math.sqrt(Math.max(0,1-(u/rx)**2));return P(x,torsoLean(z,atTable)+(frame.backNear?-1:1)*(depth+.004),17+(z-17)*torsoHeight);},p=(u,z)=>{const q=T(u,z);return q.x+' '+q.y;};
+ let torso='<g class="seated-torso" data-body-volume="rounded">'+solidArt(seatedTorsoFaces(person,{rotation,atTable}),chair);
  const detail=(d,color=shade(coat,-24),w=.6)=>'<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="'+w+'"/>';
  if(frame.backNear)torso+=detail('M'+p(-.13,34)+'Q'+p(0,35)+' '+p(.13,34))+detail('M'+p(0,32)+'Q'+p(-.02,25)+' '+p(.015,20),shade(coat,-12),.45);
  else{

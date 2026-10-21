@@ -28,7 +28,7 @@ test('Actual partial payments enter demand statistics; old scores remain financi
 test('New three-person contracts retain actual count through save/reload and settle exactly three reviews',()=>{
  const c=seated(3),r=c.rooms[0],three=sessionForecast(c,r.id);assert.ok(readyRooms(c).includes(r));assert.equal(three.guestCount,3);assert.equal(three.income,1200);
  const fourth=c.guests[3];assert.equal(assignGuest(c,fourth.id,r.id,3).ok,true);const four=sessionForecast(c,r.id);fourth.roomId=null;fourth.seat=null;assert.equal(four.masterCost,three.masterCost);assert.equal(four.operatingCost-three.operatingCost,20);
- assert.equal(startRoom(c,r.id).ok,true);assert.equal(r.run.ratingVersion,9);assert.equal(r.run.contract.guestCount,3);const copy=decodeClub(encodeClub(c));assert.deepEqual(copy.rooms[0].run,r.run);finish(copy);
+ assert.equal(startRoom(c,r.id).ok,true);assert.equal(r.run.ratingVersion,10);assert.equal(r.run.contract.guestCount,3);const copy=decodeClub(encodeClub(c));assert.deepEqual(copy.rooms[0].run,r.run);finish(copy);
  assert.equal(copy.rating.count,3);assert.equal(copy.finance.settledRuns.length,1);assert.equal(copy.sessionJournal.entries[0].reviews.length,3);assert.equal(copy.guests.some(g=>g.id===fourth.id),true);
  const loaded=decodeClub(encodeClub(copy));assert.deepEqual(loaded.sessionJournal,copy.sessionJournal);
 });

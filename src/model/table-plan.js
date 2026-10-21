@@ -50,6 +50,7 @@ export function tablePlan(club,roomId){
  const limits=groupLimits(source);
  if(guests.length<limits.minimum)summary.push(note('seats',`За столом ${guests.length} из ${limits.maximum} гостей. Для этой истории нужны ещё ${limits.minimum-guests.length}.`,'warning'));
  else if(guests.length<limits.maximum)summary.push(note('seats',`Можно начать с ${guests.length} гостями или выбрать ещё ${limits.maximum-guests.length}. Зарплата мастера и содержание комнаты не уменьшаются.`));
+ if(master&&version>=10&&guests.length>master.maxPlayers)summary.push(note('master-group',`Мастеру комфортно до ${master.maxPlayers} игроков; сейчас ${guests.length}. Внимания на каждого будет меньше, качество игры снизится.`,'warning'));
  if(!master)summary.push(note('master-missing','Назначьте мастера: без него нельзя проверить поддержку группы.','warning'));
  if(!session)summary.push(note('story-missing','Выберите приключение: от него зависят время и содержание игры.','warning'));
  for(const guest of guests){

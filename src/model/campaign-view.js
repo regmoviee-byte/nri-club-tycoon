@@ -17,7 +17,7 @@ const normalizeStaff=master=>{
  const fatigue=master.fatigue??0;
  const p=masterPreferences(master);
  const trainingOptions=[...GAME_SHOP.filter(g=>!master.known.includes(g.id)).map(g=>({systemId:g.id,name:g.name,price:[600,1000,1600][g.complexity-1],hours:[8,12,16][g.complexity-1]})),{systemId:'teaching',name:'Объяснять правила новичкам',price:1200,hours:12},{systemId:'turns',name:'Помогать каждому участвовать',price:1200,hours:12}].filter(option=>masterTrainingOffer(master,option.systemId).ok);
- return {...master,fatigueValue:fatigue,systems:master.known,wage:master.hourlyWage,hireCost:master.fee,fatigue:fatigue<=4?'Отдохнул перед игрой':fatigue<=8?'Устал после игр; пауза поможет':'Сильно устал; стоит передать стол коллеге',teachingWillingness:p.wantsTeaching?'Готов объяснять правила':'Предпочитает подготовленных игроков',expectations:p.teachingCapacity?`Может одновременно вводить в игру ${p.teachingCapacity} новичков`:'Рассчитывает на знакомую с правилами компанию',trainingOptions};
+ return {...master,maxPlayers:p.maxPlayers,fatigueValue:fatigue,systems:master.known,wage:master.hourlyWage,hireCost:master.fee,fatigue:fatigue<=4?'Отдохнул перед игрой':fatigue<=8?'Устал после игр; пауза поможет':'Сильно устал; стоит передать стол коллеге',teachingWillingness:p.wantsTeaching?'Готов объяснять правила':'Предпочитает подготовленных игроков',expectations:p.teachingCapacity?`Может одновременно вводить в игру ${p.teachingCapacity} новичков`:'Рассчитывает на знакомую с правилами компанию',trainingOptions};
 };
 export function campaignMarket(club){
  const rest=staffRoomStatus(club),restSeats=new Map(rest.assignments.map(a=>[a.masterId,a.seat])),working=new Set(club.rooms.filter(r=>r.status==='running').flatMap(r=>[r.masterId,r.run?.room?.master?.id]));

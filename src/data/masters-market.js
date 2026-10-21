@@ -35,7 +35,7 @@ const authored=profiles.map((p,offset)=>{
  const index=offset+legacy.length,id=`hire-${index}`,identityId=`master-market-${index}`;
  return {...p,id,baseId:identityId,temperament:p.style,coaching:p.wantsTeaching,adviceBoundary:p.protectsChoices,announcesChanges:true,habit:p.protectsChoices?'Сначала спрашивает, нужна ли подсказка':'Иногда сразу предлагает игрокам решение',training:null,identity:{id:identityId,name:p.name,age:p.age,grammar:p.grammar,portrait:visualFor(identityId,p.age,p.grammar,index+50)}};
 });
-const catalog=[...legacy,...authored].map(person=>({...person,fatigue:0,hoursWorked:0}));
+const catalog=[...legacy,...authored].map(person=>({...person,maxPlayers:person.maxPlayers??(person.tier==='specialist'?6:person.tier==='experienced'?5:4),fatigue:0,hoursWorked:0}));
 export const MASTER_MARKET_COUNT=catalog.length;
 export function masterCandidate(index){return !Number.isSafeInteger(index)||index<0||index>Number.MAX_SAFE_INTEGER-1000?null:index<catalog.length?structuredClone(catalog[index]):nextMasterApplicant(index,catalog);}
 export const marketCandidates=()=>structuredClone(catalog);

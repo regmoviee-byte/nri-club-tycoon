@@ -5,6 +5,7 @@ import { assessGroup,assessGuest,better } from './assessment.js';
 import { shuffled,feasibleGrouping,searchArrangement } from './search.js';
 import {roomOperational} from './layout-club.js';
 import {preferenceAnswer} from './preferences.js';
+import {guestSeatNumbers} from './group-size.js';
 import {captureGuestConversation} from './guests-history.js';
 export { assessGroup,assessGuest,searchArrangement,feasibleGrouping };
 export const actorById=(shift,id)=>shift.guests.find(g=>g.id===id);
@@ -69,8 +70,8 @@ export function assignGuest(shift,id,roomId,preferredSeat=null){
   const g=actorById(shift,id),r=roomById(shift,roomId);if(!g||!r)return{ok:false,reason:'Гость или комната не найдены.'};
   if(!roomOperational(shift,roomId))return{ok:false,reason:'Сначала оборудуйте комнату и откройте проход ко всем пяти стульям.'};
   if(r.status==='running'||roomById(shift,g.roomId)?.status==='running')return{ok:false,reason:'Эта сессия уже идёт. Пересаживать можно до её запуска.'};
-  const occupied=roomOccupants(shift,roomId).filter(p=>p.id!==id).map(p=>p.seat),seat=preferredSeat??Array.from({length:r.capacity},(_,i)=>i).find(i=>!occupied.includes(i));
-  if(!Number.isInteger(seat)||seat<0||seat>=r.capacity||occupied.includes(seat))return{ok:false,reason:'Место занято. Выберите гостя для обмена.',needsSwap:true,roomId};
+  const occupied=roomOccupants(shift,roomId).filter(p=>p.id!==id).map(p=>p.seat),available=guestSeatNumbers(r),seat=preferredSeat??available.find(i=>!occupied.includes(i));
+  if(!Number.isInteger(seat)||!available.includes(seat)||occupied.includes(seat))return{ok:false,reason:'Место занято или стул отсутствует. Выберите свободное место.',needsSwap:true,roomId};
   g.roomId=roomId;g.seat=seat;return{ok:true,roomId,seat};
 }
 export function swapGuests(shift,aId,bId){

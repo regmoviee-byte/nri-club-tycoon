@@ -182,7 +182,7 @@ function structuralError(layout) {
     if (cells.some(cell => !occupiedPlots.has(keyOf(cell)) || (object.roomId && zones.get(keyOf(cell)) !== object.roomId))) return 'Предмет выходит за участок или свою комнату.';
     if (own(object, 'role') || own(object, 'seat')) {
       if (item.family !== 'chair' || !object.roomId || roomPurpose(layout.rooms.find(r => r.id === object.roomId)) !== 'game' || !['guest', 'master'].includes(object.role) ||
-          (object.role === 'guest' ? ![0, 1, 2, 3].includes(object.seat) : own(object, 'seat'))) return 'Некорректное назначение игрового стула.';
+          (object.role === 'guest' ? !Number.isSafeInteger(object.seat)||object.seat<0||object.seat>=MAX_CELLS : own(object, 'seat'))) return 'Некорректное назначение игрового стула.';
       const seat = `${object.roomId}:${object.role}:${object.seat ?? 'master'}`;
       if (seatIds.has(seat)) return 'В комнате повторяется номер места.';
       seatIds.add(seat);
@@ -241,7 +241,7 @@ export function roomReadiness(layout, roomId) {
   if ([...perimeter.keys()].some(key => !nav.walls.has(key))) reasons.push('Замкните стены по границе комнаты.');
   if (![...perimeter.entries()].some(([key, value]) => ['door', 'wideDoor'].includes(nav.walls.get(key)?.kind) && nav.visited.has(keyOf(value.outside)))) reasons.push('Нужна дверь с проходом от входа.');
   if (!tables.length) reasons.push('Поставьте игровой стол.');
-  if (seats.length !== 4 || seats.some((seat, index) => seat.seat !== index)) reasons.push('Нужны четыре гостевых стула с разными номерами.');
+  if (seats.length < 2) reasons.push('Поставьте гостевые стулья рядом со столом.');
   if (!master) reasons.push('Нужно отдельное место мастера.');
   if (!objects.some(object => BUILD_CATALOG[object.kind].family === 'light')) reasons.push('Добавьте светильник.');
   const assignedChairs = objects.filter(object => BUILD_CATALOG[object.kind].family === 'chair' && object.role);

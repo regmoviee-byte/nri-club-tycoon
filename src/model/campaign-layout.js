@@ -16,7 +16,7 @@ export function inspectRooms(layout){
   const ready=roomReadiness(layout,zone.id),items=layout.objects.filter(o=>o.roomId===zone.id),table=items.find(o=>BUILD_CATALOG[o.kind].family==='table');
   const errors=ready.reasons.map(text=>({text,x:zone.cells[0]?.x??0,y:zone.cells[0]?.y??0}));
   if(ready.ok&&!items.some(o=>BUILD_CATALOG[o.kind].family==='light'&&o.enabled!==false))errors.push({text:'Включите свет в комнате.',x:zone.cells[0].x,y:zone.cells[0].y});
-  return {id:zone.id,tableId:table?.id??null,cells:zone.cells.map(c=>cellKey(c.x,c.y)),chairIds:ready.seats.map(o=>o.id),masterChairId:ready.master?.id??null,items:items.map(o=>o.id),valid:errors.length===0,errors};
+  return {id:zone.id,tableId:table?.id??null,cells:zone.cells.map(c=>cellKey(c.x,c.y)),chairIds:ready.seats.reduce((ids,o)=>{ids[o.seat]=o.id;return ids;},[]),masterChairId:ready.master?.id??null,items:items.map(o=>o.id),valid:errors.length===0,errors};
  });
 }
 function commit(layout,edit,options){const result=quoteEdit(layout,edit,options);if(result.ok)Object.assign(layout,result.next);return result;}
@@ -25,7 +25,7 @@ function placeSpec(layout,type,x,y,{rotation=0,role='guest',id}={}){
  const object={id:id??`item-${layout.revision+1}-${layout.objects.length+1}`,kind,x,y,rotation,price:BUILD_CATALOG[kind].price,enabled:true,stock:0,autoRefill:false};
  const cells=objectCells(object),zone=layout.rooms.find(r=>cells.every(c=>r.cells.some(p=>p.x===c.x&&p.y===c.y)));
  if(zone)object.roomId=zone.id;
- if(BUILD_CATALOG[kind].family==='chair'&&zone&&roomPurpose(zone)==='game'){object.role=role;if(role==='guest')object.seat=[0,1,2,3].find(n=>!layout.objects.some(o=>o.roomId===zone.id&&o.role==='guest'&&o.seat===n));}
+ if(BUILD_CATALOG[kind].family==='chair'&&zone&&roomPurpose(zone)==='game'){object.role=layout.objects.some(o=>o.roomId===zone.id&&o.role==='master')?'guest':'master';if(object.role==='guest'){object.seat=0;while(layout.objects.some(o=>o.roomId===zone.id&&o.role==='guest'&&o.seat===object.seat))object.seat++;}}
  return object;
 }
 export function canPlace(layout,type,x,y,rotation=0,ignoreId=null){

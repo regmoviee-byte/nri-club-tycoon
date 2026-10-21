@@ -36,8 +36,8 @@ export function normalizeEdit(club,input) {
     object.roomId=zone.id;
     if(roomPurpose(zone)!=='game'){delete object.role;delete object.seat;return object;}
     const chairs=layout.objects.filter(o=>o.id!==object.id&&o.roomId===zone.id&&BUILD_CATALOG[o.kind]?.family==='chair');
-    const freeSeat=[0,1,2,3].find(n=>!chairs.some(o=>o.role==='guest'&&o.seat===n));
-    if(object.role===undefined)object.role=freeSeat===undefined?'master':'guest';
+    let freeSeat=0;while(chairs.some(o=>o.role==='guest'&&o.seat===freeSeat))freeSeat++;
+    if(object.role===undefined||previous&&previous.roomId!==zone.id)object.role=chairs.some(o=>o.role==='master')?'guest':'master';
     if(object.role==='guest'&&(object.seat===undefined||previous&&previous.roomId!==zone.id))object.seat=freeSeat;
     if(object.role==='master')delete object.seat;
     return object;

@@ -1,0 +1,165 @@
+{
+  "finished": true,
+  "passed": true,
+  "checks": [
+    {
+      "text": "Custom administrator, reception-only start, reload and cancelling a replacement club preserve player choices"
+    },
+    {
+      "text": "Native first-club steps purchase game room, staff room, shelf, master and system within the real starting budget",
+      "cash": 4050
+    },
+    {
+      "text": "Window and door tools show their own illustrated and priced choices instead of furniture"
+    },
+    {
+      "text": "A selected fridge clears with Escape in an input, explicit deselection, tab change and blank map click"
+    },
+    {
+      "text": "Bottom questions update the fixed visible answer, retain list position, replay without time or duplicate dialogue, and fit mobile"
+    },
+    {
+      "text": "Two successive furniture clicks buy two real objects without confirming or reselecting the tool"
+    },
+    {
+      "text": "Native repeated chair placement grows capacity beyond four, retains one master seat and rejects an extra chair that would block access"
+    },
+    {
+      "text": "Valid, blocked and outside movement positions keep quote, panel and camera geometry fixed",
+      "geometry": [
+        {
+          "worldY": 135,
+          "worldHeight": 460.0625,
+          "quoteY": 595.0625,
+          "quoteHeight": 188,
+          "panelY": 66,
+          "camera": {
+            "x": 427.30515463917527,
+            "y": 130.29768041237114,
+            "zoom": 0.7527061855670103
+          }
+        },
+        {
+          "worldY": 135,
+          "worldHeight": 460.0625,
+          "quoteY": 595.0625,
+          "quoteHeight": 188,
+          "panelY": 66,
+          "camera": {
+            "x": 427.30515463917527,
+            "y": 130.29768041237114,
+            "zoom": 0.7527061855670103
+          }
+        },
+        {
+          "worldY": 135,
+          "worldHeight": 460.0625,
+          "quoteY": 595.0625,
+          "quoteHeight": 188,
+          "panelY": 66,
+          "camera": {
+            "x": 427.30515463917527,
+            "y": 130.29768041237114,
+            "zoom": 0.7527061855670103
+          }
+        },
+        {
+          "worldY": 135,
+          "worldHeight": 460.0625,
+          "quoteY": 595.0625,
+          "quoteHeight": 188,
+          "panelY": 66,
+          "camera": {
+            "x": 427.30515463917527,
+            "y": 130.29768041237114,
+            "zoom": 0.7527061855670103
+          }
+        },
+        {
+          "worldY": 135,
+          "worldHeight": 460.0625,
+          "quoteY": 595.0625,
+          "quoteHeight": 188,
+          "panelY": 66,
+          "camera": {
+            "x": 427.30515463917527,
+            "y": 130.29768041237114,
+            "zoom": 0.7527061855670103
+          }
+        },
+        {
+          "worldY": 135,
+          "worldHeight": 460.0625,
+          "quoteY": 595.0625,
+          "quoteHeight": 188,
+          "panelY": 66,
+          "camera": {
+            "x": 427.30515463917527,
+            "y": 130.29768041237114,
+            "zoom": 0.7527061855670103
+          }
+        }
+      ]
+    },
+    {
+      "text": "Native drag keeps the same animated limb nodes and changing animation time, seats the guest, and never dims the map on save",
+      "frames": [
+        {
+          "same": true,
+          "transform": "matrix(0.990296, -0.138973, 0.138973, 0.990296, 0, 0)",
+          "time": 150.184000009391
+        },
+        {
+          "same": true,
+          "transform": "matrix(0.999376, 0.0353114, -0.0353114, 0.999376, 0, 0)",
+          "time": 250.21400000939133
+        },
+        {
+          "same": true,
+          "transform": "matrix(0.968406, 0.249377, -0.249377, 0.968406, 0, 0)",
+          "time": 383.7800000093914
+        },
+        {
+          "same": true,
+          "transform": "matrix(0.951057, 0.309016, -0.309016, 0.951057, 0, 0)",
+          "time": 500.4420000093912
+        },
+        {
+          "same": true,
+          "transform": "matrix(0.964309, 0.264778, -0.264778, 0.964309, 0, 0)",
+          "time": 600.6140000093918
+        }
+      ],
+      "opacities": [
+        "1"
+      ]
+    },
+    {
+      "text": "Start executes once from its own risk block; the walking master opens the route door, which closes afterward",
+      "buttonY": 797.046875,
+      "doorPeak": 1
+    },
+    {
+      "text": "Two sessions finishing together show individual results in order, truthful feedback and retained journal entries"
+    }
+  ],
+  "errors": [],
+  "screenshots": [
+    "administrator-creator.png",
+    "reception-only-new-club.png",
+    "first-player-built-club.png",
+    "window-tool-context.png",
+    "conversation-visible-answer-desktop.png",
+    "conversation-visible-answer-mobile.png",
+    "stable-move-preview.png",
+    "drag-ragdoll-persistent.png",
+    "door-opens-for-master.png",
+    "rounded-figures-at-table.png",
+    "party-result-first.png",
+    "party-result-second.png"
+  ],
+  "audio": "-noaudio; ReviewAudioSilence; --mute-audio; chromiumSandbox:true; isolated storage",
+  "url": "http://127.0.0.1:59112/",
+  "fixture": "Only the following interaction checks use a clearly labelled paid construction grant; the first-club sequence above uses ordinary funds",
+  "elapsedMs": 20409
+}

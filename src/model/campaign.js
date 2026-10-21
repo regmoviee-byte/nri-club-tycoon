@@ -12,7 +12,7 @@ import {makePreferences,makeLegacyPreferences,sessionProgram,sessionDurationRang
 import {CAMPAIGN_RATING_VERSION,rateCampaignGuest} from './campaign-rating.js';
 import {updateDevelopment} from './development.js';
 import {ensureSessionJournal,recordSessionJournal,validateSessionJournal} from './session-journal.js';
-import {groupLimits} from './group-size.js';
+import {groupLimits,guestSeatNumbers} from './group-size.js';
 import {BEGINNER_DIRECTION,ensureClubDirection,validateClubDirection} from './club-direction.js';
 import {recordMoney,restock,reserveRequired,obligations,hourlyCosts,serviceInterval,chargeInterval,settleRun,sessionForecast} from './finances.js';
 import {findRecoveryPlan,applyRecoveryPlan,canProveInsolvent} from './solvency.js';
@@ -50,7 +50,7 @@ export function syncRooms(club){
   let room=club.rooms.find(r=>r.id===region.id)??(region.tableId?club.rooms.find(r=>r.tableId===region.tableId):null);
   if(room)room.tableId=region.tableId;
   if(!room)room={id:region.id,tableId:region.tableId,number:club.layout.rooms.find(z=>z.id===region.id)?.number??club.nextRoomNumber++,capacity:4,turn:0,status:'closed',run:null,enabled:true,masterId:null,kitId:null,adventureId:null,hours:2};
-  room.layout=region;room.chairIds=region.chairIds;room.masterChairId=region.masterChairId;room.layoutErrors=[...region.errors];
+  room.layout=region;if(room.status!=='running')room.capacity=region.chairIds.filter(Boolean).length;room.chairIds=region.chairIds;room.masterChairId=region.masterChairId;room.layoutErrors=[...region.errors];
   if(room.status==='running'){room.operational=true;room.minimumGuests=groupLimits(room).minimum;room.maximumGuests=groupLimits(room).maximum;next.push(room);continue;}
   if(!getKit(club,room.kitId))room.kitId=null;if(!getMaster(club,room.masterId))room.masterId=null;
   if(region.valid&&room.enabled){
@@ -236,7 +236,7 @@ function advanceCampaignTo(club,target){
   settleSessions(time){
    const gone=new Set();
    for(const room of runningRooms(club).filter(r=>Math.abs(r.run.endsAt-time)<1e-8)){
-    const run={...room.run,observed:club.activity[room.run.id]??{}},reviews=run.guests.map(g=>[3,4,5,6,7,8,9].includes(run.ratingVersion)?rateCampaignGuest(run,g):rateLegacyGuest(run,g));
+    const run={...room.run,observed:club.activity[room.run.id]??{}},reviews=run.guests.map(g=>[3,4,5,6,7,8,9,10].includes(run.ratingVersion)?rateCampaignGuest(run,g):rateLegacyGuest(run,g));
     const settlement=settleRun(club,run,reviews);if(!settlement)throw new Error('Эта игра уже рассчитана.');
     recordGuestOutcome(club,run,settlement.reviews);prepareAfterRun(club,run,room);
     for(const review of settlement.reviews)if(!club.reviewIds.includes(review.reviewId)){club.reviewIds.push(review.reviewId);club.rating.sum+=review.score;club.rating.count++;}
@@ -281,10 +281,10 @@ export function decodeClub(raw){
  if(legacyOperations)ensureKits(club);validateKits(club);validateOperations(club,{allowMigration:legacyOperations});
  if(!Number.isInteger(club.rating?.count)||club.rating.count<0||!Number.isFinite(club.rating.sum)||club.rating.sum<club.rating.count||club.rating.sum>10*club.rating.count||!Array.isArray(club.reviewIds)||new Set(club.reviewIds).size!==club.rating.count)throw new Error('Повреждена история отзывов.');
  if(new Set(club.library.copies?.map(k=>k.id)).size!==club.library.copies?.length||club.library.copies.some(k=>!gameProduct(k.systemId)||!Number.isFinite(k.price)||k.price<0)||new Set(club.staff.map(m=>m.id)).size!==club.staff.length||club.staff.some(m=>!Array.isArray(m.known)||m.known.some(id=>!gameProduct(id))||!Number.isFinite(m.hourlyWage)||m.hourlyWage<0))throw new Error('Повреждены купленные игры или мастера.');
- if(!Number.isInteger(club.step)||club.step<0||!Number.isInteger(club.arrivals)||club.arrivals<0||new Set(club.rooms.map(r=>r.id)).size!==club.rooms.length||club.rooms.some(r=>r.capacity!==4||!Number.isInteger(r.turn)||r.turn<0||!Number.isInteger(r.hours)||r.hours<2||r.hours>6))throw new Error('Повреждены события клуба.');
+ if(!Number.isInteger(club.step)||club.step<0||!Number.isInteger(club.arrivals)||club.arrivals<0||new Set(club.rooms.map(r=>r.id)).size!==club.rooms.length||club.rooms.some(r=>(!Number.isSafeInteger(r.capacity)||r.capacity<0||r.capacity>12288)||!Number.isInteger(r.turn)||r.turn<0||!Number.isInteger(r.hours)||r.hours<2||r.hours>6))throw new Error('Повреждены события клуба.');
  const ids=new Set(),seats=new Set();
- for(const g of club.guests){if(ids.has(g.id)||!g.identity?.portrait||!g.profile||!Array.isArray(g.dialogue)||!Array.isArray(g.asked)||!Number.isFinite(g.schedule?.leaveAt)||!g.preferences)throw new Error('Повреждён гость.');ids.add(g.id);if(g.roomId){const room=roomById(club,g.roomId),key=g.roomId+':'+g.seat;if(!room||!Number.isInteger(g.seat)||g.seat<0||g.seat>3||seats.has(key))throw new Error('Повреждена рассадка.');seats.add(key);}g.dialogueVersion??=1;g.dialogue.forEach(a=>{if(!QUESTIONS.some(q=>q.id===a.questionId))throw new Error('Повреждён разговор.');a.reply??=answerText(g,a.questionId,a.variant);});if(g.lastAnswer)g.lastAnswer=g.dialogue.find(a=>a.questionId===g.lastAnswer.questionId&&a.variant===g.lastAnswer.variant)??null;}
- for(const r of club.rooms)if(r.status==='running'){const run=r.run,limits=groupLimits(r),count=run?.guests?.length;if(!run||![1,2,3,4,5,6,7,8,9].includes(run.ratingVersion??1)||run.endsAt<=club.clock||!Number.isInteger(count)||count<limits.minimum||count>limits.maximum||run.ratingVersion>=9&&run.contract?.guestCount!==count||new Set(run.guests.map(g=>g.id)).size!==count||run.endsAt!==run.startedAt+run.room.session.minutes/60||run.guests.some(g=>!roomOccupants(club,r.id).some(p=>p.id===g.id))||!Number.isFinite(run.contract?.guestPrice)||run.contract.guestPrice<0||run.contract.wageTotal<0||!Number.isFinite(run.contract?.wageTotal)||run.contract.pricingVersion===3&&run.contract.paymentCurve!==3||run.ratingVersion>=3&&run.guests.some(g=>!Number.isFinite(run.contract.tipRolls?.[g.id])||run.contract.tipRolls[g.id]>=1||run.contract.tipRolls[g.id]<0))throw new Error('Повреждена начатая игра.');freeze(run);}
+ for(const g of club.guests){if(ids.has(g.id)||!g.identity?.portrait||!g.profile||!Array.isArray(g.dialogue)||!Array.isArray(g.asked)||!Number.isFinite(g.schedule?.leaveAt)||!g.preferences)throw new Error('Повреждён гость.');ids.add(g.id);if(g.roomId){const room=roomById(club,g.roomId),key=g.roomId+':'+g.seat;if(!room||!Number.isInteger(g.seat)||g.seat<0||!guestSeatNumbers(room).includes(g.seat)||seats.has(key))throw new Error('Повреждена рассадка.');seats.add(key);}g.dialogueVersion??=1;g.dialogue.forEach(a=>{if(!QUESTIONS.some(q=>q.id===a.questionId))throw new Error('Повреждён разговор.');a.reply??=answerText(g,a.questionId,a.variant);});if(g.lastAnswer)g.lastAnswer=g.dialogue.find(a=>a.questionId===g.lastAnswer.questionId&&a.variant===g.lastAnswer.variant)??null;}
+ for(const r of club.rooms)if(r.status==='running'){const run=r.run,limits=groupLimits(r),count=run?.guests?.length;if(!run||![1,2,3,4,5,6,7,8,9,10].includes(run.ratingVersion??1)||run.endsAt<=club.clock||!Number.isInteger(count)||count<limits.minimum||count>limits.maximum||run.ratingVersion>=9&&run.contract?.guestCount!==count||new Set(run.guests.map(g=>g.id)).size!==count||run.endsAt!==run.startedAt+run.room.session.minutes/60||run.guests.some(g=>!roomOccupants(club,r.id).some(p=>p.id===g.id))||!Number.isFinite(run.contract?.guestPrice)||run.contract.guestPrice<0||run.contract.wageTotal<0||!Number.isFinite(run.contract?.wageTotal)||run.contract.pricingVersion===3&&run.contract.paymentCurve!==3||run.ratingVersion>=3&&run.guests.some(g=>!Number.isFinite(run.contract.tipRolls?.[g.id])||run.contract.tipRolls[g.id]>=1||run.contract.tipRolls[g.id]<0))throw new Error('Повреждена начатая игра.');freeze(run);}
  validateGuestWaiting(club);adoptGuestWaiting(club);ensureGuestRegistry(club);validateGuestRegistry(club);validateSessionJournal(club);validateClubDirection(club);
  club.construction??={version:1,transactions:[]};club.campaignActions??=[];
  club.drag=null;club.phase='placing';syncRooms(club);validateGuestFlow(club);ensureGuestFlow(club);replenish(club,{removeExpired:false});freeze(club.lastReport);updateDevelopment(club,campaignProgress(club));return club;
@@ -331,10 +331,11 @@ function validatePersonnel(club){
  const people=[...club.staff,...club.personnelArchive],ids=new Set();
  for(const master of people){
   if(typeof master.id!=='string'||ids.has(master.id)||typeof master.name!=='string'||!Array.isArray(master.known)||master.known.some(id=>!gameProduct(id))||new Set(master.known).size!==master.known.length||!Number.isFinite(master.hourlyWage)||master.hourlyWage<0||!Number.isFinite(master.fee)||master.fee<0)throw new Error('Повреждены данные мастера.');
-  ids.add(master.id);master.systemSkills??=Object.fromEntries(master.known.map(id=>[id,70]));master.fatigue??=0;master.hoursWorked??=0;master.training??=null;
+  ids.add(master.id);master.systemSkills??=Object.fromEntries(master.known.map(id=>[id,70]));master.fatigue??=0;master.hoursWorked??=0;master.training??=null;master.maxPlayers??=masterPreferences(master).maxPlayers;
   if(!master.systemSkills||Object.entries(master.systemSkills).some(([id,n])=>!gameProduct(id)||!Number.isFinite(n)||n<0||n>100)||!Number.isFinite(master.fatigue)||master.fatigue<0||master.fatigue>12||!Number.isFinite(master.hoursWorked)||master.hoursWorked<0)throw new Error('Повреждены навыки или усталость мастера.');
   if(master.training&&(!Number.isFinite(master.training.endsAt)||!['teaching','turns'].includes(master.training.systemId)&&!gameProduct(master.training.systemId)||master.training.cost!==undefined&&(!Number.isFinite(master.training.cost)||master.training.cost<0)))throw new Error('Повреждено обучение мастера.');
   for(const field of ['teachingSkill','facilitation'])if(master[field]!==undefined&&(!Number.isFinite(master[field])||master[field]<0||master[field]>1))throw new Error('Повреждён навык работы с группой.');
+  if(!Number.isInteger(master.maxPlayers)||master.maxPlayers<2||master.maxPlayers>20)throw new Error('Повреждён размер группы мастера.');
   if(master.teachingCapacity!==undefined&&(!Number.isInteger(master.teachingCapacity)||master.teachingCapacity<0||master.teachingCapacity>4))throw new Error('Повреждена учебная нагрузка мастера.');
  }
  if(club.personnelArchive.some(m=>m.training)||new Set(club.staffRoomLegacyIds).size!==club.staffRoomLegacyIds.length||club.staffRoomLegacyIds.some(id=>!club.staff.some(m=>m.id===id)))throw new Error('Повреждены сохранённые места сотрудников.');

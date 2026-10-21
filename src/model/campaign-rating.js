@@ -1,10 +1,11 @@
+import {reviewFeedback} from './review-feedback.js';
 import {makeLegacyPreferences,sessionProgram,masterPreferences,guestVoice} from './preferences.js';
 import {disclosedWeights} from './rating.js';
 import {gameProduct,PRODUCTS} from '../data/commerce.js';
 import {roomUpgradeBenefit,roomUpgradeBenefitV8,roomUpgradeBenefitV9,serviceUpgradeBenefitV8} from './upgrades.js';
 import {itemContext,contextualLearningAllowance} from './item-context.js';
 import {QUALITY_BALANCE as Q} from '../data/balance.js';
-export const CAMPAIGN_RATING_VERSION=9;
+export const CAMPAIGN_RATING_VERSION=10;
 const keys=['game','master','company','duration'];
 const clamp=n=>Math.max(0,Math.min(1,n));
 const fact=(fit,text,question,code)=>({fit:clamp(fit),text,question,code});
@@ -204,6 +205,7 @@ export function rateCampaignGuest(run,guest){
  }
  if(version===8)return rateCampaignGuestV8(run,guest);
  if(version===9)return rateCampaignGuestV9(run,guest);
+ if(version===10)return rateModernGuest(run,guest,10);
  throw new Error('Неизвестная версия оценки кампании.');
 }
 
@@ -269,8 +271,9 @@ function rateModernGuest(run,original,version){
  const shortfall=Math.sqrt(keys.reduce((n,k)=>n+legacy.weights[k]*(1-components[k])**2,0)/10),comfort=roomComfortV8(run,guest),genre=evidence.game.find(f=>f.code==='genre')?.fit??0;
  const eligible=!legacy.violations.length&&genre>=.55&&!comfort.dirty,equipment=eligible?(version>=9?roomUpgradeBenefitV9(run,guest):roomUpgradeBenefitV8(run,guest)):{bonus:0,effects:[]},service=eligible?serviceUpgradeBenefitV8(run,guest):{bonus:0,effects:[]};
  const teachingPenalty=needs&&work.demandById[guest.id]>0?Math.min(Q.teachingPenaltyCap,Q.teachingPenaltyStrength*Math.max(0,Q.teachingTarget-served)):0;
+ const excess=version>=10?Math.max(0,run.guests.length-master.maxPlayers):0,overloadPenalty=Math.min(4,excess*.65+excess*excess*.1);
  const bonus=Math.min(Q.totalBonusCap,equipment.bonus+service.bonus),raw=10-9*shortfall-comfort.penalty-teachingPenalty+bonus;
- let satisfactionValue=Math.max(1,Math.min(10,raw));if(genre<.2)satisfactionValue=Math.min(satisfactionValue,6);if(legacy.violations.length)satisfactionValue=Math.min(satisfactionValue,4);
+ let satisfactionValue=Math.max(1,Math.min(10,raw)-overloadPenalty);if(genre<.2)satisfactionValue=Math.min(satisfactionValue,6);if(legacy.violations.length)satisfactionValue=Math.min(satisfactionValue,4);
  satisfactionValue=Math.round(satisfactionValue*100)/100;
  const effects=[...equipment.effects,...service.effects],cleanText=text=>guest.identity.grammar==='feminine'?text.replace(/(ждала|рассчитывала|просила|хотела|успела|знала|сама|играла|устала)а+/gu,'$1'):text;
  comfort.helped=eligible?[...new Set([...comfort.helped,...effects.map(e=>e.text),...(work.materialsById[guest.id]>0?['Наглядные материалы помогли разобраться с правилом.']:[])])]:[];
@@ -279,5 +282,6 @@ function rateModernGuest(run,original,version){
  const category=keys.toSorted((a,b)=>legacy.weights[b]*(1-components[b])**2-legacy.weights[a]*(1-components[a])**2)[0],reason=weakest(evidence[category]);
  const learningText=p.learning==='describe'?'Мне требовалась помощь с кубиками на первом ходу, а мастер не успевал помочь всем.':'Для новой системы мне требовались объяснения, а времени мастера на все вопросы не хватило.';
  const text=legacy.violations[0]??(teachingPenalty>.35?learningText:reason.fit<.95?reason.text:comfort.notes[0]??'История, мастер и компания подошли. Было приятно играть.');
- return{...legacy,score:Math.round(satisfactionValue),satisfactionValue,satisfaction:satisfactionValue,baseSatisfaction:Math.round(Math.max(1,Math.min(10,10-9*shortfall-comfort.penalty-teachingPenalty))*100)/100,teachingPenalty,components,evidence,comfort,text:cleanText(text),violations:legacy.violations.map(cleanText),ratingVersion:version,equipmentBenefit:eligible&&comfort.helped.length>0,upgradeBenefit:{bonus,equipmentBonus:equipment.bonus,serviceBonus:service.bonus,effects,cap:Q.totalBonusCap},events:[...Object.values(evidence).flat().filter(f=>f.fit<.95||f.code==='teaching'),...comfort.penalties.map(p=>fact(0,p.text,'comfort',p.code)),...(teachingPenalty>0?[fact(served,learningText,'learning','unmet-teaching')]:[])],workload:work};
+ const review={...legacy,score:Math.round(satisfactionValue),satisfactionValue,satisfaction:satisfactionValue,baseSatisfaction:Math.round(Math.max(1,Math.min(10,10-9*shortfall-comfort.penalty-teachingPenalty))*100)/100,teachingPenalty,overloadPenalty,components,evidence,comfort,text:cleanText(text),violations:legacy.violations.map(cleanText),ratingVersion:version,equipmentBenefit:eligible&&comfort.helped.length>0,upgradeBenefit:{bonus,equipmentBonus:equipment.bonus,serviceBonus:service.bonus,effects,cap:Q.totalBonusCap},events:[...Object.values(evidence).flat().filter(f=>f.fit<.95||f.code==='teaching'),...comfort.penalties.map(p=>fact(0,p.text,'comfort',p.code)),...(teachingPenalty>0?[fact(served,learningText,'learning','unmet-teaching')]:[])],workload:work};
+ if(version>=9){const feedback=reviewFeedback(review);return {...review,text:feedback.text,adminAdvice:feedback.advice};}return review;
 }

@@ -70,6 +70,9 @@ export function personArt(person,{seated=false,back=false,drag=false,reception=f
  else hairFront=path('M-11 3L-12-6Q-13-13-5-15Q3-18 10-13L12-7 10 4 8 5 7-6Q2-4-1-8Q-5-3-9-3L-8 5Z',hair)+path('M2-15Q10-16 12-7L10 4 8 5 7-6 3-9Z',hairDark)+line('M-9-8Q-5-13 1-13',hairLight,1);
  if(style==='braid')hairFront+=path('M8 10q7 3 1 7 7 3 0 7 6 4-1 6L4 24q5-4 0-7 5-3 1-7Z',hair)+line('M7 12l3 4-4 4 4 4',hairDark,.8);
  if(age>=50&&style!=='shaved')hairFront+=line('M-9-3l-.5 5M9-3l.5 5',tint(hair,44),1.4);
+ if(p.hairClip&&!back)hairFront+=path('M-10-6l6-3 1 2-6 3Z',accent);
+ if(p.earrings&&!back)face+='<circle cx="-11" cy="6" r="1.8" fill="none" stroke="'+accent+'" stroke-width=".9"/><circle cx="11" cy="6" r="1.8" fill="none" stroke="'+accent+'" stroke-width=".9"/>';
+ if(p.necklace&&!back)body+=line('M-6 '+(shoulder+1)+'Q0 '+(shoulder+16)+' 6 '+(shoulder+1),accent,.85);
  if(headOnly){
   const rear=hairBehind?'<g class="person-hair-back" transform="translate(0 '+(-head)+')">'+hairBehind+'</g>':'';
   return '<g class="person-head-art" data-head-layer="'+headLayer+'">'+(headLayer==='front'?'':rear)+(headLayer==='back'?'':face+hairFront)+'</g>';
