@@ -1,0 +1,90 @@
+{
+  "version": "20261021-ergonomics-v4",
+  "scope": "Player task ergonomics: proximity, visible dependencies, scrolling, return paths and local feedback",
+  "status": "local-verified-public-check-pending",
+  "viewports": [
+    [
+      1280,
+      720
+    ],
+    [
+      1366,
+      768
+    ],
+    [
+      844,
+      390
+    ],
+    [
+      390,
+      844
+    ]
+  ],
+  "layoutStates": 17,
+  "primaryTasks": [
+    {
+      "task": "room-setup",
+      "beforeOffscreen": 3,
+      "afterOffscreen": 0
+    },
+    {
+      "task": "guest-seating",
+      "beforeOffscreen": 4,
+      "afterOffscreen": 0
+    },
+    {
+      "task": "selected-table",
+      "beforeOffscreen": 2,
+      "afterOffscreen": 0
+    },
+    {
+      "task": "service-restock",
+      "beforeOffscreen": 3,
+      "afterOffscreen": 0
+    },
+    {
+      "task": "master-training",
+      "beforeOffscreen": 2,
+      "afterOffscreen": 0
+    },
+    {
+      "task": "control-settings",
+      "beforeOffscreen": 7,
+      "afterOffscreen": 0
+    },
+    {
+      "task": "creator-controls",
+      "beforeOffscreen": 6,
+      "afterOffscreen": 0
+    }
+  ],
+  "objectMoveDistance": {
+    "before": 833.0,
+    "after": 151.1,
+    "unit": "screen pixels from selected miniature centre to Move button centre, same 1280x720 viewport; initial action was also offscreen"
+  },
+  "realTaskScenarios": [
+    "Guest and room settings form a returnable task without searching or scrolling",
+    "Buying an adventure keeps its originating table available",
+    "Contextual object actions remain adjacent during camera changes and commit a real rotation",
+    "Equipment supplies and local result are reachable from the selected device",
+    "Destructive decisions stay in their subject card and cancellation changes nothing",
+    "Start still executes directly, reports finish and room choices survive reload"
+  ],
+  "relatedRegressionGroups": 21,
+  "manualFirstClubCompleted": true,
+  "modelsAndCataloguesUnchanged": true,
+  "reports": {
+    "baseline": "review/ergonomics-v4/baseline-public/report.json",
+    "layout": "review/ergonomics-v4/layout-final/report.json",
+    "tasks": "review/ergonomics-v4/tasks-order-final/report.json",
+    "regression": "review/ergonomics-v4/regression-1/report.json",
+    "additional": "review/ergonomics-v4/regression-more-final/report.json",
+    "manualClub": "review/ergonomics-v4/manual-club-1/report.json"
+  },
+  "limitations": [
+    "Scripted real-browser journeys plus visual inspection; no novice-participant study or physical touchscreen test.",
+    "The results apply to measured tasks and layouts, not a guarantee that every possible future interface state is convenient.",
+    "Catalogue browsing, long histories and advanced options may scroll; primary task actions remain available."
+  ]
+}
