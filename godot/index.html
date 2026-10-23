@@ -17,14 +17,14 @@ window.NriLoadFailure=function(message){const overlay=document.querySelector('#l
 document.querySelector('#retry').addEventListener('click',()=>location.reload());
 window.addEventListener('error',event=>{if(event.target instanceof HTMLScriptElement)NriLoadFailure('Не удалось получить файлы игры. Проверьте подключение и попробуйте снова.');else if(event.error&&document.querySelector('#loading'))NriLoadFailure('Не удалось запустить игру. Перезагрузите страницу и попробуйте снова.');},true);
 </script>
-<script>window.NriPackageBootstrapBytes=1720703;</script>
+<script>window.NriPackageBootstrapBytes=1720701;</script>
 <script src="game-rules.js"></script>
 <script src="index.js"></script>
 <script>
 (()=>{
  try{
  const overlay=document.querySelector('#loading'),logo=overlay.querySelector('.logo'),label=document.querySelector('#load-label'),retry=document.querySelector('#retry');let progress=0,started=false,sceneReady=false;
- const config={"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":56525312,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4},bootstrapBytes=Number(window.NriPackageBootstrapBytes)||0,binaryBytes=Object.values(config.fileSizes??{}).reduce((sum,size)=>sum+Number(size||0),0),packageBytes=bootstrapBytes+binaryBytes;
+ const config={"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":56529392,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4},bootstrapBytes=Number(window.NriPackageBootstrapBytes)||0,binaryBytes=Object.values(config.fileSizes??{}).reduce((sum,size)=>sum+Number(size||0),0),packageBytes=bootstrapBytes+binaryBytes;
  const update=value=>{const percent=Math.max(Math.floor(progress*100),Math.min(100,Math.floor(value*100)));progress=percent/100;logo.style.setProperty('--loaded',percent+'%');overlay.dataset.progress=String(progress);label.textContent='Загрузка клуба · '+percent+'%';};
  const finish=()=>{if(!started||!sceneReady||overlay.dataset.failed)return;update(1);overlay.remove();document.querySelector('#canvas').focus();};
  window.NriGodotBoot={ready(){sceneReady=true;finish();},get progress(){return progress;}};
