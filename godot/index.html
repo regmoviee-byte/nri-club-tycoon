@@ -6,7 +6,7 @@
 <title>НРИ / КЛУБ · Офиздат</title>
 <link rel="icon" href="brand/ofizdat-color.svg" type="image/svg+xml">
 <style>
-html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#001632;color:#fff;font-family:Montserrat,"Segoe UI",Arial,sans-serif}*{box-sizing:border-box}#canvas{display:block;width:100%;height:100%;outline:0;touch-action:none}#loading{position:fixed;inset:0;z-index:5;display:grid;place-content:center;justify-items:center;gap:24px;background:radial-gradient(at 0 0,#5b7898 0%,#3d6184 35%,#1c3f68 70%,#001632 100%)}.logo{position:relative;width:clamp(110px,22vw,210px);aspect-ratio:564/683}.logo img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.logo .color{clip-path:inset(0 calc(100% - var(--loaded,0%)) 0 0)}#load-label{font-size:16px;text-align:center;padding:0 20px;max-width:450px}#retry{min-height:44px;padding:10px 20px;border:1px solid #ffcd3a;color:#fff;background:#1c3f68;font:inherit}#retry[hidden]{display:none}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#001632;color:#fff;font-family:Montserrat,"Segoe UI",Arial,sans-serif}*{box-sizing:border-box}#canvas{position:fixed;inset:0;display:block;width:100%!important;height:100%!important;max-width:100%;max-height:100%;outline:0;touch-action:none}#loading{position:fixed;inset:0;z-index:5;display:grid;place-content:center;justify-items:center;gap:24px;background:radial-gradient(at 0 0,#5b7898 0%,#3d6184 35%,#1c3f68 70%,#001632 100%)}.logo{position:relative;width:clamp(110px,22vw,210px);aspect-ratio:564/683}.logo img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.logo .color{clip-path:inset(0 calc(100% - var(--loaded,0%)) 0 0)}#load-label{font-size:16px;text-align:center;padding:0 20px;max-width:450px}#retry{min-height:44px;padding:10px 20px;border:1px solid #ffcd3a;color:#fff;background:#1c3f68;font:inherit}#retry[hidden]{display:none}
 </style>
 
 <canvas id="canvas" tabindex="0" aria-label="НРИ Клуб: управление клубом"></canvas>
@@ -17,14 +17,14 @@ window.NriLoadFailure=function(message){const overlay=document.querySelector('#l
 document.querySelector('#retry').addEventListener('click',()=>location.reload());
 window.addEventListener('error',event=>{if(event.target instanceof HTMLScriptElement)NriLoadFailure('Не удалось получить файлы игры. Проверьте подключение и попробуйте снова.');else if(event.error&&document.querySelector('#loading'))NriLoadFailure('Не удалось запустить игру. Перезагрузите страницу и попробуйте снова.');},true);
 </script>
-<script>window.NriPackageBootstrapBytes=2476417;</script>
+<script>window.NriPackageBootstrapBytes=2477353;</script>
 <script src="game-rules.js"></script>
 <script src="index.js"></script>
 <script>
 (()=>{
  try{
  const overlay=document.querySelector('#loading'),logo=overlay.querySelector('.logo'),label=document.querySelector('#load-label'),retry=document.querySelector('#retry');let progress=0,started=false,sceneReady=false;
- const config={"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":64228288,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4},bootstrapBytes=Number(window.NriPackageBootstrapBytes)||0,binaryBytes=Object.values(config.fileSizes??{}).reduce((sum,size)=>sum+Number(size||0),0),packageBytes=bootstrapBytes+binaryBytes;
+ const config={"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":64246168,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4},bootstrapBytes=Number(window.NriPackageBootstrapBytes)||0,binaryBytes=Object.values(config.fileSizes??{}).reduce((sum,size)=>sum+Number(size||0),0),packageBytes=bootstrapBytes+binaryBytes;
  const update=value=>{const percent=Math.max(Math.floor(progress*100),Math.min(100,Math.floor(value*100)));progress=percent/100;logo.style.setProperty('--loaded',percent+'%');overlay.dataset.progress=String(progress);label.textContent='Загрузка клуба · '+percent+'%';};
  const finish=()=>{if(!started||!sceneReady||overlay.dataset.failed)return;update(1);overlay.remove();document.querySelector('#canvas').focus();};
  window.NriGodotBoot={ready(){sceneReady=true;finish();},get progress(){return progress;}};
