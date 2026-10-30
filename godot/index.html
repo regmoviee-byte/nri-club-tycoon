@@ -24,7 +24,7 @@ window.addEventListener('error',event=>{if(event.target instanceof HTMLScriptEle
 (()=>{
  try{
  const overlay=document.querySelector('#loading'),logo=overlay.querySelector('.logo'),label=document.querySelector('#load-label'),retry=document.querySelector('#retry');let progress=0,started=false,sceneReady=false;
- const config={"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":64261816,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4},bootstrapBytes=Number(window.NriPackageBootstrapBytes)||0,binaryBytes=Object.values(config.fileSizes??{}).reduce((sum,size)=>sum+Number(size||0),0),packageBytes=bootstrapBytes+binaryBytes;
+ const config={"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":64266152,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4},bootstrapBytes=Number(window.NriPackageBootstrapBytes)||0,binaryBytes=Object.values(config.fileSizes??{}).reduce((sum,size)=>sum+Number(size||0),0),packageBytes=bootstrapBytes+binaryBytes;
  const update=value=>{const percent=Math.max(Math.floor(progress*100),Math.min(100,Math.floor(value*100)));progress=percent/100;logo.style.setProperty('--loaded',percent+'%');overlay.dataset.progress=String(progress);label.textContent='Загрузка клуба · '+percent+'%';};
  const finish=()=>{if(!started||!sceneReady||overlay.dataset.failed)return;update(1);overlay.remove();document.querySelector('#canvas').focus();};
  window.NriGodotBoot={ready(){sceneReady=true;finish();},get progress(){return progress;}};
