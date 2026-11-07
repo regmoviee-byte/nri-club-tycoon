@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "character-geometry-worker.js",
-      "bytes": 233725,
-      "sha256": "f4ec143f70663988cff7ce5c5b3ad4962124ee3b9145f5e88f379af34542ea68"
+      "bytes": 233833,
+      "sha256": "8e486ded3b90efcf98a70661a53436a28e8850fa12022eaa130ebe84247d3821"
     },
     {
       "path": "character-geometry.js",

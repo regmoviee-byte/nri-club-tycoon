@@ -235,7 +235,10 @@ function normalizeAccessories(values = []) {
   let used = /* @__PURE__ */ new Set();
   return (Array.isArray(values) ? values : []).flatMap((value) => {
     let item = catalogItem("accessories", value?.id ?? value);
-    return !item || used.has(item.geometry.slot) ? [] : (used.add(item.geometry.slot), [{ id: item.id, slot: item.geometry.slot, color: /^#[\da-f]{6}$/i.test(value?.color ?? "") ? value.color : "#bd9d67" }]);
+    if (!item || used.has(item.geometry.slot)) return [];
+    used.add(item.geometry.slot);
+    let fields = typeof value == "object" && value !== null ? value : {}, color = /^#[\da-f]{6}$/i.test(value?.color ?? "") ? value.color : "#bd9d67";
+    return [{ ...fields, id: item.id, slot: item.geometry.slot, color }];
   });
 }
 var NPC_PRESENTATION = Object.freeze({
