@@ -17,10 +17,10 @@ window.NriLoadFailure=function(message){const overlay=document.querySelector('#l
 document.querySelector('#retry').addEventListener('click',()=>location.reload());
 window.addEventListener('error',event=>{if(event.target instanceof HTMLScriptElement){if(!event.target.hasAttribute('data-optional-character'))NriLoadFailure('Не удалось получить файлы игры. Проверьте подключение и попробуйте снова.');}else if(event.error&&document.querySelector('#loading'))NriLoadFailure('Не удалось запустить игру. Перезагрузите страницу и попробуйте снова.');},true);
 </script>
-<script>window.NriPackageBootstrapBytes=2779052;</script>
+<script>window.NriPackageBootstrapBytes=2779269;</script>
 <script>window.NriCharacterGeometryReady=new Promise(resolve=>{window.NriCharacterGeometryReadyResolve=resolve;});</script>
 <script type="module" src="character-geometry.js" data-optional-character onload="NriCharacterGeometryReadyResolve()" onerror="NriCharacterGeometryReadyResolve()"></script>
-<script src="game-rules.js"></script>
+<script src="game-rules.js?v=90fa4f599cda"></script>
 <script src="index.js"></script>
 <script>
 (()=>{
