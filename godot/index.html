@@ -26,7 +26,7 @@ window.addEventListener('error',event=>{if(event.target instanceof HTMLScriptEle
 (()=>{
  try{
  const overlay=document.querySelector('#loading'),logo=overlay.querySelector('.logo'),label=document.querySelector('#load-label');let progress=0,started=false,sceneReady=false;
- const config={"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":138605344,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4},packCompression={"format":"gzip","bytes":98192840,"rawBytes":138605344,"rawSha256":"78a27dfd77556985fad966caa877d34096531aca6e29d21c002b5be75e2aeb7e"},packName=config.mainPack||config.executable+'.pck';
+ const config={"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":139707680,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4},packCompression={"format":"gzip","bytes":99277367,"rawBytes":139707680,"rawSha256":"e79e65172a548edc9c14f6e47373b8fe27ffc9dafb6b2350595959a602f8f00f"},packName=config.mainPack||config.executable+'.pck';
  config.fileSizes[packName]=packCompression.bytes;
  const bootstrapBytes=Number(window.NriPackageBootstrapBytes)||0,binaryBytes=Object.values(config.fileSizes??{}).reduce((sum,size)=>sum+Number(size||0),0),packageBytes=bootstrapBytes+binaryBytes;
  const update=value=>{if(overlay.dataset.failed)return;const percent=Math.max(Math.floor(progress*100),Math.min(100,Math.floor(value*100)));progress=percent/100;logo.style.setProperty('--loaded',percent+'%');overlay.dataset.progress=String(progress);label.textContent='Загрузка клуба · '+percent+'%';};
